@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.Set;
 
 import de.intarsys.pdf.content.CSOperation;
+import java.util.HashSet;
+import java.util.TreeSet;
 
 /**
  * 
@@ -23,11 +25,12 @@ public class ExtractorOperationsManager {
 	
 	private CSOperation currentOperation; // currently performed operation
 	private HashMap<CSOperation, Rectangle2D> operationBoundaries; // Boundries of areas affected by PS operations
-//	private Set<CSOperation> textOperations; // operations drawing the text
+	private HashSet<CSOperation> textOperations; // operations drawing the text
 	
 	public ExtractorOperationsManager(){
 		this.currentOperation = null;
 		this.operationBoundaries = new HashMap<CSOperation, Rectangle2D>();
+                this.textOperations = new HashSet<CSOperation>();
 	};
 	
 	public void setCurrentOperation(CSOperation op){
@@ -64,4 +67,18 @@ public class ExtractorOperationsManager {
 		//TODO: implement
 		this.setOperationBoundary(this.getCurrentOperation(), rec);
 	};
+
+        public void addTextOperation(CSOperation op){
+            /**
+             * Mark an operation as a tree operation
+             */
+            this.textOperations.add(op);
+        };
+
+        public Set<CSOperation> getTextOperations(){
+            /**
+             * Returns all the operations causing the text to be drawn
+             */
+            return this.textOperations;
+        };
 };
