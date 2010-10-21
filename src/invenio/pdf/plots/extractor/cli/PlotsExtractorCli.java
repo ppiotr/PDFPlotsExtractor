@@ -8,6 +8,8 @@ import de.intarsys.pdf.parser.COSLoadException;
 import invenio.pdf.plots.PlotsExtractor;
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -21,12 +23,19 @@ public class PlotsExtractorCli {
             File[] files = input.listFiles();
             for (File file : files) {
                 if (file.getPath().toLowerCase().endsWith(".pdf")) {
-                    PlotsExtractor.processDocument(file.getPath(), file.getPath()
-                            + ".extracted");
+                    try {
+                        PlotsExtractor.processDocument(file.getPath(), file.getPath() + ".extracted");
+                    } catch (Exception ex) {
+                        Logger.getLogger(PlotsExtractorCli.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                 }
             }
         } else {
-            PlotsExtractor.processDocument(inputFileName, inputFileName + ".extracted");
+            try {
+                PlotsExtractor.processDocument(inputFileName, inputFileName + ".extracted");
+            } catch (Exception ex) {
+                Logger.getLogger(PlotsExtractorCli.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
     }
 }

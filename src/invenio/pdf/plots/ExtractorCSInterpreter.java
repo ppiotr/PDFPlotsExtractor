@@ -38,7 +38,7 @@ public class ExtractorCSInterpreter extends CSPlatformRenderer {
     protected void render_Do(CSOperation operation) throws CSException {
         System.out.println("render named xobject");
         System.out.println("");
-        super.render_Do(operation);
+    //    super.render_Do(operation);
     }
     // Handlers for 4 main text operators (we do not care about changing the text
     // state. only real drawin matters here)
@@ -64,7 +64,7 @@ public class ExtractorCSInterpreter extends CSPlatformRenderer {
 
     @Override
     protected void render_TJ(CSOperation operation) throws CSException {
-        System.out.println("Rendering text (TJ operator)");
+     //   System.out.println("Rendering text (TJ operator)");
         this.operationsManager.addTextOperation(operation);
         super.render_TJ(operation);
     }

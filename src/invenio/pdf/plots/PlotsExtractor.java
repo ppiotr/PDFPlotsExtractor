@@ -43,6 +43,11 @@ import de.intarsys.pdf.pd.PDResources;
 import de.intarsys.pdf.pd.PDXObject;
 import de.intarsys.pdf.platform.cwt.rendering.CSPlatformRenderer;
 import de.intarsys.tools.locator.FileLocator;
+import invenio.common.Images;
+import invenio.common.SpatialClusterManager;
+import java.awt.Graphics;
+import java.awt.Rectangle;
+import java.awt.geom.Point2D;
 
 public class PlotsExtractor {
 
@@ -274,55 +279,6 @@ public class PlotsExtractor {
         return results;
     }
 
-    private static String writeImageToFile(BufferedImage image, String filename)
-            throws IOException {
-        /**
-         * Save a given BufferedImage instance into a file
-         *
-         * @param image
-         *            The object describing the image to be saved
-         * @param filename
-         *            Name of the file, where results should be saved. If this
-         *            parameter designs a directory, a new file with the unique
-         *            name is created
-         * @return The name of the file, where image has been saved
-         */
-        ImageWriter writer = null;
-        Iterator<ImageWriter> iter = ImageIO.getImageWritersByFormatName("png");
-        if (iter.hasNext()) {
-            writer = iter.next();
-        }
-
-        File outputFile = new File(filename);
-        if (outputFile.isDirectory()) {
-            outputFile = File.createTempFile("plot", ".png", outputFile);
-        }
-
-        ImageOutputStream ios = null;
-
-        try {
-            ios = ImageIO.createImageOutputStream(outputFile);
-            writer.setOutput(ios);
-            writer.write(null, new IIOImage(image, null, null), null);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (ios != null) {
-                try {
-                    ios.flush();
-                } catch (IOException e) {
-                }
-                try {
-                    ios.close();
-                } catch (IOException e) {
-                }
-            }
-            writer.reset();
-        }
-        writer.dispose();
-        return outputFile.getPath();
-    }
-
     private static void findPlotNodes(PDObject rootNode,
             List<PlotDescription> plotDescs) throws IOException {
         /**
@@ -481,7 +437,7 @@ public class PlotsExtractor {
         }
 
         for (PlotDescription desc : descriptions) {
-            writeImageToFile(desc.getImage(), directoryName);
+            Images.writeImageToFile(desc.getImage(), directoryName);
         }
     }
 
@@ -497,18 +453,80 @@ public class PlotsExtractor {
          */
     }
 
+    /**
+     * while (!constant point){
+     *    Cluster all operations. graphical together and text together.
+     *    Add text clusters overlaping with graphical clusters to the graphical clusters
+     * }
+     * 
+     * Every cluster is represented by the rectangular area in the space
+     *
+     * @param opManager
+     */
+    public static Map<Integer, Rectangle> clusterOperations(ExtractorOperationsManager opManager) {
+        SpatialClusterManager<CSOperation> clusterManager =
+                new SpatialClusterManager<CSOperation>(new Rectangle(-10000, -10000, 30000, 30000), 5);
+
+        Set<CSOperation> allOperations = opManager.getOperations();
+        Set<CSOperation> textOperations = opManager.getTextOperations();
+
+        for (CSOperation op : allOperations) {
+            if (!textOperations.contains(op) && opManager.getOperationBoundary2D(op) != null){
+                Rectangle2D srcRec = opManager.getOperationBoundary2D(op);
+                Rectangle rec = new Rectangle((int) srcRec.getX(), (int) srcRec.getY(), (int) srcRec.getWidth(), (int) srcRec.getHeight());
+
+                clusterManager.addRectangle(rec, op);
+            }
+        }
+        return clusterManager.getFinalBoundaries();
+    }
+
     /** debug code -> rendering the entire page */
     public static void annotateImage(Graphics2D graphics,
-            ExtractorOperationsManager opManager) {
+            ExtractorOperationsManager opManager){
         /**
          * Annotates image with the data from teh operation manager
          */
+        graphics.setTransform(AffineTransform.getRotateInstance(0));
         graphics.setPaintMode();
+
+        // drawing all the operations
+        graphics.setColor(Color.green);
+
+        Set<CSOperation> operations = opManager.getOperations();
+
+        for (CSOperation operation : operations) {
+            Rectangle2D opRec = opManager.getOperationBoundary2D(operation);
+            if (opRec != null) {
+                graphics.drawRect((int) opRec.getMinX(), (int) opRec.getMinY(), (int) opRec.getWidth(), (int) opRec.getHeight());
+            }
+        }
+
+        // drawing text operations
+
         graphics.setColor(Color.red);
-        graphics.drawRect(10, 10, 200, 200);
+
+        operations = opManager.getTextOperations();
+
+        for (CSOperation operation : operations) {
+            Rectangle2D opRec = opManager.getOperationBoundary2D(operation);
+            if (opRec != null) {
+                // TODO: take care of having all the text operators
+
+                graphics.drawRect((int) opRec.getMinX(), (int) opRec.getMinY(), (int) opRec.getWidth(), (int) opRec.getHeight());
+            }
+        }
+        graphics.setColor(Color.blue);
+        // now painting clustered operations
+        Map<Integer, Rectangle> clustered = clusterOperations(opManager);
+        for (Integer i : clustered.keySet()) {
+            Rectangle rec = clustered.get(i);
+            graphics.drawRect(rec.x, rec.y, rec.width, rec.height);
+        }
+
     }
 
-    public static BufferedImage renderPage(PDPage page) {
+    public static ExtractorOperationsManager renderPage(PDPage page) {
         Rectangle2D rect = page.getCropBox().toNormalizedRectangle();
         BufferedImage image = null;
         IGraphicsContext graphics = null;
@@ -524,7 +542,7 @@ public class PlotsExtractor {
             ExtractorGraphics2D g2proxy = new ExtractorGraphics2D(g2, opManager);
 
             // now we use our wrapper in order to construct standard mechanisms
-            graphics = new ExtractorGraphicsContext(g2proxy);
+            graphics = new ExtractorJPodGraphicsContext(g2proxy);
 
             // setup user space
             AffineTransform imgTransform = graphics.getTransform();
@@ -550,8 +568,9 @@ public class PlotsExtractor {
 
                 renderer.process(content, page.getResources());
                 annotateImage(g2, opManager);
+                opManager.setRenderedPage(image);
             }
-            return image;
+            return opManager;
         } finally {
             if (graphics != null) {
                 graphics.dispose();
@@ -559,36 +578,36 @@ public class PlotsExtractor {
         }
     }
 
-    public static List<BufferedImage> renderDocumentPages(PDDocument doc,
-            String filename) throws IOException {
+    public static List<ExtractorOperationsManager> renderDocumentPages(PDDocument doc,
+            String filename) throws IOException{
 
-        ArrayList<BufferedImage> images = new ArrayList<BufferedImage>();
+        //ArrayList<BufferedImage> images = new ArrayList<BufferedImage>();
+        ArrayList<ExtractorOperationsManager> results = new ArrayList<ExtractorOperationsManager>();
 
         PDPageTree pages = doc.getPageTree();
         PDPage page = pages.getFirstPage();
 
         int i = 0;
         while (page != null) {
-            BufferedImage image = renderPage(page);
-            writeImageToFile(image, filename + "." + i + ".png");
-            images.add(image);
-
+            ExtractorOperationsManager currentOperationsManager = renderPage(page);
+            Images.writeImageToFile(currentOperationsManager.getRenderedPage(), filename + "." + i + ".png");
+            results.add(currentOperationsManager);
             i++;
             if (i % 10 == 0) {
                 System.out.println();
             }
             page = page.getNextPage();
         }
-        return images;
+        return results;
     }
 
-    public static List<BufferedImage> renderDocumentPages(String filename)
+    public static List<ExtractorOperationsManager> renderDocumentPages(String filename)
             throws IOException, COSLoadException {
         FileLocator locator = new FileLocator(filename);
         PDDocument doc = PDDocument.createFromLocator(locator);
-        List<BufferedImage> images = renderDocumentPages(doc, filename);
+        List<ExtractorOperationsManager> opManagers = renderDocumentPages(doc, filename);
         doc.close();
-        return images;
+        return opManagers;
     }
 
     public static void processDocument(String fileName, String outputDirectory)
