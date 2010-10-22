@@ -29,6 +29,9 @@ import static org.junit.Assert.*;
  */
 public class IntervalTreeTest {
 
+    private static final int OPERATION_ADD = 0;
+    private static final int OPERATION_REMOVE = 1;
+    private static final int OPERATION_GETINTERSECTING = 2;
     private static Random randomGenerator;
 
     public IntervalTreeTest() {
@@ -93,9 +96,9 @@ public class IntervalTreeTest {
         int e = 0;
         IntervalTree<Integer> instance = null;
         int nextNumber = 0; // next number associated with an interval
-        int trialNumber = 10;
-        int intervalsNumber = 1000;
-        int intervalsToQuery = 10000;
+        int trialNumber = 1000000;
+        int intervalsNumber = 5;
+        int intervalsToQuery = 4;
 
         while (trialNumber > 0) {
             int endInterval = 100; // randomGenerator.nextInt(1000000000);
@@ -138,6 +141,7 @@ public class IntervalTreeTest {
                     System.out.println("an interval scheduled for removal is not present (" + interval[0] + ", " + interval[1] + ") <- " + interval[2]);
                 }
                 instance.removeInterval(interval[0], interval[1], interval[2]);
+                recordedRemovedIntervals.add(new int[]{interval[0], interval[1], interval[2]});
 
                 if (!isTreeSane(instance)) {
                     printAddRemoveTest(beginInterval, endInterval, recordedIntervals, recordedRemovedIntervals);
@@ -159,11 +163,41 @@ public class IntervalTreeTest {
                     qe = qb;
                     qb = c;
                 }
-                recordedQueriedIntervals.add(new int[] {qb, qe});
+                recordedQueriedIntervals.add(new int[]{qb, qe});
                 instance.getIntersectingIntervals(qb, qe);
             }
             trialNumber--;
         }
+    }
+
+    @Test
+    public void testSmallTestYeldToBeFailing() {
+        playSimpleSaintyTest(0, 100, new int[][]{
+                    new int[]{15, 25, 0},
+                    new int[]{30, 91, 1},
+                    new int[]{30, 99, 2},
+                    new int[]{86, 99, 3},
+                    new int[]{33, 55, 4}
+                }, new int[][]{
+                    new int[]{15, 25, 0},}, "test742");
+
+        playSimpleSaintyTest(0, 100, new int[][]{
+                    new int[]{6, 23, 0},
+                    new int[]{24, 35, 1},
+                    new int[]{24, 63, 2},
+                    new int[]{24, 72, 3},
+                    new int[]{25, 48, 4}
+                }, new int[][]{
+                    new int[]{6, 23, 0},}, "test649");
+        
+        playSimpleSaintyTest(0, 100, new int[][]{
+                    new int[]{12, 20, 0},
+                    new int[]{27, 92, 1},
+                    new int[]{27, 92, 2},
+                    new int[]{53, 94, 3},
+                    new int[]{35, 39, 4}
+                }, new int[][]{
+                    new int[]{12, 20, 0},}, "test111");
     }
 
     /**
@@ -440,6 +474,56 @@ public class IntervalTreeTest {
                     new int[]{58, 73, 1},
                     new int[]{55, 83, 2}
                 }, new int[][]{}, "test189");
+    }
+
+    @Test
+    public void testMixingAddingAndRemovals() {
+        playTest(36, 125, new int[][]{
+                    new int[]{OPERATION_ADD, 86, 108, 0},
+                    new int[]{OPERATION_ADD, 63, 101, 1},
+                    new int[]{OPERATION_ADD, 85, 98, 2},
+                    new int[]{OPERATION_ADD, 121, 122, 3},
+                    new int[]{OPERATION_REMOVE, 63, 101, 1},
+                    new int[]{OPERATION_REMOVE, 85, 98, 2},
+                    new int[]{OPERATION_ADD, 63, 106, 4}},
+                "testMixedAddsRemovals");
+    }
+
+    /**
+     * playing a test
+     * a test consists of list of operations.
+     * each operation can be of a type
+     * "0" -> add new interval
+     * "1" -> remove interval
+     * "2" -> get intersecting intervals
+     */
+    private void playTest(int min, int max, int[][] operations, String testIdentifier) {
+        IntervalTree<Integer> tree = new IntervalTree<Integer>(min, max);
+        int stepNumber = 0;
+        for (int[] operation : operations) {
+            switch (operation[0]) {
+                case OPERATION_ADD:
+                    tree.addInterval(operation[1], operation[2], operation[3]);
+                    break;
+                case OPERATION_REMOVE:
+                    tree.removeInterval(operation[1], operation[2], operation[3]);
+                    break;
+                case OPERATION_GETINTERSECTING:
+                    tree.getIntersectingIntervals(operation[1], operation[2]);
+                    break;
+                default:
+                    System.out.println("invalid test !");
+            }
+
+            try {
+                Images.writeImageToFile(tree.renderTree(), "c:\\intervalTrees\\test_" + testIdentifier + "_step_" + stepNumber + ".png");
+            } catch (IOException ex) {
+                System.out.println("epic failure");
+            }
+
+            checkTreeSainty(tree);
+            stepNumber++;
+        }
     }
 
     private void playSimpleSaintyTest(int min, int max, int[][] intervals, int[][] removals, String testIdentifier) {

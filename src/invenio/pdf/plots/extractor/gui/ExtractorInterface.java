@@ -5,21 +5,12 @@
 package invenio.pdf.plots.extractor.gui;
 
 import de.intarsys.pdf.parser.COSLoadException;
-import invenio.common.Images;
-import invenio.common.IntervalTree;
 import invenio.pdf.plots.ExtractorOperationsManager;
 import invenio.pdf.plots.PlotsExtractor;
-import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.layout.RowData;
-import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.*;
 
 public class ExtractorInterface {
@@ -117,7 +108,8 @@ public class ExtractorInterface {
         ExtractorInterface exInterface = new ExtractorInterface();
         //exInterface.openDocument("c:\\pdf\\tests\\proper_raster_image_one_page.pdf");
 //        exInterface.openDocument("c:\\pdf\\1007.0043.pdf");
-        exInterface.openDocument("c:\\pdf\\tests\\modified7_1007.0043.pdf");
+       // exInterface.openDocument("c:\\pdf\\tests\\modified7_1007.0043.pdf");
+exInterface.openDocument("/home/piotr/pdf/1007.0043.pdf");
         //     exInterface.openDocument("c:\\pdf\\tests\\problematic_page.pdf");
 
         //exInterface.openDocument("c:\\pdf\\tests\\two_plots_one_page.pdf");

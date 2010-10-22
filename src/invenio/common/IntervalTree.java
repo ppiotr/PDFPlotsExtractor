@@ -176,7 +176,7 @@ public class IntervalTree<IntervalObjectType> {
     }
 
     private void addInterval(IntervalTreeNode tmpRoot,
-            int b, int e, IntervalObjectType data) {
+            int b, int e, IntervalObjectType data, Boolean avoidRotations) {
         /**
          * Adding new interval to the tree rooted in a given point
          */
@@ -191,7 +191,7 @@ public class IntervalTree<IntervalObjectType> {
 
         if (e < b) {
             // we enforce the beginning of the interval to be before its end
-            addInterval(tmpRoot, e, b, data);
+            addInterval(tmpRoot, e, b, data, avoidRotations);
             return;
         }
 
@@ -204,24 +204,24 @@ public class IntervalTree<IntervalObjectType> {
 
             if (tmpRoot.number <= b) {
                 // the interval fits into the right branch entirely
-                addInterval(tmpRoot.secondChild, b, e, data);
+                addInterval(tmpRoot.secondChild, b, e, data, avoidRotations);
                 tmpRoot.recalculateHeight();
             }
 
             if (e <= tmpRoot.number) {
                 // the interval fits into the left branch entirely
-                addInterval(tmpRoot.firstChild, b, e, data);
+                addInterval(tmpRoot.firstChild, b, e, data, avoidRotations);
                 tmpRoot.recalculateHeight();
             }
 
             if (b < tmpRoot.number && tmpRoot.number < e) {
                 // we have to split hte interval
                 if (b != tmpRoot.number) {
-                    addInterval(tmpRoot.firstChild, b, tmpRoot.number, data);
+                    addInterval(tmpRoot.firstChild, b, tmpRoot.number, data, avoidRotations);
                 }
 
                 if (e != tmpRoot.number) {
-                    addInterval(tmpRoot.secondChild, tmpRoot.number, e, data);
+                    addInterval(tmpRoot.secondChild, tmpRoot.number, e, data, avoidRotations);
                 }
                 tmpRoot.recalculateHeight();
             }
@@ -277,14 +277,6 @@ public class IntervalTree<IntervalObjectType> {
 
                 nodeEnd.recalculateInterval();
                 nodeBeg.recalculateInterval();
-
-//                assert isTreeNodeCorrect(tmpRoot);
-//                assert isTreeNodeCorrect(nodeBeg);
-//                assert isTreeNodeCorrect(nodeA);
-//                assert isTreeNodeCorrect(nodeEnd);
-//                assert isTreeNodeCorrect(nodeB);
-//                assert isTreeNodeCorrect(nodeC);
-
             }
 
             if ((b == tmpRoot.intBeginning && e < tmpRoot.intEnd)
@@ -338,27 +330,34 @@ public class IntervalTree<IntervalObjectType> {
         // now rebalancing the tree... before returning tothe upper call of the
         // function, we perform a neceessary rotation
         tmpRoot.recalculateInterval();
-        this.performNecessaryRotations(tmpRoot);
+        if (!avoidRotations) {
+            this.performNecessaryRotations(tmpRoot);
+        }
     }
 
 //        void addInterval
     public void addInterval(
-            int b, int e, IntervalObjectType data) {
-        /**
-         * add the interval to the tree
-         *
-         * @param b    - the beginning of teh interval
-         * @param e    - the ending of the interval
-         * @param data - data associated with the interval
-         */
+            int b, int e, IntervalObjectType data, Boolean avoidRotations) {
         if (b != e) {
-            this.addInterval(this.root, b, e, data);
+            this.addInterval(this.root, b, e, data, avoidRotations);
             int[] val = new int[]{b, e};
-            if (val == null){
+            if (val == null) {
                 System.out.println("Epic failure ! ");
             }
             this.intervalsStored.put(data, val);
         }
+    }
+
+    /**
+     * add the interval to the tree
+     *
+     * @param b    - the beginning of teh interval
+     * @param e    - the ending of the interval
+     * @param data - data associated with the interval
+     */
+    public void addInterval(
+            int b, int e, IntervalObjectType data) {
+        addInterval(b, e, data, false);
     }
 
     /**
@@ -436,7 +435,6 @@ public class IntervalTree<IntervalObjectType> {
                 balanceSubtree(operationRoot);
             }
         }
-        // assert isTreeNodeCorrect(operationRoot);
     }
 
     /**
@@ -525,7 +523,7 @@ public class IntervalTree<IntervalObjectType> {
                         System.out.println("Epic failure !");
                     }
                 }
-                this.addInterval(rotationRoot, currentInt[0], currentInt[1], objectData);
+                this.addInterval(rotationRoot, currentInt[0], currentInt[1], objectData, true);
                 dbgIsAdded = true;
             } while (!ints.isEmpty());
         }
@@ -963,7 +961,7 @@ public class IntervalTree<IntervalObjectType> {
      */
     public IntervalTreeNode balanceSubtree(IntervalTreeNode operationRoot) {
         IntervalTreeNode currentRoot = null;
-        IntervalTreeNode newRoot = currentRoot;
+        IntervalTreeNode newRoot = operationRoot;
         while (newRoot != currentRoot) {
             currentRoot = newRoot;
             newRoot = performNecessaryRotations(operationRoot);
@@ -986,7 +984,7 @@ public class IntervalTree<IntervalObjectType> {
             if (!partialResults.containsKey(obj)) {
                 partialResults.put(obj, false);
             }
-            if (this.intervalsStored.get(obj) == null){
+            if (this.intervalsStored.get(obj) == null) {
                 System.out.println("Epic failure !");
             }
         }

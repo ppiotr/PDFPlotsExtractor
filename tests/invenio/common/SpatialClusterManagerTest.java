@@ -13,7 +13,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.eclipse.swt.internal.win32.HELPINFO;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -124,7 +123,7 @@ public class SpatialClusterManagerTest {
      * insert first -->    #
      */
     @Test
-    public void testGetFinalBoundariesIndirectMoreComplex() throws Exception {
+    public void testGetFinalBoundariesIndirectMoreComplex(){
         SpatialClusterManager<Integer> instance = new SpatialClusterManager<Integer>(new Rectangle(0, 0, 1000, 1000), 0);
         instance.addRectangle(new Rectangle(20, 20, 100, 1), 1);
         instance.addRectangle(new Rectangle(20, 20, 1, 100), 2);
@@ -132,6 +131,27 @@ public class SpatialClusterManagerTest {
         instance.addRectangle(new Rectangle(10, 10, 1, 100), 4);
 
         assertRectangles(instance, new Rectangle[]{new Rectangle(10, 10, 110, 110)});
+    }
+
+    @Test
+    public void anotherTestsFoundToBeFailing(){
+        SpatialClusterManager<Integer> instance = new SpatialClusterManager<Integer>(new Rectangle(36, 40, 89, 67), 0);
+        instance.addRectangle(new Rectangle(86, 74, 22, 1), 0);
+        IntervalTreeTest.checkTreeSainty(instance.xIntervalTree);
+        IntervalTreeTest.checkTreeSainty(instance.yIntervalTree);
+        instance.addRectangle(new Rectangle(63, 79, 38, 12), 1);
+        IntervalTreeTest.checkTreeSainty(instance.xIntervalTree);
+        IntervalTreeTest.checkTreeSainty(instance.yIntervalTree);
+        instance.addRectangle(new Rectangle(85, 96, 13, 4), 2);
+        IntervalTreeTest.checkTreeSainty(instance.xIntervalTree);
+        IntervalTreeTest.checkTreeSainty(instance.yIntervalTree);
+        instance.addRectangle(new Rectangle(121, 63, 1, 19), 3);
+        IntervalTreeTest.checkTreeSainty(instance.xIntervalTree);
+        IntervalTreeTest.checkTreeSainty(instance.yIntervalTree);
+        instance.addRectangle(new Rectangle(86, 80, 20, 18), 4);
+        IntervalTreeTest.checkTreeSainty(instance.xIntervalTree);
+        IntervalTreeTest.checkTreeSainty(instance.yIntervalTree);
+
     }
 
     /**
@@ -149,8 +169,8 @@ public class SpatialClusterManagerTest {
 
     @Test
     public void bigRandomTest() {
-        int numberOfTests = 100;
-        int numberOfTrials = 1000;
+        int numberOfTests = 100000;
+        int numberOfTrials = 5;
         for (int testNum = 0; testNum < numberOfTests; testNum++) {
             Rectangle boundary = null;
             do {
@@ -167,7 +187,9 @@ public class SpatialClusterManagerTest {
                 instance.addRectangle(newRectangle, i);
                 if (!IntervalTreeTest.isTreeSane(instance.xIntervalTree)) {
                     try {
-                        Images.writeImageToFile(instance.xIntervalTree.renderTree(), "c:\\intervalTrees\\failing_x_tree.png");
+ //                       Images.writeImageToFile(instance.xIntervalTree.renderTree(), "c:\\intervalTrees\\failing_x_tree.png");
+                        Images.writeImageToFile(instance.xIntervalTree.renderTree(), "/home/piotr/intervalTrees/failing_x_tree.png");
+
                     } catch (IOException ex) {
                         Logger.getLogger(SpatialClusterManagerTest.class.getName()).log(Level.SEVERE, null, ex);
                     }
@@ -175,7 +197,9 @@ public class SpatialClusterManagerTest {
                 }
                 if (!IntervalTreeTest.isTreeSane(instance.yIntervalTree)) {
                     try {
-                        Images.writeImageToFile(instance.yIntervalTree.renderTree(), "c:\\intervalTrees\\failing_y_tree.png");
+//                        Images.writeImageToFile(instance.yIntervalTree.renderTree(), "c:\\intervalTrees\\failing_y_tree.png");
+                        Images.writeImageToFile(instance.yIntervalTree.renderTree(), "/home/piotr/intervalTrees/failing_y_tree.png");
+
                     } catch (IOException ex) {
                         Logger.getLogger(SpatialClusterManagerTest.class.getName()).log(Level.SEVERE, null, ex);
                     }
@@ -187,65 +211,5 @@ public class SpatialClusterManagerTest {
             }
         }
     }
-//
-//    /**
-//     * we are randomly generating a large number of rectangles from a given rectangle (the small rectangles are considerably smaller than the big one)
-//     * by the law of big numbers we expect the big rectangle to be filled
-//     */
-//    @Test
-//    public void testGetFinalBoundariesMany() {
-//        Random rand = new Random();
-//        SpatialClusterManager<Integer> instance = new SpatialClusterManager<Integer>(new Rectangle(0, 0, 10000, 10000), 0);
-//        int width = 5;
-//        int height = 5;
-//        int maximalPiece = 3;
-//        int minimalPiece = 1;
-//
-//        int x = rand.nextInt(1000) + 10;
-//        int y = rand.nextInt(1000) + 10;
-//
-//        //int width = rand.nextInt(10) + 10;
-//        //int height = rand.nextInt(10) + 10;
-//
-//        // the number of experiments depends on the total volume
-//        int numberProbes = width * height;
-//        System.out.println("Expecting the rectangle: (" + x + ", " + y + ", " + width + ", " + height + ")");
-//        while (numberProbes > 0) {
-//            int recWidth = rand.nextInt(maximalPiece - minimalPiece + 1) + minimalPiece;
-//            int recHeight = rand.nextInt(maximalPiece - minimalPiece + 1) + 1;
-//            int dx = rand.nextInt(width - recWidth + 1);
-//            int dy = rand.nextInt(height - recHeight + 1);
-//            instance.addRectangle(new Rectangle(x + dx, y + dy, recWidth, recHeight), numberProbes);
-//            numberProbes--;
-//            System.out.println("ädding the rectangle (" + (x + dx) + ", " + (y + dy) + ", " + recWidth + ", " + recHeight + ")");
-//        }
-//
-//        // now checking if we have obtained the entire rectangle
-//
-//        Map<Integer, Rectangle> boundaries = instance.getFinalBoundaries();
-//
-//        assertEquals(1, boundaries.size());
-//        Integer k1 = (Integer) boundaries.keySet().toArray()[0];
-//
-//        Rectangle r1 = boundaries.get(k1);
-//        System.out.println("Obtained rectangle: (" + r1.x + ", " + r1.y + ", " + r1.width + ", " + r1.height + ")");
-//
-//        assertEquals(x, r1.x);
-//        assertEquals(y, r1.y);
-//        assertEquals(width, r1.width);
-//        assertEquals(height, r1.height);
-//    }
-//    /**
-//     * Test of addRectangle method, of class SpatialClusterManager.
-//     */
-//    @Test
-//    public void testAddRectangle() {
-//        System.out.println("addRectangle");
-//        Rectangle rec = null;
-//        Object obj = null;
-//        SpatialClusterManager instance = null;
-//        instance.addRectangle(rec, obj);
-//        // TODO review the generated test code and remove the default call to fail.
-//        fail("The test case is a prototype.");
-//    }
+
 }
