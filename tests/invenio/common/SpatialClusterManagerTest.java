@@ -4,12 +4,15 @@
  */
 package invenio.common;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
 import java.awt.Rectangle;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.eclipse.swt.internal.win32.HELPINFO;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -137,22 +140,22 @@ public class SpatialClusterManagerTest {
      * @return
      */
     private Rectangle getRandomRectangle(Rectangle area) {
-        int x = randomGenerator.nextInt(area.width - 1);
-        int y = randomGenerator.nextInt(area.height - 1);
-        int width = randomGenerator.nextInt(area.width - x - 1) + 1;
-        int height = randomGenerator.nextInt(area.height - y - 1) + 1;
+        int x = randomGenerator.nextInt(area.width - 3) + 1;
+        int y = randomGenerator.nextInt(area.height - 3) + 1;
+        int width = randomGenerator.nextInt(area.width - x - 2) + 1;
+        int height = randomGenerator.nextInt(area.height - y - 2) + 1;
         return new Rectangle(area.x + x, area.y + y, width, height);
     }
 
     @Test
     public void bigRandomTest() {
-        int numberOfTests = 1000;
-        int numberOfTrials = 2;
+        int numberOfTests = 100;
+        int numberOfTrials = 1000;
         for (int testNum = 0; testNum < numberOfTests; testNum++) {
             Rectangle boundary = null;
             do {
-                boundary = getRandomRectangle(new Rectangle(0, 0, 100, 100));
-            } while (boundary.width < 10 || boundary.height < 10);
+                boundary = getRandomRectangle(new Rectangle(0, 0, 150, 150));
+            } while (boundary.width < 7 || boundary.height < 7);
 
             SpatialClusterManager<Integer> instance = new SpatialClusterManager<Integer>(boundary, 0);
 
@@ -162,10 +165,20 @@ public class SpatialClusterManagerTest {
                 Rectangle newRectangle = getRandomRectangle(boundary);
                 recordedRectangles.add(newRectangle);
                 instance.addRectangle(newRectangle, i);
-                if (!IntervalTreeTest.isTreeSane(instance.xIntervalTree)){
+                if (!IntervalTreeTest.isTreeSane(instance.xIntervalTree)) {
+                    try {
+                        Images.writeImageToFile(instance.xIntervalTree.renderTree(), "c:\\intervalTrees\\failing_x_tree.png");
+                    } catch (IOException ex) {
+                        Logger.getLogger(SpatialClusterManagerTest.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                     System.out.println("Epic failure x;");
                 }
-                if (!IntervalTreeTest.isTreeSane(instance.yIntervalTree)){
+                if (!IntervalTreeTest.isTreeSane(instance.yIntervalTree)) {
+                    try {
+                        Images.writeImageToFile(instance.yIntervalTree.renderTree(), "c:\\intervalTrees\\failing_y_tree.png");
+                    } catch (IOException ex) {
+                        Logger.getLogger(SpatialClusterManagerTest.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                     System.out.println("Epic failure y;");
                 }
 

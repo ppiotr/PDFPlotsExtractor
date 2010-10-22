@@ -106,6 +106,8 @@ public class ExtractorGraphics2D extends Graphics2D {
     public void drawGlyphVector(GlyphVector arg0, float arg1, float arg2) {
         System.out.println("no boundary information : drawGlyphVector(GlyphVector arg0, float arg1, float arg2)");
         this.originalGraphics.drawGlyphVector(arg0, arg1, arg2);
+        this.operationsManager.addRenderingMethod("drawGlyphVector");
+
     }
 
     @Override
@@ -375,6 +377,7 @@ public class ExtractorGraphics2D extends Graphics2D {
     public boolean drawImage(Image arg0, int arg1, int arg2, ImageObserver arg3) {
         System.out.println("drawImage(Image arg0, int arg1, int arg2, ImageObserver arg3)");
         this.operationsManager.addRenderingMethod("drawImage");
+        this.processOperatorBoundary(new Rectangle2D.Double((double) arg1, (double) arg2, (double) arg0.getWidth(arg3), (double) arg0.getHeight(arg3)));
         return this.originalGraphics.drawImage(arg0, arg1, arg2, arg3);
     }
 

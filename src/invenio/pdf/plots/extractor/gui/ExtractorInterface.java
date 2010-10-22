@@ -110,35 +110,22 @@ public class ExtractorInterface {
         }
         this.display.dispose();
     }
-    /// debug function: testing the interval tree implementation
-    protected void testTheIntervalTrees() throws IOException{
-        IntervalTree intervals = new IntervalTree<String>(-1000, 1000);
-        Images.writeImageToFile(intervals.renderTree(), "c:\\intervalTrees\\1.png");
-        intervals.addInterval(1, 5, "A");
-        Images.writeImageToFile(intervals.renderTree(), "c:\\intervalTrees\\2.png");
-//        intervals.addInterval(15.0, 20.0, "B");
-//        Images.writeImageToFile(intervals.renderTree(), "c:\\intervalTrees\\3.png");
-        intervals.addInterval(2, 7, "C");
-        Images.writeImageToFile(intervals.renderTree(), "c:\\intervalTrees\\4.png");
-       // intervals.removeInterval(1, 5, "A");
-        Images.writeImageToFile(intervals.renderTree(), "c:\\intervalTrees\\5.png");
-        Map a = intervals.getIntersectingIntervals(2, 3);
-            
-
-        intervals.removeInterval(2, 7, "C");
-        Images.writeImageToFile(intervals.renderTree(), "c:\\intervalTrees\\6.png");
-//        intervals.addInterval(0, 3, "D");
-//        Images.writeImageToFile(intervals.renderTree(), "c:\\intervalTrees\\5.png");
-//        intervals.performNecessaryRotations(intervals.root);
-//        Images.writeImageToFile(intervals.renderTree(), "c:\\intervalTrees\\6.png");
-
-    }
+  
 
     public static void main(String[] args) throws IOException, COSLoadException {
 
         ExtractorInterface exInterface = new ExtractorInterface();
-        exInterface.testTheIntervalTrees(); // debug only
-        exInterface.openDocument("c:\\pdf\\tests\\proper_raster_image_one_page.pdf");
+        //exInterface.openDocument("c:\\pdf\\tests\\proper_raster_image_one_page.pdf");
+//        exInterface.openDocument("c:\\pdf\\1007.0043.pdf");
+        exInterface.openDocument("c:\\pdf\\tests\\modified7_1007.0043.pdf");
+        //     exInterface.openDocument("c:\\pdf\\tests\\problematic_page.pdf");
+
+        //exInterface.openDocument("c:\\pdf\\tests\\two_plots_one_page.pdf");
+//        exInterface.openDocument("c:\\pdf\\tests\\no_plots.pdf");
+          //exInterface.openDocument("c:\\pdf\\tests\\some_math.pdf");
+
+        //exInterface.openDocument("c:\\pdf\\tests\\overlaping_one_page.pdf");
+
 //         exInterface.openDocument("c:\\pdf\\tibor_1.pdf");
  //       exInterface.openDocument("c:\\pdf\\1007.0043.pdf");
         exInterface.run();

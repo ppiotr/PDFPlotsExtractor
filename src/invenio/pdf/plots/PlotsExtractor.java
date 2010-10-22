@@ -589,6 +589,7 @@ public class PlotsExtractor {
 
         int i = 0;
         while (page != null) {
+            System.out.println("Processing page " + i);
             ExtractorOperationsManager currentOperationsManager = renderPage(page);
             Images.writeImageToFile(currentOperationsManager.getRenderedPage(), filename + "." + i + ".png");
             results.add(currentOperationsManager);
