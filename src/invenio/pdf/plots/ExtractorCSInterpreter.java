@@ -10,9 +10,9 @@ import de.intarsys.pdf.platform.cwt.rendering.CSPlatformRenderer;
 
 public class ExtractorCSInterpreter extends CSPlatformRenderer {
 
-    private ExtractorOperationsManager operationsManager;
+    private PDFPageManager operationsManager;
 
-    public ExtractorCSInterpreter(Map paramOptions, IGraphicsContext igc, ExtractorOperationsManager opManager) {
+    public ExtractorCSInterpreter(Map paramOptions, IGraphicsContext igc, PDFPageManager opManager) {
         super(paramOptions, igc);
         this.operationsManager = opManager;
     }

@@ -31,9 +31,9 @@ import java.awt.geom.Rectangle2D;
 public class ExtractorGraphics2D extends Graphics2D {
 
     private Graphics2D originalGraphics;
-    private ExtractorOperationsManager operationsManager; // keeping track of the current operation and of its parameters
+    private PDFPageManager operationsManager; // keeping track of the current operation and of its parameters
 
-    public ExtractorGraphics2D(Graphics2D original, ExtractorOperationsManager opManager) {
+    public ExtractorGraphics2D(Graphics2D original, PDFPageManager opManager) {
         this.originalGraphics = original;
         this.operationsManager = opManager;
     }

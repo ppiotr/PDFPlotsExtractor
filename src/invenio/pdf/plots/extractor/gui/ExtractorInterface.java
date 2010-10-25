@@ -5,7 +5,7 @@
 package invenio.pdf.plots.extractor.gui;
 
 import de.intarsys.pdf.parser.COSLoadException;
-import invenio.pdf.plots.ExtractorOperationsManager;
+import invenio.pdf.plots.PDFPageManager;
 import invenio.pdf.plots.PlotsExtractor;
 import java.io.IOException;
 import org.eclipse.swt.SWT;
@@ -61,7 +61,7 @@ public class ExtractorInterface {
         this.openFileLabel.setText("The file currently open in the editor: " + this.openFileName);
     }
 
-    private TabItem createPdfPage(String title, ExtractorOperationsManager opManager){
+    private TabItem createPdfPage(String title, PDFPageManager opManager){
         TabItem pageTab = new TabItem(this.pdfPagesTabFolder, SWT.NONE);
         PdfPageComposite content = new PdfPageComposite(this.pdfPagesTabFolder, opManager);
         pageTab.setControl(content);
@@ -70,15 +70,15 @@ public class ExtractorInterface {
     }
     
     protected void openDocument(String filename) throws IOException, COSLoadException{
-        java.util.List<ExtractorOperationsManager> operationManagers;
+        java.util.List<PDFPageManager> operationManagers;
 
-        operationManagers = PlotsExtractor.renderDocumentPages(filename);
+        operationManagers = PlotsExtractor.getOperationsFromDocument(filename);
        
         this.openFileName = filename;
         this.updateOpenFileLabel();
         int page = 1;
         
-        for (ExtractorOperationsManager opManager: operationManagers){
+        for (PDFPageManager opManager: operationManagers){
             TabItem tabPage = createPdfPage("Page " + page, opManager);
             page++;
         }

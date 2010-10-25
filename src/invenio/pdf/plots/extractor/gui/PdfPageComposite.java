@@ -5,7 +5,7 @@
 package invenio.pdf.plots.extractor.gui;
 
 import de.intarsys.pdf.content.CSOperation;
-import invenio.pdf.plots.ExtractorOperationsManager;
+import invenio.pdf.plots.PDFPageManager;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DirectColorModel;
@@ -51,7 +51,7 @@ public class PdfPageComposite extends Composite {
     private TableColumn columnOperatorArguments;
     private TableColumn columnIsTextOperator;
 
-    private ExtractorOperationsManager operationsManager;
+    private PDFPageManager operationsManager;
     
     static ImageData convertToSWT(BufferedImage bufferedImage) {
         /**
@@ -105,7 +105,7 @@ public class PdfPageComposite extends Composite {
    
 
 
-    public PdfPageComposite(TabFolder folder, ExtractorOperationsManager opManager) {
+    public PdfPageComposite(TabFolder folder, PDFPageManager opManager) {
         super(folder, SWT.NONE);
         this.operationsManager = opManager;
         GridLayout pageLayout = new GridLayout();
