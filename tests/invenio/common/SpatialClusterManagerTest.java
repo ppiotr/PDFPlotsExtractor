@@ -60,7 +60,7 @@ public class SpatialClusterManagerTest {
             usedRectangles.put(rec, Boolean.FALSE);
         }
 
-        Map<Integer, Rectangle> finalBoundaries = spatialManager.getFinalBoundaries();
+        Map<Rectangle, List<Integer>> finalBoundaries = spatialManager.getFinalBoundaries();
         assertEquals("Wrong size of the resulting set", rectanglesToFind.length, finalBoundaries.size());
         // asserting that  correct the rectangles have been used
         for (Integer key : finalBoundaries.keySet()) {
@@ -79,7 +79,9 @@ public class SpatialClusterManagerTest {
      */
     @Test
     public void testGetFinalBoundaries() throws Exception {
-        SpatialClusterManager<Integer> instance = new SpatialClusterManager<Integer>(new Rectangle(0, 0, 1000, 1000), 1);
+        SpatialClusterManager<Integer> instance =
+                new SpatialClusterManager<Integer>(
+                new Rectangle(0, 0, 1000, 1000), 1, 1);
         instance.addRectangle(new Rectangle(10, 10, 100, 10), 1);
         instance.addRectangle(new Rectangle(10, 10, 10, 100), 2);
         assertRectangles(instance, new Rectangle[]{new Rectangle(9, 9, 102, 102)});
@@ -87,7 +89,9 @@ public class SpatialClusterManagerTest {
 
     @Test
     public void testGetFinalBoundariesSeries() throws Exception {
-        SpatialClusterManager<Integer> instance = new SpatialClusterManager<Integer>(new Rectangle(0, 0, 1000, 1000), 0);
+        SpatialClusterManager<Integer> instance =
+                new SpatialClusterManager<Integer>(
+                new Rectangle(0, 0, 1000, 1000), 0, 0);
 
         instance.addRectangle(new Rectangle(10, 10, 2, 1), 1);
         instance.addRectangle(new Rectangle(11, 11, 2, 1), 3);
@@ -123,7 +127,7 @@ public class SpatialClusterManagerTest {
      * insert first -->    #
      */
     @Test
-    public void testGetFinalBoundariesIndirectMoreComplex(){
+    public void testGetFinalBoundariesIndirectMoreComplex() {
         SpatialClusterManager<Integer> instance = new SpatialClusterManager<Integer>(new Rectangle(0, 0, 1000, 1000), 0);
         instance.addRectangle(new Rectangle(20, 20, 100, 1), 1);
         instance.addRectangle(new Rectangle(20, 20, 1, 100), 2);
@@ -134,7 +138,7 @@ public class SpatialClusterManagerTest {
     }
 
     @Test
-    public void anotherTestsFoundToBeFailing(){
+    public void anotherTestsFoundToBeFailing() {
         SpatialClusterManager<Integer> instance = new SpatialClusterManager<Integer>(new Rectangle(36, 40, 89, 67), 0);
         instance.addRectangle(new Rectangle(86, 74, 22, 1), 0);
         IntervalTreeTest.checkTreeSainty(instance.xIntervalTree);
@@ -187,7 +191,7 @@ public class SpatialClusterManagerTest {
                 instance.addRectangle(newRectangle, i);
                 if (!IntervalTreeTest.isTreeSane(instance.xIntervalTree)) {
                     try {
- //                       Images.writeImageToFile(instance.xIntervalTree.renderTree(), "c:\\intervalTrees\\failing_x_tree.png");
+                        //                       Images.writeImageToFile(instance.xIntervalTree.renderTree(), "c:\\intervalTrees\\failing_x_tree.png");
                         Images.writeImageToFile(instance.xIntervalTree.renderTree(), "/home/piotr/intervalTrees/failing_x_tree.png");
 
                     } catch (IOException ex) {
@@ -211,5 +215,4 @@ public class SpatialClusterManagerTest {
             }
         }
     }
-
 }

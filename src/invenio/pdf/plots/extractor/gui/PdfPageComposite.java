@@ -6,6 +6,9 @@ package invenio.pdf.plots.extractor.gui;
 
 import de.intarsys.pdf.content.CSOperation;
 import invenio.pdf.plots.PDFPageManager;
+import invenio.pdf.plots.Plot;
+import invenio.pdf.plots.PlotsExtractor;
+import java.awt.Graphics2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DirectColorModel;
@@ -16,8 +19,6 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
-import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.graphics.Device;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
@@ -50,9 +51,8 @@ public class PdfPageComposite extends Composite {
     private TableColumn columnRenderingMethods;
     private TableColumn columnOperatorArguments;
     private TableColumn columnIsTextOperator;
-
     private PDFPageManager operationsManager;
-    
+
     static ImageData convertToSWT(BufferedImage bufferedImage) {
         /**
          * This function has been downloaded from the Eclipse examples
@@ -102,8 +102,6 @@ public class PdfPageComposite extends Composite {
         }
         return null;
     }
-   
-
 
     public PdfPageComposite(TabFolder folder, PDFPageManager opManager) {
         super(folder, SWT.NONE);
@@ -113,6 +111,14 @@ public class PdfPageComposite extends Composite {
         this.setLayout(pageLayout);
 
         BufferedImage pageImage = opManager.getRenderedPage();
+        // now annotating the image !
+        List<Plot> plots = PlotsExtractor.getPlotsFromPage(opManager);
+
+        PlotsExtractor.annotateImage((Graphics2D) pageImage.getGraphics(), plots);
+
+
+
+
         ScrolledComposite canvasComposite = new ScrolledComposite(this,
                 SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
         canvasComposite.setLayout(new FillLayout());
@@ -132,7 +138,7 @@ public class PdfPageComposite extends Composite {
         this.imageCanvas = new Canvas(canvasComposite, SWT.NONE);
         canvasComposite.setContent(this.imageCanvas);
         ImageData pageImageData = convertToSWT(pageImage);
-        
+
         this.renderedPage = new Image(this.getDisplay(), pageImageData);
 
         this.imageCanvas.addPaintListener(new PaintListener() {
@@ -142,8 +148,8 @@ public class PdfPageComposite extends Composite {
                 Rectangle bounds = renderedPage.getBounds();
                 //System.out.println("Image parameters width: " + bounds.width + " height: " + bounds.height);
                 e.gc.drawImage(renderedPage, 0, 0);
-               
-               // e.gc.drawImage(someImage, e.x, e.y, e.width, e.height, e.x, e.y, e.width, e.height);
+
+                // e.gc.drawImage(someImage, e.x, e.y, e.width, e.height, e.x, e.y, e.width, e.height);
                 e.gc.drawRectangle(bounds);
 
                 //e.gc.drawRectangle(0, 0, width, height);
@@ -158,7 +164,7 @@ public class PdfPageComposite extends Composite {
         tableLayout.verticalAlignment = SWT.FILL;
         tableLayout.horizontalAlignment = SWT.FILL;
         tableLayout.minimumHeight = 200;
-        
+
 
         this.operationsTable = new Table(this, SWT.NONE);
         this.operationsTable.setLayoutData(tableLayout);
@@ -180,8 +186,8 @@ public class PdfPageComposite extends Composite {
         /// sample item
 
         TableItem item = new TableItem(this.operationsTable, SWT.NONE);
-	item.setText(new String[] {"operator name","results boundary",});
-	//item.setForeground(red);
+        item.setText(new String[]{"operator name", "results boundary",});
+        //item.setForeground(red);
         this.columnBoundaries.pack();
         this.columnOperators.pack();
         this.columnRenderingMethods.pack();
@@ -190,8 +196,8 @@ public class PdfPageComposite extends Composite {
         this.fillOperationsTable();
     }
 
-    private void fillOperationsTable(){
-        for (CSOperation operation: this.operationsManager.getOperations()){
+    private void fillOperationsTable() {
+        for (CSOperation operation : this.operationsManager.getOperations()) {
             TableItem item = new TableItem(this.operationsTable, SWT.NONE);
             // preparing the data about a particular operation
             String operator = operation.getOperator().toString();
@@ -201,17 +207,17 @@ public class PdfPageComposite extends Composite {
             String renderingMethods = "";
             String isTextOperator = (this.operationsManager.getTextOperations().contains(operation)) ? "yes" : "no";
             List<String> methods = this.operationsManager.getRenderingMethods(operation);
-            if (methods != null){
+            if (methods != null) {
                 boolean first = true;
-                for (String method : methods){
-                    if (!first){
+                for (String method : methods) {
+                    if (!first) {
                         renderingMethods += ", ";
                     }
                     renderingMethods += method;
                     first = false;
                 }
             }
-            item.setText(new String[] {operator, isTextOperator, boundary, operatorArguments, renderingMethods});
+            item.setText(new String[]{operator, isTextOperator, boundary, operatorArguments, renderingMethods});
         }
         this.columnOperatorArguments.pack();
         this.columnBoundaries.pack();
@@ -220,5 +226,4 @@ public class PdfPageComposite extends Composite {
         this.columnIsTextOperator.pack();
 
     }
-
 }

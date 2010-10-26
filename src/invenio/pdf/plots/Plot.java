@@ -7,6 +7,7 @@ package invenio.pdf.plots;
 import de.intarsys.pdf.content.CSOperation;
 import java.awt.Rectangle;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -35,6 +36,7 @@ public class Plot {
         this.caption = "";
         this.boundary = new Rectangle(0, 0, 0, 0);
         this.pageBoundary = new Rectangle(0, 0, 0, 0);
+        this.csOperations = new LinkedList<CSOperation>();
     }
 
     /**
@@ -85,6 +87,14 @@ public class Plot {
      */
     public List<CSOperation> getOperations(){
         return this.csOperations;
+    }
+
+    /**
+     * Add the entire list of operations constituting the plot
+     * @param operations list of CSOperation instances
+     */
+    public void addOperations(List<CSOperation> operations){
+        this.csOperations.addAll(operations);
     }
     
 }

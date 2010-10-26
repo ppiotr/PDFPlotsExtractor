@@ -1,16 +1,15 @@
 package invenio.pdf.plots;
 
-import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
 import java.util.Set;
 
 import de.intarsys.pdf.content.CSOperation;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.TreeSet;
 
 /**
  *
@@ -28,15 +27,32 @@ public class PDFPageManager {
     private HashMap<CSOperation, Rectangle2D> operationBoundaries2D; // Boundries of areas affected by PS operations
     private HashSet<CSOperation> textOperations; // operations drawing the text
     private HashSet<CSOperation> operations; // operations drawing the text
-    private HashMap<CSOperation, List<String>> renderingMethods; /// Methods called in order to execute an operation
+    private HashMap<CSOperation, List<String>> renderingMethods; // Methods
+    // called in order to execute an operation
     private BufferedImage renderedPage; // the image of a completely rendered page
+    private Rectangle pageBoundary;
 
-    public PDFPageManager() {
+    /**
+     * Creates a new instance of the page manager for a page of a given boundary
+     * (rectangle starting at 0,0 and having some non-zero width and height)
+     *
+     * @param pgBound a rectangle defining the page boundary
+     */
+    public PDFPageManager(Rectangle pgBound) {
         this.currentOperation = null;
         this.operationBoundaries2D = new HashMap<CSOperation, Rectangle2D>();
         this.textOperations = new HashSet<CSOperation>();
         this.renderingMethods = new HashMap<CSOperation, List<String>>();
         this.operations = new HashSet<CSOperation>();
+        this.pageBoundary = pgBound;
+    }
+
+    /**
+     * Returns the boundary of the page described by this manager
+     * @return
+     */
+    public Rectangle getPageBoundary() {
+        return this.pageBoundary;
     }
 
     public BufferedImage getRenderedPage() {
@@ -56,7 +72,7 @@ public class PDFPageManager {
 
     public Set<CSOperation> getOperations() {
         /**return all the operations managed by this manager*/
-        return this.operations;
+        return new HashSet<CSOperation>(this.operations);
     }
 
     public void addOperation(CSOperation op) {

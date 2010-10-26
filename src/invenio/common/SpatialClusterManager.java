@@ -5,7 +5,10 @@ package invenio.common;
 
 import java.awt.Rectangle;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 
 /**
  *
@@ -16,7 +19,8 @@ public class SpatialClusterManager<StoredObjectType> {
     IntervalTree<Integer> xIntervalTree;
     IntervalTree<Integer> yIntervalTree;
     private Rectangle boundary;
-    private int margin; //
+    private int hMargin, vMargin;
+
     private Map<Integer, StoredObjectType> mappingsToObjects; // mapping numbers to the original objects
     private Map<Integer, Integer> mappingsToParents; // mapping numbers to list of objects contained in a given cathegory
     private int currentNumber = -1;
@@ -28,24 +32,32 @@ public class SpatialClusterManager<StoredObjectType> {
 
     /**
      * Constructs a new spatial clusters manager
-     * @param b the boundary of the entire region (everything has to be included in it)
-     * @param m the margin by which each added rectangle will be extended
+     * @param b the boundary of the entire region (everything has to be included
+     *          in it)
+     * @param hM the margin by which each added rectangle will be extended
+     *                in horizontal directions
+     * @param vM the margin by which each added rectangle will be extended
+     *                in vertical directions
      */
-    public SpatialClusterManager(Rectangle b, int m) {
+    
+    public SpatialClusterManager(Rectangle b, int hM, int vM) {
         this.xIntervalTree = new IntervalTree<Integer>(b.x, b.x + b.width);
         this.yIntervalTree = new IntervalTree<Integer>(b.y, b.y + b.height);
         this.mappingsToObjects = new HashMap<Integer, StoredObjectType>();
         this.mappingsToParents = new HashMap<Integer, Integer>();
-        this.margin = m;
+        this.hMargin = hM;
+        this.vMargin = vM;
     }
 
     /**
-     * Return all the clusters being currently sotred in the manager
+     * Return all the clusters being currently sorted in the manager
      *
-     * @return a map identifier -> boundary
+     * @return a map boundary -> list of objects  intersecting with the boundary
      */
-    public Map<Integer, Rectangle> getFinalBoundaries() {
-        Map<Integer, Rectangle> result = new HashMap<Integer, Rectangle>();
+    public Map<Rectangle, List<StoredObjectType>> getFinalBoundaries() {
+
+        Map<Integer, Rectangle> partialResults =
+                new HashMap<Integer, Rectangle>();
         Map<Integer, int[]> intervalsX = this.xIntervalTree.getAllIntervals();
         Map<Integer, int[]> intervalsY = this.yIntervalTree.getAllIntervals();
         // producing the cartesian products
@@ -54,8 +66,47 @@ public class SpatialClusterManager<StoredObjectType> {
                 int[] dx = intervalsX.get(i);
                 int[] dy = intervalsY.get(i);
 
-                result.put(i, new Rectangle(dx[0], dy[0], dx[1] - dx[0], dy[1] - dy[0]));
+                partialResults.put(i, new Rectangle(
+                        dx[0], dy[0], dx[1] - dx[0], dy[1] - dy[0]));
             }
+        }
+
+        // now rewriting the results so that we have a list of objects 
+        // associated with a given boundary arther than the identifier of the
+        // parent
+
+        Map<Rectangle, List<StoredObjectType>> result =
+                new HashMap<Rectangle, List<StoredObjectType>>();
+
+        for (Rectangle r : partialResults.values()) {
+            result.put(r, new LinkedList<StoredObjectType>());
+        }
+
+        // now iterating over all the basic operations and associating them to
+        // the parent region
+
+        for (Integer internalIdent : this.mappingsToObjects.keySet()) {
+            // find parent of this number
+            int currentNum = internalIdent;
+            Stack<Integer> visitednumbers = new Stack<Integer>();
+
+
+            while (this.mappingsToParents.containsKey(currentNum)) {
+                visitednumbers.push(currentNum);
+                currentNum = this.mappingsToParents.get(currentNum);
+            }
+            // now we have the entire path on the stack -> we can repair links
+            // for the futureuse - let them point directly to the root
+
+            while (!visitednumbers.empty()) {
+                int num = visitednumbers.pop();
+                this.mappingsToParents.put(num, currentNum);
+            }
+
+            // we have the parent whose boundary is the boundary of the group
+
+            result.get(partialResults.get(currentNum)).add(
+                    this.mappingsToObjects.get(internalIdent));
         }
 
         return result;
@@ -70,10 +121,10 @@ public class SpatialClusterManager<StoredObjectType> {
     public void addRectangle(Rectangle rec, StoredObjectType obj) {
         // update the original mapping
 
-        int minX = rec.x - margin;
-        int maxX = rec.x + rec.width + margin;
-        int minY = rec.y - margin;
-        int maxY = rec.y + rec.height + margin;
+        int minX = rec.x - this.hMargin;
+        int maxX = rec.x + rec.width + this.hMargin;
+        int minY = rec.y - this.vMargin;
+        int maxY = rec.y + rec.height + this.vMargin;
 
         int newObjectIdentifier = this.getNextNumber();
         this.mappingsToObjects.put(newObjectIdentifier, obj);
@@ -126,7 +177,7 @@ public class SpatialClusterManager<StoredObjectType> {
                 this.yIntervalTree.removeInterval(intervalY[0], intervalY[1], intervalId);
 
             }
-        } while (! intersecting.isEmpty()); // we finished only if there are no more intersecting areas
+        } while (!intersecting.isEmpty()); // we finished only if there are no more intersecting areas
 
         this.xIntervalTree.addInterval(minX, maxX, newObjectIdentifier);
         this.yIntervalTree.addInterval(minY, maxY, newObjectIdentifier);

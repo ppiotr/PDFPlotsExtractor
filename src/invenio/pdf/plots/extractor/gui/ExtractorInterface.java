@@ -15,6 +15,7 @@ import org.eclipse.swt.widgets.*;
 
 public class ExtractorInterface {
     // graphic controls
+
     private Shell shell;
     private Display display;
     // interface elements
@@ -61,24 +62,24 @@ public class ExtractorInterface {
         this.openFileLabel.setText("The file currently open in the editor: " + this.openFileName);
     }
 
-    private TabItem createPdfPage(String title, PDFPageManager opManager){
+    private TabItem createPdfPage(String title, PDFPageManager opManager) {
         TabItem pageTab = new TabItem(this.pdfPagesTabFolder, SWT.NONE);
         PdfPageComposite content = new PdfPageComposite(this.pdfPagesTabFolder, opManager);
         pageTab.setControl(content);
         pageTab.setText(title);
         return pageTab;
     }
-    
-    protected void openDocument(String filename) throws IOException, COSLoadException{
+
+    protected void openDocument(String filename) throws IOException, COSLoadException {
         java.util.List<PDFPageManager> operationManagers;
 
         operationManagers = PlotsExtractor.getOperationsFromDocument(filename);
-       
+
         this.openFileName = filename;
         this.updateOpenFileLabel();
         int page = 1;
-        
-        for (PDFPageManager opManager: operationManagers){
+
+        for (PDFPageManager opManager : operationManagers) {
             TabItem tabPage = createPdfPage("Page " + page, opManager);
             page++;
         }
@@ -101,25 +102,24 @@ public class ExtractorInterface {
         }
         this.display.dispose();
     }
-  
 
     public static void main(String[] args) throws IOException, COSLoadException {
 
         ExtractorInterface exInterface = new ExtractorInterface();
         //exInterface.openDocument("c:\\pdf\\tests\\proper_raster_image_one_page.pdf");
 //        exInterface.openDocument("c:\\pdf\\1007.0043.pdf");
-       // exInterface.openDocument("c:\\pdf\\tests\\modified7_1007.0043.pdf");
-exInterface.openDocument("/home/piotr/pdf/1007.0043.pdf");
+        // exInterface.openDocument("c:\\pdf\\tests\\modified7_1007.0043.pdf");
+        exInterface.openDocument("/home/piotr/pdf/1007.0043.pdf");
         //     exInterface.openDocument("c:\\pdf\\tests\\problematic_page.pdf");
 
         //exInterface.openDocument("c:\\pdf\\tests\\two_plots_one_page.pdf");
 //        exInterface.openDocument("c:\\pdf\\tests\\no_plots.pdf");
-          //exInterface.openDocument("c:\\pdf\\tests\\some_math.pdf");
+        //exInterface.openDocument("c:\\pdf\\tests\\some_math.pdf");
 
         //exInterface.openDocument("c:\\pdf\\tests\\overlaping_one_page.pdf");
 
 //         exInterface.openDocument("c:\\pdf\\tibor_1.pdf");
- //       exInterface.openDocument("c:\\pdf\\1007.0043.pdf");
+        //       exInterface.openDocument("c:\\pdf\\1007.0043.pdf");
         exInterface.run();
     }
 }
