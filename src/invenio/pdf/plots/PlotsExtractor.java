@@ -1,29 +1,28 @@
 package invenio.pdf.plots;
 
+import invenio.pdf.core.ExtractorParameters;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 
-import de.intarsys.cwt.environment.IGraphicsContext;
-import de.intarsys.pdf.content.CSContent;
-import de.intarsys.pdf.content.CSOperation;
 import de.intarsys.pdf.parser.COSLoadException;
 import de.intarsys.pdf.pd.PDDocument;
-import de.intarsys.pdf.pd.PDPage;
-import de.intarsys.pdf.pd.PDPageTree;
 import de.intarsys.tools.locator.FileLocator;
 import invenio.common.ExtractorGeometryTools;
 import invenio.common.SpatialClusterManager;
+import invenio.pdf.core.DisplayedOperation;
+import invenio.pdf.core.Operation;
+import invenio.pdf.core.PDFDocumentManager;
+import invenio.pdf.core.PDFPageManager;
+import invenio.pdf.core.documentProcessing.PDFDocumentPreprocessor;
 import java.awt.Rectangle;
 import java.util.LinkedList;
 
@@ -38,19 +37,21 @@ public class PlotsExtractor {
      * @param horizontalMargin 
      * @return
      */
-    private static Map<Rectangle, List<CSOperation>> clusterOperations(
-            Set<CSOperation> operations, PDFPageManager manager, int horizontalMargin,
+    private static Map<Rectangle, List<Operation>> clusterOperations(
+            Set<Operation> operations, PDFPageManager manager, int horizontalMargin,
             int verticalMargin) {
 
-        SpatialClusterManager<CSOperation> clusterManager =
-                new SpatialClusterManager<CSOperation>(
+        SpatialClusterManager<Operation> clusterManager =
+                new SpatialClusterManager<Operation>(
                 ExtractorGeometryTools.extendRectangle(manager.getPageBoundary(),
                 horizontalMargin * 2, verticalMargin * 2),
                 horizontalMargin, verticalMargin);
 
-        for (CSOperation op : operations) {
-            Rectangle2D srcRec = manager.getOperationBoundary2D(op);
-            if (srcRec != null) {
+        for (Operation op : operations) {
+            if (op instanceof DisplayedOperation) {
+                DisplayedOperation dOp = (DisplayedOperation) op;
+                Rectangle srcRec = dOp.getBoundary();
+
                 Rectangle rec = new Rectangle((int) srcRec.getX(), (int) srcRec.getY(), (int) srcRec.getWidth(), (int) srcRec.getHeight());
                 clusterManager.addRectangle(rec, op);
             }
@@ -68,11 +69,10 @@ public class PlotsExtractor {
      *
      * @param opManager
      */
-    private static Map<Rectangle, List<CSOperation>> clusterOperations(PDFPageManager opManager) {
-        Set<CSOperation> interestingOperations = opManager.getOperations();
-        interestingOperations.removeAll(opManager.getTextOperations());
+    private static Map<Rectangle, List<Operation>> clusterOperations(PDFPageManager manager) {
+        Set<Operation> interestingOperations = manager.getGraphicalOperations();
 
-        return clusterOperations(interestingOperations, opManager, 100, 50);
+        return clusterOperations(interestingOperations, manager, 100, 50);
     }
 
     public static void annotateImage(Graphics2D graphics, List<Plot> plots) {
@@ -89,8 +89,9 @@ public class PlotsExtractor {
     }
 
     /** debug code -> rendering the entire page */
+    
     public static void annotateImage(Graphics2D graphics,
-            PDFPageManager opManager) {
+            PDFPageManager manager) {
         /**
          * Annotates image with the data from teh operation manager
          */
@@ -100,125 +101,38 @@ public class PlotsExtractor {
         // drawing all the operations
         graphics.setColor(Color.green);
 
-        Set<CSOperation> operations = opManager.getOperations();
+//        Set<Operation> operations = opManager.getOperations();
+//
+//        for (Operation operation : operations) {
+//            Rectangle2D opRec = opManager.getOperationBoundary2D(operation);
+//            if (opRec != null) {
+//                graphics.drawRect((int) opRec.getMinX(), (int) opRec.getMinY(), (int) opRec.getWidth(), (int) opRec.getHeight());
+//            }
+//        }
+//
+//        // drawing text operations
+//
+//        graphics.setColor(Color.red);
+//
+//        operations = opManager.getTextOperations();
+//
+//        for (CSOperation operation : operations) {
+//            Rectangle2D opRec = opManager.getOperationBoundary2D(operation);
+//            if (opRec != null) {
+//                // TODO: take care of having all the text operators
+//
+//                graphics.drawRect((int) opRec.getMinX(), (int) opRec.getMinY(), (int) opRec.getWidth(), (int) opRec.getHeight());
+//            }
+//        }
 
-        for (CSOperation operation : operations) {
-            Rectangle2D opRec = opManager.getOperationBoundary2D(operation);
-            if (opRec != null) {
-                graphics.drawRect((int) opRec.getMinX(), (int) opRec.getMinY(), (int) opRec.getWidth(), (int) opRec.getHeight());
-            }
-        }
 
-        // drawing text operations
 
-        graphics.setColor(Color.red);
-
-        operations = opManager.getTextOperations();
-
-        for (CSOperation operation : operations) {
-            Rectangle2D opRec = opManager.getOperationBoundary2D(operation);
-            if (opRec != null) {
-                // TODO: take care of having all the text operators
-
-                graphics.drawRect((int) opRec.getMinX(), (int) opRec.getMinY(), (int) opRec.getWidth(), (int) opRec.getHeight());
-            }
-        }
         graphics.setColor(Color.blue);
         // now painting clustered operations
-        Map<Rectangle, List<CSOperation>> clustered = clusterOperations(opManager);
+        Map<Rectangle, List<Operation>> clustered = clusterOperations(manager);
         for (Rectangle rec : clustered.keySet()) {
             graphics.drawRect(rec.x, rec.y, rec.width, rec.height);
         }
-
-    }
-
-    private static PDFPageManager getOperationsFromPage(PDPage page) {
-        Rectangle2D rect = page.getCropBox().toNormalizedRectangle();
-        BufferedImage image = null;
-        IGraphicsContext graphics = null;
-        try {
-            Rectangle pageBoundary = new Rectangle(0, 0,
-                    (int) rect.getWidth() * SCALE,
-                    (int) rect.getHeight() * SCALE);
-
-            //Constructing the graphics context
-            image = new BufferedImage((int) pageBoundary.getWidth(),
-                    (int) pageBoundary.getHeight(), BufferedImage.TYPE_INT_RGB);
-
-            Graphics2D g2 = (Graphics2D) image.getGraphics();
-
-            //Our wrapper around the 2D device allowing to extract informations
-            // about the device
-
-            PDFPageManager opManager = new PDFPageManager(pageBoundary);
-
-            ExtractorGraphics2D g2proxy = new ExtractorGraphics2D(g2, opManager);
-
-            // now we use our wrapper in order to construct standard mechanisms
-            graphics = new ExtractorJPodGraphicsContext(g2proxy);
-
-            // setup user space
-            AffineTransform imgTransform = graphics.getTransform();
-            imgTransform.scale(SCALE, -SCALE);
-            imgTransform.translate(-rect.getMinX(), -rect.getMaxY());
-            graphics.setTransform(imgTransform);
-            graphics.setBackgroundColor(Color.WHITE);
-            graphics.fill(rect);
-            CSContent content = page.getContentStream();
-            CSOperation[] operations = content.getOperations();
-
-            if (content != null) {
-
-                //CSPlatformRenderer renderer = new CSPlatformRenderer(null,
-                //		graphics);
-
-                // we inject our own implementation of the renderer -> before performing an operation, it is
-                // marked as currently performed. In such a way, out graphics device will be able to detect the operation
-                // and assign its attributes
-
-                ExtractorCSInterpreter renderer = new ExtractorCSInterpreter(null,
-                        graphics, opManager);
-
-                renderer.process(content, page.getResources());
-                //  annotateImage(g2, opManager);
-                opManager.setRenderedPage(image);
-            }
-            return opManager;
-        } finally {
-            if (graphics != null) {
-                graphics.dispose();
-            }
-        }
-    }
-
-    private static List<PDFPageManager> getOperationsFromDocument(PDDocument doc,
-            String fileName) throws IOException {
-
-        //ArrayList<BufferedImage> images = new ArrayList<BufferedImage>();
-        ArrayList<PDFPageManager> results = new ArrayList<PDFPageManager>();
-
-        PDPageTree pages = doc.getPageTree();
-        PDPage page = pages.getFirstPage();
-
-//        int i = 0;
-        while (page != null) {
-//            System.out.println("Processing page " + i);
-            PDFPageManager currentOperationsManager = getOperationsFromPage(page);
-//            Images.writeImageToFile(currentOperationsManager.getRenderedPage(), fileName + "." + i + ".png");
-            results.add(currentOperationsManager);
-//            i++;
-            page = page.getNextPage();
-        }
-        return results;
-    }
-
-    public static List<PDFPageManager> getOperationsFromDocument(String filename)
-            throws IOException, COSLoadException {
-        FileLocator locator = new FileLocator(filename);
-        PDDocument doc = PDDocument.createFromLocator(locator);
-        List<PDFPageManager> opManagers = getOperationsFromDocument(doc, filename);
-        doc.close();
-        return opManagers;
     }
 
     /**
@@ -254,6 +168,7 @@ public class PlotsExtractor {
      */
     public static List<Plot> getPlotsFromPage(PDFPageManager manager) {
         List<Plot> plots = new LinkedList<Plot>();
+
         int[] margins = calculateGraphicsMargins(manager);
 
 
@@ -261,22 +176,23 @@ public class PlotsExtractor {
          * Treating graphics operations - clustering them, filtering and
          * including appropriate text operations
          **************/
-        Set<CSOperation> graphicOperations = manager.getOperations();
-        graphicOperations.removeAll(manager.getTextOperations());
+        Set<Operation> graphicalOperations = manager.getGraphicalOperations();
 
-        Map<Rectangle, List<CSOperation>> graphicalRegions = clusterOperations(
-                graphicOperations, manager, margins[0], margins[1]);
+//        graphicOperations.removeAll(manager.getTextOperations());
 
-        Map<Rectangle, List<CSOperation>> shrinkedRegions =
+        Map<Rectangle, List<Operation>> graphicalRegions = clusterOperations(
+                graphicalOperations, manager, margins[0], margins[1]);
+
+        Map<Rectangle, List<Operation>> shrinkedRegions =
                 ExtractorGeometryTools.shrinkRectangleMap(graphicalRegions,
                 margins[0], margins[1]);
 
 
-        Map<Rectangle, List<CSOperation>> graphicalPlotRegions =
+        Map<Rectangle, List<Operation>> graphicalPlotRegions =
                 PlotHeuristics.removeFalsePlots(shrinkedRegions);
 
 
-        Map<Rectangle, List<CSOperation>> plotRegions =
+        Map<Rectangle, List<Operation>> plotRegions =
                 PlotHeuristics.includeTextParts(graphicalPlotRegions, manager);
 
 //        Map<Rectangle, List<CSOperation>> plotRegions = graphicalPlotRegions;
@@ -359,11 +275,13 @@ public class PlotsExtractor {
         File cosLogFile = new File(fileName + ".cos");
         PrintStream cosStream = new PrintStream(cosLogFile);
 
-        List<PDFPageManager> documentPages = getOperationsFromDocument(doc, fileName);
-        for (PDFPageManager manager : documentPages) {
+        //List<PDFPageOperationsManager> documentPages = getOperationsFromDocument(doc, fileName);
+        PDFDocumentManager processedDocument = PDFDocumentPreprocessor.readPDFDocument(fileName);
+
+        for (int i = 0; i < processedDocument.getPagesNumber(); ++i) {
             // Now we want to process document page by page and detect potential plots
             System.out.println("page processed");
-            List<Plot> currentPlots = getPlotsFromPage(manager);
+            List<Plot> currentPlots = getPlotsFromPage(processedDocument.getPage(i));
             result.addAll(currentPlots);
         }
 

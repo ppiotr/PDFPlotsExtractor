@@ -1,18 +1,16 @@
-package invenio.pdf.plots;
+package invenio.pdf.core.documentProcessing;
 
 import java.util.Map;
 import de.intarsys.cwt.environment.IGraphicsContext;
 import de.intarsys.pdf.content.CSException;
 import de.intarsys.pdf.content.CSOperation;
-import de.intarsys.pdf.cos.COSNumber;
-import de.intarsys.pdf.cos.COSString;
 import de.intarsys.pdf.platform.cwt.rendering.CSPlatformRenderer;
 
-public class ExtractorCSInterpreter extends CSPlatformRenderer {
+class ExtractorCSInterpreter extends CSPlatformRenderer {
 
-    private PDFPageManager operationsManager;
+    private PDFPageOperationsManager operationsManager;
 
-    public ExtractorCSInterpreter(Map paramOptions, IGraphicsContext igc, PDFPageManager opManager) {
+    public ExtractorCSInterpreter(Map paramOptions, IGraphicsContext igc, PDFPageOperationsManager opManager) {
         super(paramOptions, igc);
         this.operationsManager = opManager;
     }
@@ -25,18 +23,8 @@ public class ExtractorCSInterpreter extends CSPlatformRenderer {
         this.operationsManager.unsetCurrentOperation();
     }
 
-    /// reimplementation of the text operations
-   
-
-    @Override
-    protected void render_BT(CSOperation operation) {
-        System.out.println("render_BT(" + operation.toString() + ") - begin text block");
-        super.render_BT(operation);
-    }
-
     @Override
     protected void render_Do(CSOperation operation) throws CSException {
-        System.out.println("render named xobject");
         super.render_Do(operation);
     }
     // Handlers for 4 main text operators (we do not care about changing the text
@@ -44,26 +32,24 @@ public class ExtractorCSInterpreter extends CSPlatformRenderer {
 
     @Override
     protected void render_DoubleQuote(CSOperation operation) throws CSException {
-        System.out.println("Rendering text (\" operator)");
+        this.operationsManager.addTextOperation(operation);
         super.render_DoubleQuote(operation);
     }
 
     @Override
     protected void render_Quote(CSOperation operation) throws CSException {
-        System.out.println("Rendering text (\' operator)");
+        this.operationsManager.addTextOperation(operation);
         super.render_Quote(operation);
     }
 
     @Override
     protected void render_Tj(CSOperation operation) throws CSException {
-        System.out.println("Rendering text (Tj operator)");
         this.operationsManager.addTextOperation(operation);
         super.render_Tj(operation);
     }
 
     @Override
     protected void render_TJ(CSOperation operation) throws CSException {
-     //   System.out.println("Rendering text (TJ operator)");
         this.operationsManager.addTextOperation(operation);
         super.render_TJ(operation);
     }

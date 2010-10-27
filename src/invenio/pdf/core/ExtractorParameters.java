@@ -1,4 +1,4 @@
-package invenio.pdf.plots;
+package invenio.pdf.core;
 
 import java.util.Properties;
 
@@ -53,5 +53,13 @@ public class ExtractorParameters extends Properties {
      */
     public double getHorizontalMargin() {
         return 0.15;
+    }
+
+    /**
+     * Return the coefficient by which the page will be scaled
+     * @return
+     */
+    public int getPageScale(){
+        return 2;
     }
 }

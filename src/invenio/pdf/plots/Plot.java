@@ -4,7 +4,7 @@
  */
 package invenio.pdf.plots;
 
-import de.intarsys.pdf.content.CSOperation;
+import invenio.pdf.core.Operation;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -26,7 +26,7 @@ public class Plot {
     private Rectangle pageBoundary; // The boundary of the rendered page
     private String caption; // Detected caption of the plot
     private List<String> references; // a list of references to the plot, from the article text
-    private List<CSOperation> csOperations; // a list of all the PDF operations creating this plot
+    private List<Operation> operations; // a list of all the PDF operations creating this plot
 
     /**
      * A default constructor - creates a plot descriptor holding empty information
@@ -36,7 +36,7 @@ public class Plot {
         this.caption = "";
         this.boundary = new Rectangle(0, 0, 0, 0);
         this.pageBoundary = new Rectangle(0, 0, 0, 0);
-        this.csOperations = new LinkedList<CSOperation>();
+        this.operations = new LinkedList<Operation>();
     }
 
     /**
@@ -48,7 +48,7 @@ public class Plot {
     }
 
     /**
-     * Sets the boundary of a described plot in the coordonates of the rendered page
+     * Sets the boundary of a described plot in the coordinates of the rendered page
      * @param rec The rectangle describing the new boundary
      */
     public void setBoundary(Rectangle rec) {
@@ -77,24 +77,24 @@ public class Plot {
      * @param op
      * @return
      */
-    public void addOperation(CSOperation op) {
-        this.csOperations.add(op);
+    public void addOperation(Operation op) {
+        this.operations.add(op);
     }
     /**
      * Return all the CS operations (Operations forming the PDF content stream)
      * associated with the current plot.
      * @return list of CSOperation instances
      */
-    public List<CSOperation> getOperations(){
-        return this.csOperations;
+    public List<Operation> getOperations(){
+        return this.operations;
     }
 
     /**
      * Add the entire list of operations constituting the plot
      * @param operations list of CSOperation instances
      */
-    public void addOperations(List<CSOperation> operations){
-        this.csOperations.addAll(operations);
+    public void addOperations(List<Operation> operations){
+        this.operations.addAll(operations);
     }
     
 }

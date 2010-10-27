@@ -2,11 +2,12 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package invenio.pdf.plots.extractor.gui;
+package invenio.pdf.gui;
 
 import de.intarsys.pdf.parser.COSLoadException;
-import invenio.pdf.plots.PDFPageManager;
-import invenio.pdf.plots.PlotsExtractor;
+import invenio.pdf.core.PDFDocumentManager;
+import invenio.pdf.core.PDFPageManager;
+import invenio.pdf.core.documentProcessing.PDFDocumentPreprocessor;
 import java.io.IOException;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
@@ -27,7 +28,7 @@ public class ExtractorInterface {
 
     private void init_interface() {
         /**
-         * Creatign teh basic interface
+         * Creating the basic interface
          */
         this.display = new Display();
         this.shell = new Shell(display);
@@ -71,17 +72,13 @@ public class ExtractorInterface {
     }
 
     protected void openDocument(String filename) throws IOException, COSLoadException {
-        java.util.List<PDFPageManager> operationManagers;
-
-        operationManagers = PlotsExtractor.getOperationsFromDocument(filename);
+        PDFDocumentManager manager = PDFDocumentPreprocessor.readPDFDocument(filename);
 
         this.openFileName = filename;
         this.updateOpenFileLabel();
-        int page = 1;
 
-        for (PDFPageManager opManager : operationManagers) {
-            TabItem tabPage = createPdfPage("Page " + page, opManager);
-            page++;
+        for (int page = 0; page < manager.getPagesNumber(); page++) {
+            TabItem tabPage = createPdfPage("Page " + (page + 1), manager.getPage(page));
         }
     }
 

@@ -1,4 +1,4 @@
-package invenio.pdf.plots;
+package invenio.pdf.core.documentProcessing;
 
 import java.awt.Color;
 import java.awt.Composite;
@@ -25,28 +25,24 @@ import java.awt.image.renderable.RenderableImage;
 import java.text.AttributedCharacterIterator;
 import java.util.Map;
 
-import de.intarsys.pdf.content.CSOperation;
 import java.awt.geom.Rectangle2D;
 
-public class ExtractorGraphics2D extends Graphics2D {
+class ExtractorGraphics2D extends Graphics2D {
 
     private Graphics2D originalGraphics;
-    private PDFPageManager operationsManager; // keeping track of the current operation and of its parameters
+    private PDFPageOperationsManager operationsManager; // keeping track of the current operation and of its parameters
 
-    public ExtractorGraphics2D(Graphics2D original, PDFPageManager opManager) {
+    public ExtractorGraphics2D(Graphics2D original, PDFPageOperationsManager opManager) {
         this.originalGraphics = original;
         this.operationsManager = opManager;
     }
 
-    protected void processOperatorBoundary(Rectangle2D bounds2D) {
-        /**
-         *
-         */
-        AffineTransform currentTransform = this.originalGraphics.getTransform();
-        double origin[] = {bounds2D.getMinX(), bounds2D.getMinY(),
-            bounds2D.getMinX(), bounds2D.getMaxY(),
-            bounds2D.getMaxX(), bounds2D.getMaxY(),
-            bounds2D.getMaxX(), bounds2D.getMinY()};
+    protected void processOperatorBoundary(Rectangle2D bounds) {
+              AffineTransform currentTransform = this.originalGraphics.getTransform();
+        double origin[] = {bounds.getMinX(), bounds.getMinY(),
+            bounds.getMinX(), bounds.getMaxY(),
+            bounds.getMaxX(), bounds.getMaxY(),
+            bounds.getMaxX(), bounds.getMinY()};
         double transformedPoints[] = new double[8];
         currentTransform.transform(origin, 0, transformedPoints, 0, 4);
         //currentTransform.
@@ -74,11 +70,8 @@ public class ExtractorGraphics2D extends Graphics2D {
         }
         // after a rotation, this might be something different that a rectanglr
         // we have to find the boudary
-        Rectangle2D finalBoundingRectangle2D = new Rectangle2D.Double(minX, minY, maxX - minX, maxY - minY);
-//        Rectangle finalBoundingRectangle = new Rectangle((int) minX, (int) minY, (int) (maxX - minX), (int) (maxY - minY));
-
-        this.operationsManager.extendCurrentOperationBoundary2D(finalBoundingRectangle2D);
-//        this.operationsManager.extendCurrentOperationBoundary(finalBoundingRectangle);
+        Rectangle finalBoundingRectangle = new Rectangle((int) minX, (int) minY, (int) (maxX - minX), (int) (maxY - minY));
+        this.operationsManager.extendCurrentOperationBoundary(finalBoundingRectangle);
     }
 
     @Override
@@ -330,7 +323,7 @@ public class ExtractorGraphics2D extends Graphics2D {
     @Override
     public void translate(double arg0, double arg1) {
         // TODO Auto-generated method stub
-       // System.out.println("translate(double arg0 = " + arg0 + ", double arg1 = " + arg1 + ");");
+        // System.out.println("translate(double arg0 = " + arg0 + ", double arg1 = " + arg1 + ");");
         this.originalGraphics.translate(arg0, arg1);
     }
 

@@ -2,14 +2,15 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package invenio.pdf.plots.extractor.gui;
+package invenio.pdf.gui;
 
-import de.intarsys.pdf.content.CSOperation;
-import invenio.pdf.plots.PDFPageManager;
+import invenio.pdf.core.DisplayedOperation;
+import invenio.pdf.core.Operation;
+import invenio.pdf.core.PDFPageManager;
 import invenio.pdf.plots.Plot;
 import invenio.pdf.plots.PlotsExtractor;
 import java.awt.Graphics2D;
-import java.awt.geom.Rectangle2D;
+
 import java.awt.image.BufferedImage;
 import java.awt.image.DirectColorModel;
 import java.awt.image.IndexColorModel;
@@ -23,7 +24,7 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.RGB;
-import org.eclipse.swt.graphics.Rectangle;
+
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -145,7 +146,7 @@ public class PdfPageComposite extends Composite {
 
             @Override
             public void paintControl(PaintEvent e) {
-                Rectangle bounds = renderedPage.getBounds();
+                org.eclipse.swt.graphics.Rectangle bounds = renderedPage.getBounds();
                 //System.out.println("Image parameters width: " + bounds.width + " height: " + bounds.height);
                 e.gc.drawImage(renderedPage, 0, 0);
 
@@ -197,26 +198,31 @@ public class PdfPageComposite extends Composite {
     }
 
     private void fillOperationsTable() {
-        for (CSOperation operation : this.operationsManager.getOperations()) {
+        for (Operation operation : this.operationsManager.getOperations()) {
             TableItem item = new TableItem(this.operationsTable, SWT.NONE);
             // preparing the data about a particular operation
-            String operator = operation.getOperator().toString();
-            Rectangle2D boundaryRec = this.operationsManager.getOperationBoundary2D(operation);
+            String operator = operation.getOriginalOperation().getOperator().toString();
+
+            java.awt.Rectangle boundaryRec = new java.awt.Rectangle(0,0,0,0);
+            if (operation instanceof DisplayedOperation){
+                boundaryRec = ((DisplayedOperation) operation).getBoundary();
+            }
+
             String boundary = (boundaryRec == null) ? "(null)" : boundaryRec.toString();
             String operatorArguments = operation.toString();
             String renderingMethods = "";
             String isTextOperator = (this.operationsManager.getTextOperations().contains(operation)) ? "yes" : "no";
-            List<String> methods = this.operationsManager.getRenderingMethods(operation);
-            if (methods != null) {
-                boolean first = true;
-                for (String method : methods) {
-                    if (!first) {
-                        renderingMethods += ", ";
-                    }
-                    renderingMethods += method;
-                    first = false;
-                }
-            }
+//            List<String> methods = this.operationsManager.getRenderingMethods(operation);
+//            if (methods != null) {
+//                boolean first = true;
+//                for (String method : methods) {
+//                    if (!first) {
+//                        renderingMethods += ", ";
+//                    }
+//                    renderingMethods += method;
+//                    first = false;
+//                }
+//            }
             item.setText(new String[]{operator, isTextOperator, boundary, operatorArguments, renderingMethods});
         }
         this.columnOperatorArguments.pack();

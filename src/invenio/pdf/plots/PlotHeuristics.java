@@ -1,11 +1,12 @@
 package invenio.pdf.plots;
 
-import de.intarsys.pdf.content.CSOperation;
+import invenio.pdf.core.ExtractorParameters;
 import invenio.common.ExtractorGeometryTools;
 import invenio.common.SpatialClusterManager;
+import invenio.pdf.core.Operation;
+import invenio.pdf.core.PDFPageManager;
+import invenio.pdf.core.TextOperation;
 import java.awt.Rectangle;
-import java.awt.geom.Rectangle2D;
-import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -26,10 +27,10 @@ public class PlotHeuristics {
      * (plots can not for example be half of the page hight and few pixels broad
      * @param areas
      */
-    public static Map<Rectangle, List<CSOperation>> removeBasedOnAspectRatio(
-            Map<Rectangle, List<CSOperation>> areas) {
+    public static Map<Rectangle, List<Operation>> removeBasedOnAspectRatio(
+            Map<Rectangle, List<Operation>> areas) {
 
-        Map<Rectangle, List<CSOperation>> result = new HashMap<Rectangle, List<CSOperation>>();
+        Map<Rectangle, List<Operation>> result = new HashMap<Rectangle, List<Operation>>();
 
         ExtractorParameters parameters = ExtractorParameters.getExtractorParameters();
 
@@ -56,7 +57,7 @@ public class PlotHeuristics {
      *
      * @return
      */
-    public static Map<Rectangle, List<CSOperation>> removeBasedOnNumberOfOperations() {
+    public static Map<Rectangle, List<Operation>> removeBasedOnNumberOfOperations() {
         //Map<Rectangle, List<CSOperation>> result = new HashMap<Rectangle
         //TODO Implement... for the moment this heuristic seems not to be crucial in order
         //     for everything to work
@@ -64,7 +65,7 @@ public class PlotHeuristics {
         return null;
     }
 
-    public static Map<Rectangle, List<CSOperation>> removeFalsePlots(Map<Rectangle, List<CSOperation>> areas) {
+    public static Map<Rectangle, List<Operation>> removeFalsePlots(Map<Rectangle, List<Operation>> areas) {
         // remove graphics with too small/too big aspect ratios
         return removeBasedOnAspectRatio(areas);
     }
@@ -76,54 +77,53 @@ public class PlotHeuristics {
      * @param manager
      * @return
      */
-    public static Map<Rectangle, List<CSOperation>> includeTextParts(
-            Map<Rectangle, List<CSOperation>> areas, PDFPageManager manager) {
+    public static Map<Rectangle, List<Operation>> includeTextParts(
+            Map<Rectangle, List<Operation>> areas, PDFPageManager manager) {
         // each region will be represented by one of CSOperation instances
         // constituting it
-        HashMap<CSOperation, Rectangle> areaIdentifiers =
-                new HashMap<CSOperation, Rectangle>();
+        HashMap<Operation, Rectangle> areaIdentifiers =
+                new HashMap<Operation, Rectangle>();
 
-        SpatialClusterManager<CSOperation> clusterManager =
-                new SpatialClusterManager<CSOperation>(
+        SpatialClusterManager<Operation> clusterManager =
+                new SpatialClusterManager<Operation>(
                 ExtractorGeometryTools.extendRectangle(
                 manager.getPageBoundary(), 2, 2), 1, 1);
 
         for (Rectangle rec : areas.keySet()) {
-            CSOperation representant = areas.get(rec).get(0);
+            Operation representant = areas.get(rec).get(0);
             areaIdentifiers.put(representant, rec);
             clusterManager.addRectangle(rec, representant);
         }
 
         // now processing all the text operations
-        for (CSOperation textOp : manager.getTextOperations()) {
-            Rectangle2D boundary = manager.getOperationBoundary2D(textOp);
-            if (boundary != null){
-                clusterManager.addRectangle(boundary.getBounds(), textOp);
+        for (Operation textOp : manager.getTextOperations()) {
+
+            if (textOp instanceof TextOperation) {
+                Rectangle boundary = ((TextOperation) textOp).getBoundary();
+                clusterManager.addRectangle(boundary, textOp);
             }
         }
 
-        Map<Rectangle, List<CSOperation>> newBoundaries = clusterManager.getFinalBoundaries();
-        Map<Rectangle, List<CSOperation>> result = new HashMap<Rectangle, List<CSOperation>>();
+        Map<Rectangle, List<Operation>> newBoundaries = clusterManager.getFinalBoundaries();
+        Map<Rectangle, List<Operation>> result = new HashMap<Rectangle, List<Operation>>();
 
-        for (Rectangle rec: newBoundaries.keySet()){
+        for (Rectangle rec : newBoundaries.keySet()) {
             // find old rectangle corresponding to this new one
             Rectangle oldRect = null;
-            List<CSOperation> toAdd = new LinkedList<CSOperation>();
-            for (CSOperation op: newBoundaries.get(rec)){
-                if (areaIdentifiers.containsKey(op)){
+            List<Operation> toAdd = new LinkedList<Operation>();
+            for (Operation op : newBoundaries.get(rec)) {
+                if (areaIdentifiers.containsKey(op)) {
                     oldRect = areaIdentifiers.get(op);
                 } else {
                     toAdd.add(op);
                 }
             }
-            if (oldRect != null){
+            if (oldRect != null) {
                 // we have a cluster containing a plot !
                 toAdd.addAll(areas.get(oldRect));
                 result.put(rec, toAdd);
             }
-
         }
-
         return result;
     }
 }

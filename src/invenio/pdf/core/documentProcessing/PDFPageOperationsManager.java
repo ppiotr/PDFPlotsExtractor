@@ -1,12 +1,14 @@
-package invenio.pdf.plots;
+package invenio.pdf.core.documentProcessing;
 
-import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
 import java.util.Set;
 
 import de.intarsys.pdf.content.CSOperation;
+import invenio.pdf.core.GraphicalOperation;
+import invenio.pdf.core.PDFPageManager;
+import invenio.pdf.core.TextOperation;
+import invenio.pdf.core.TransformationOperation;
 import java.awt.Rectangle;
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -16,20 +18,19 @@ import java.util.List;
  * Managing operations from the document operations stream (remembering attributes for them).
  * Contains informations about:
  *    current operation : operation that has been last started
- *    operation boundries : rectangles affected by the execution of an operation
+ *    operation boundaries : rectangles affected by the execution of an operation
  * 
  * @author Piotr Praczyk
  *
  */
-public class PDFPageManager {
+class PDFPageOperationsManager {
 
     private CSOperation currentOperation; // currently performed operation
-    private HashMap<CSOperation, Rectangle2D> operationBoundaries2D; // Boundries of areas affected by PS operations
+    private HashMap<CSOperation, Rectangle> operationBoundaries; // Boundries of areas affected by PS operations
     private HashSet<CSOperation> textOperations; // operations drawing the text
-    private HashSet<CSOperation> operations; // operations drawing the text
+    private List<CSOperation> operations; // operations drawing the text
     private HashMap<CSOperation, List<String>> renderingMethods; // Methods
     // called in order to execute an operation
-    private BufferedImage renderedPage; // the image of a completely rendered page
     private Rectangle pageBoundary;
 
     /**
@@ -38,12 +39,12 @@ public class PDFPageManager {
      *
      * @param pgBound a rectangle defining the page boundary
      */
-    public PDFPageManager(Rectangle pgBound) {
+    public PDFPageOperationsManager(Rectangle pgBound) {
         this.currentOperation = null;
-        this.operationBoundaries2D = new HashMap<CSOperation, Rectangle2D>();
+        this.operationBoundaries = new HashMap<CSOperation, Rectangle>();
         this.textOperations = new HashSet<CSOperation>();
         this.renderingMethods = new HashMap<CSOperation, List<String>>();
-        this.operations = new HashSet<CSOperation>();
+        this.operations = new ArrayList<CSOperation>();
         this.pageBoundary = pgBound;
     }
 
@@ -53,14 +54,6 @@ public class PDFPageManager {
      */
     public Rectangle getPageBoundary() {
         return this.pageBoundary;
-    }
-
-    public BufferedImage getRenderedPage() {
-        return this.renderedPage;
-    }
-
-    public void setRenderedPage(BufferedImage im) {
-        this.renderedPage = im;
     }
 
     public void addRenderingMethod(String method) {
@@ -116,24 +109,25 @@ public class PDFPageManager {
         return this.currentOperation;
     }
 
-    public void setOperationBoundary2D(CSOperation op, Rectangle2D rec) {
-        this.operationBoundaries2D.put(op, rec);
+    public void setOperationBoundary(CSOperation op, Rectangle rec) {
+        this.operationBoundaries.put(op, rec);
     }
 
-    public Rectangle2D getOperationBoundary2D(CSOperation op) {
-        return this.operationBoundaries2D.get(op); // will return null if key is not present
+    public Rectangle getOperationBoundary(CSOperation op) {
+        return this.operationBoundaries.get(op); // will return null if key is not present
     }
 
-    public void extendCurrentOperationBoundary2D(Rectangle2D rec) {
+    public void extendCurrentOperationBoundary(Rectangle rec) {
         /**
          *  Extend the boundary of a current operation by a given rectangle.
          *  (find a minimal rectangle containing current boundary and the rectangle passed as a parameter)
          */
-        Rectangle2D currentBoundary = this.getOperationBoundary2D(this.getCurrentOperation());
+        Rectangle currentBoundary = this.getOperationBoundary(this.getCurrentOperation());
+
         if (currentBoundary != null) {
-            this.setOperationBoundary2D(this.getCurrentOperation(), currentBoundary.createUnion(rec));
+            this.setOperationBoundary(this.getCurrentOperation(), currentBoundary.createUnion(rec.getBounds2D()).getBounds());
         } else {
-            this.setOperationBoundary2D(this.getCurrentOperation(), rec);
+            this.setOperationBoundary(this.getCurrentOperation(), rec);
         }
     }
 
@@ -149,5 +143,34 @@ public class PDFPageManager {
          * Returns all the operations causing the text to be drawn
          */
         return this.textOperations;
+    }
+
+    /**
+     * transforms the current instance into the instance of PDFPageManager
+     * @return
+     */
+    public PDFPageManager transformToPDFPageManager() {
+        PDFPageManager result = new PDFPageManager();
+        for (CSOperation op : this.operations) {
+            if (this.isTextOperation(op)) {
+                TextOperation newOp = new TextOperation(op, this.getOperationBoundary(op));
+                result.addTextOperation(newOp);
+            } else if (this.isGraphicalOperation(op)) {
+                GraphicalOperation newOp = new GraphicalOperation(op, this.getOperationBoundary(op));
+                result.addGraphicalOperation(newOp);
+            } else {
+                TransformationOperation newOp = new TransformationOperation(op);
+                result.addTransformationOperation(newOp);
+            }
+        }
+        return result;
+    }
+
+    private boolean isTextOperation(CSOperation op) {
+        return this.textOperations.contains(op);
+    }
+
+    private boolean isGraphicalOperation(CSOperation op) {
+        return (this.getOperationBoundary(op) != null) && (!this.isTextOperation(op));
     }
 };
