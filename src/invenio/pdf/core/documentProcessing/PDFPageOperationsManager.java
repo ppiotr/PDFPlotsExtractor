@@ -12,6 +12,7 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -32,6 +33,8 @@ class PDFPageOperationsManager {
     private HashMap<CSOperation, List<String>> renderingMethods; // Methods
     // called in order to execute an operation
     private Rectangle pageBoundary;
+    private Map<CSOperation, int[]> operationTextPositions;
+    private String pageText;
 
     /**
      * Creates a new instance of the page manager for a page of a given boundary
@@ -46,6 +49,8 @@ class PDFPageOperationsManager {
         this.renderingMethods = new HashMap<CSOperation, List<String>>();
         this.operations = new ArrayList<CSOperation>();
         this.pageBoundary = pgBound;
+        this.operationTextPositions = new HashMap<CSOperation, int[]>();
+        this.pageText = "";
     }
 
     /**
@@ -154,7 +159,10 @@ class PDFPageOperationsManager {
         for (CSOperation op : this.operations) {
             if (this.isTextOperation(op)) {
                 TextOperation newOp = new TextOperation(op, this.getOperationBoundary(op));
+                int[] substrInd = this.getOperationTextIndices(op);
+                newOp.setText(this.getPageText().substring(substrInd[0], substrInd[1]));
                 result.addTextOperation(newOp);
+
             } else if (this.isGraphicalOperation(op)) {
                 GraphicalOperation newOp = new GraphicalOperation(op, this.getOperationBoundary(op));
                 result.addGraphicalOperation(newOp);
@@ -170,7 +178,23 @@ class PDFPageOperationsManager {
         return this.textOperations.contains(op);
     }
 
-    private boolean isGraphicalOperation(CSOperation op) {
+    public boolean isGraphicalOperation(CSOperation op) {
         return (this.getOperationBoundary(op) != null) && (!this.isTextOperation(op));
+    }
+
+    public void setOperationTextIndices(CSOperation operation, int[] i) {
+        this.operationTextPositions.put(operation, i);
+    }
+
+    public int[] getOperationTextIndices(CSOperation operation) {
+        return this.operationTextPositions.get(operation);
+    }
+
+    public void setPageText(String text) {
+        this.pageText = text;
+    }
+
+    public String getPageText() {
+        return this.pageText;
     }
 };

@@ -7,10 +7,12 @@ package invenio.pdf.core.documentProcessing;
 import de.intarsys.cwt.awt.environment.CwtAwtGraphicsContext;
 import de.intarsys.cwt.environment.IGraphicsContext;
 import de.intarsys.pdf.content.CSContent;
+import de.intarsys.pdf.content.text.CSTextExtractor;
 import de.intarsys.pdf.parser.COSLoadException;
 import de.intarsys.pdf.pd.PDDocument;
 import de.intarsys.pdf.pd.PDPage;
 import de.intarsys.pdf.pd.PDPageTree;
+import de.intarsys.pdf.tools.kernel.PDFGeometryTools;
 import de.intarsys.tools.locator.FileLocator;
 import invenio.pdf.core.ExtractorParameters;
 import invenio.pdf.core.PDFDocumentManager;
@@ -85,7 +87,14 @@ public class PDFDocumentPreprocessor {
             //CSOperation[] operations = content.getOperations();
 
             PDFPageManager result = new PDFPageManager();
-            
+
+            // now the text extraction part
+            CSTextExtractor extractor = new CSTextExtractor();
+            AffineTransform pageTx = new AffineTransform();
+            PDFGeometryTools.adjustTransform(pageTx, page);
+                                        extractor.setDeviceTransform(pageTx);
+
+
 
             if (content != null) {
                 //CSPlatformRenderer renderer = new CSPlatformRenderer(null,
@@ -98,13 +107,19 @@ public class PDFDocumentPreprocessor {
                 ExtractorCSInterpreter renderer = new ExtractorCSInterpreter(null,
                         graphics, opManager);
 
+                ExtractorCSTextInterpreter textInterpreter =
+                    new ExtractorCSTextInterpreter(null, extractor, opManager);
+                
                 renderer.process(content, page.getResources());
+                textInterpreter.process(content, page.getResources());
+                opManager.setPageText(extractor.getContent());
+               // System.out.println("Page text: " + extractor.getContent());
                 //  annotateImage(g2, opManager);
                 result = opManager.transformToPDFPageManager();
                 result.setRenderedPage(image);
             }
-           result.setPageBoundary(pageBoundary);
-           return result;
+            result.setPageBoundary(pageBoundary);
+            return result;
         } finally {
             if (graphics != null) {
                 graphics.dispose();
@@ -116,7 +131,7 @@ public class PDFDocumentPreprocessor {
             String fileName) throws IOException {
         PDFDocumentManager documentManager = new PDFDocumentManager();
         documentManager.setSourceFileName(fileName);
-        
+
         PDPageTree pages = doc.getPageTree();
         PDPage page = pages.getFirstPage();
 
@@ -125,7 +140,7 @@ public class PDFDocumentPreprocessor {
             documentManager.addPage(currentPageManager);
             page = page.getNextPage();
         }
-        
+
         return documentManager;
     }
 }

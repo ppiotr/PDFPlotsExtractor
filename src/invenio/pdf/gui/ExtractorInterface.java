@@ -105,8 +105,8 @@ public class ExtractorInterface {
         ExtractorInterface exInterface = new ExtractorInterface();
         //exInterface.openDocument("c:\\pdf\\tests\\proper_raster_image_one_page.pdf");
 //        exInterface.openDocument("c:\\pdf\\1007.0043.pdf");
-         exInterface.openDocument("c:\\pdf\\tests\\modified7_1007.0043.pdf");
-     //   exInterface.openDocument("/home/piotr/pdf/1007.0043.pdf");
+      //   exInterface.openDocument("c:\\pdf\\tests\\modified7_1007.0043.pdf");
+        exInterface.openDocument("/home/piotr/pdf/1007.0043.pdf");
         //     exInterface.openDocument("c:\\pdf\\tests\\problematic_page.pdf");
 
         //exInterface.openDocument("c:\\pdf\\tests\\two_plots_one_page.pdf");

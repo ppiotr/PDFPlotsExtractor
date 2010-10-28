@@ -2,12 +2,17 @@ package invenio.pdf.core.documentProcessing;
 
 import java.util.Map;
 import de.intarsys.cwt.environment.IGraphicsContext;
+import de.intarsys.pdf.content.CSContent;
+import de.intarsys.pdf.content.CSDeviceBasedInterpreter;
 import de.intarsys.pdf.content.CSException;
 import de.intarsys.pdf.content.CSOperation;
+import de.intarsys.pdf.content.text.CSTextExtractor;
 import de.intarsys.pdf.cos.COSArray;
 import de.intarsys.pdf.cos.COSObject;
 import de.intarsys.pdf.cos.COSString;
+import de.intarsys.pdf.font.PDGlyphs;
 import de.intarsys.pdf.platform.cwt.rendering.CSPlatformRenderer;
+import java.awt.geom.Rectangle2D;
 import java.util.Iterator;
 import java.util.List;
 
@@ -70,6 +75,18 @@ class ExtractorCSInterpreter extends CSPlatformRenderer {
      * @return
      */
     private String extractTextOperationString(CSOperation operation) {
+        CSTextExtractor extractor = new CSTextExtractor();
+        CSDeviceBasedInterpreter interpreter = new CSDeviceBasedInterpreter(null, extractor);
+
+        CSContent content = CSContent.createNew();
+        content.addOperation(operation);
+        interpreter.process(content, null);
+        System.out.print(extractor.getContent());
+        //System.out.println("Extracted text: " + extractor.getContent());
+        return "";
+    }
+
+    private String extractTextOperationStringOld(CSOperation operation) {
         // interpreting the arguments -> reading the spring
         Iterator<COSObject> operandsIter = operation.getOperands();
         COSObject firstOperand = null;
@@ -85,7 +102,7 @@ class ExtractorCSInterpreter extends CSPlatformRenderer {
                     System.out.print(stringArg.getValueString(""));
                 }
             }
-        } else if (firstOperand instanceof COSString){
+        } else if (firstOperand instanceof COSString) {
             COSString arg = (COSString) firstOperand;
             System.out.print(arg.getValueString(""));
         }

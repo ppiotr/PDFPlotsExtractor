@@ -60,6 +60,6 @@ public class ExtractorParameters extends Properties {
      * @return
      */
     public int getPageScale(){
-        return 2;
+        return 1;
     }
 }
