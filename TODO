@@ -1,0 +1,2 @@
+LIGATURES: Find out, how to treat situations when one glyph represents many characters ... hwo is it treated by other solutions ?
+OPERATION DISTANCE: It might be useful to add a new distance measure based on the distance inside the PDF operations stream. (might be useful when for example excluding page template graphics from plots in slides)
