@@ -3,7 +3,7 @@
  * and open the template in the editor.
  */
 
-package invenio.pdf.plots;
+package invenio.pdf.features;
 
 import invenio.pdf.core.IPDFPageFeature;
 import invenio.pdf.core.Operation;

@@ -1,4 +1,4 @@
-package invenio.pdf.plots;
+package invenio.pdf.features;
 
 import invenio.pdf.core.ExtractorParameters;
 import invenio.common.ExtractorGeometryTools;
@@ -42,10 +42,11 @@ public class PlotHeuristics {
             if (minAR < aspectRatio && aspectRatio < maxAR) {
                 result.put(curRec, areas.get(curRec)); // copying all the
                 // operations belonging to a valid area
-            } else {
-                //TODO: remove this debugging code
-                System.out.println("some areas filtered out !");
             }
+//            } else {
+//                //TODO: remove this debugging code
+//              //  System.out.println("some areas filtered out !");
+//            }
         }
 
         return result;

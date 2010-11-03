@@ -5,10 +5,12 @@
 package invenio.pdf.gui;
 
 import invenio.pdf.core.DisplayedOperation;
+import invenio.pdf.core.FeatureNotPresentException;
 import invenio.pdf.core.Operation;
 import invenio.pdf.core.PDFPageManager;
-import invenio.pdf.plots.Plot;
-import invenio.pdf.plots.PlotsExtractor;
+import invenio.pdf.features.Plot;
+import invenio.pdf.features.PlotsExtractorTools;
+import invenio.pdf.features.TextAreas;
 import java.awt.Graphics2D;
 
 import java.awt.image.BufferedImage;
@@ -104,7 +106,7 @@ public class PdfPageComposite extends Composite {
         return null;
     }
 
-    public PdfPageComposite(TabFolder folder, PDFPageManager opManager) {
+    public PdfPageComposite(TabFolder folder, PDFPageManager opManager, List<Plot> plots) throws FeatureNotPresentException {
         super(folder, SWT.NONE);
         this.operationsManager = opManager;
         GridLayout pageLayout = new GridLayout();
@@ -113,9 +115,12 @@ public class PdfPageComposite extends Composite {
 
         BufferedImage pageImage = opManager.getRenderedPage();
         // now annotating the image !
-        List<Plot> plots = PlotsExtractor.getPlotsFromPage(opManager);
+        
+        //List<Plot> plots = PlotsExtractorTools.getPlotsFromPage(opManager);
 
-        PlotsExtractor.annotateImage((Graphics2D) pageImage.getGraphics(), plots);
+        TextAreas tAreas = (TextAreas) opManager.getPageFeature(TextAreas.featureName);
+
+        PlotsExtractorTools.annotateImage((Graphics2D) pageImage.getGraphics(), plots, tAreas);
 
 
 

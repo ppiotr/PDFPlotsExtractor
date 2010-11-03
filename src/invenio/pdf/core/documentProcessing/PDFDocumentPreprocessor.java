@@ -77,6 +77,7 @@ public class PDFDocumentPreprocessor {
 
             // setup user space
             AffineTransform imgTransform = graphics.getTransform();
+            //imgTransform.scale(sx, sy)
             imgTransform.scale(parameters.getPageScale(), -parameters.getPageScale());
             imgTransform.translate(-rect.getMinX(), -rect.getMaxY());
 
@@ -118,7 +119,6 @@ public class PDFDocumentPreprocessor {
                 result = opManager.transformToPDFPageManager();
                 result.setRenderedPage(image);
             }
-            result.setPageBoundary(pageBoundary);
             return result;
         } finally {
             if (graphics != null) {
@@ -135,10 +135,13 @@ public class PDFDocumentPreprocessor {
         PDPageTree pages = doc.getPageTree();
         PDPage page = pages.getFirstPage();
 
+        int pageNum = 0;
         while (page != null) {
             PDFPageManager currentPageManager = getOperationsFromPage(page);
+            currentPageManager.setPageNumber(pageNum);
             documentManager.addPage(currentPageManager);
             page = page.getNextPage();
+            pageNum++;
         }
 
         return documentManager;

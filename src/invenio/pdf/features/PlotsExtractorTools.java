@@ -1,38 +1,18 @@
-package invenio.pdf.plots;
+package invenio.pdf.features;
 
-import invenio.pdf.core.ExtractorParameters;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Rectangle2D;
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintStream;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 
-import de.intarsys.pdf.parser.COSLoadException;
-import de.intarsys.pdf.pd.PDDocument;
-import de.intarsys.tools.locator.FileLocator;
-import invenio.common.ExtractorGeometryTools;
-import invenio.common.SpatialClusterManager;
-import invenio.pdf.core.DisplayedOperation;
-import invenio.pdf.core.Operation;
-import invenio.pdf.core.PDFDocumentManager;
 import invenio.pdf.core.PDFPageManager;
-import invenio.pdf.core.documentProcessing.PDFDocumentPreprocessor;
 import java.awt.Rectangle;
-import java.util.LinkedList;
 
 public class PlotsExtractorTools {
-   
 
-
-
-
-    public static void annotateImage(Graphics2D graphics, List<Plot> plots) {
+    public static void annotateImage(Graphics2D graphics, List<Plot> plots,
+            TextAreas textAreas) {
         // annotate image with plot information
         graphics.setTransform(AffineTransform.getRotateInstance(0));
         graphics.setPaintMode();
@@ -42,6 +22,13 @@ public class PlotsExtractorTools {
             graphics.drawRect((int) boundary.getX(), (int) boundary.getY(),
                     (int) boundary.getWidth(), (int) boundary.getHeight());
         }
+
+        graphics.setColor(Color.green);
+        for (Rectangle bd : textAreas.areas.keySet()) {
+            graphics.drawRect((int) bd.getX(), (int) bd.getY(),
+                    (int) bd.getWidth(), (int) bd.getHeight());
+        }
+
         return;
     }
 
@@ -91,12 +78,6 @@ public class PlotsExtractorTools {
 //            graphics.drawRect(rec.x, rec.y, rec.width, rec.height);
 //        }
 //    }
-
-
-
-
-    
-
     /**
      * Render plot into a buffered image that can be later saved to the file
      * @param plot
@@ -118,10 +99,9 @@ public class PlotsExtractorTools {
      * @param plots
      * @param managers
      */
-    private void findPlotreferences(List<Plot> plots, List<PDFPageManager> managers) {
+    private void findPlotReferences(List<Plot> plots, List<PDFPageManager> managers) {
         //TODO: Implement
     }
-
     /**
      * Perform a complete processing for one document
      *

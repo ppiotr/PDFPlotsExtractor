@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package invenio.pdf.plots;
+package invenio.pdf.features;
 
 import invenio.common.ExtractorGeometryTools;
 import invenio.common.SpatialClusterManager;
@@ -11,6 +11,7 @@ import invenio.pdf.core.IPDFPageFeature;
 import invenio.pdf.core.IPDFPageFeatureProvider;
 import invenio.pdf.core.Operation;
 import invenio.pdf.core.PDFPageManager;
+import invenio.pdf.core.PDFCommonTools;
 import java.awt.Rectangle;
 import java.util.Collection;
 import java.util.List;
@@ -53,8 +54,8 @@ public class GraphicalAreasProvider implements IPDFPageFeatureProvider {
 
     private static Map<Rectangle, List<Operation>> clusterOperations(PDFPageManager manager) {
         Set<Operation> interestingOperations = manager.getGraphicalOperations();
-
-        return clusterOperations(interestingOperations, manager, 100, 50);
+        int[] margins = PDFCommonTools.calculateGraphicsMargins(manager);
+        return clusterOperations(interestingOperations, manager, margins[0], margins[1]);
     }
 
     @Override

@@ -156,12 +156,20 @@ class PDFPageOperationsManager {
      */
     public PDFPageManager transformToPDFPageManager() {
         PDFPageManager result = new PDFPageManager();
+        result.setPageBoundary(this.getPageBoundary());
         for (CSOperation op : this.operations) {
             if (this.isTextOperation(op)) {
                 TextOperation newOp = new TextOperation(op, this.getOperationBoundary(op));
                 int[] substrInd = this.getOperationTextIndices(op);
                 newOp.setText(this.getPageText().substring(substrInd[0], substrInd[1]));
                 result.addTextOperation(newOp);
+                // check if text operation fits inside the page !
+                Rectangle ob = newOp.getBoundary();
+                Rectangle pb = this.getPageBoundary();
+
+                if (pb.getMinX() > ob.getMinX()  || pb.getMinY() > ob.getMinY() || pb.getMaxX() < ob.getMaxX() || pb.getMaxY() < ob.getMaxY()){
+                    System.out.println("we are in trouble");
+                }
 
             } else if (this.isGraphicalOperation(op)) {
                 GraphicalOperation newOp = new GraphicalOperation(op, this.getOperationBoundary(op));

@@ -5,9 +5,15 @@
 package invenio.pdf.gui;
 
 import de.intarsys.pdf.parser.COSLoadException;
+import invenio.pdf.core.FeatureNotPresentException;
 import invenio.pdf.core.PDFDocumentManager;
 import invenio.pdf.core.PDFPageManager;
 import invenio.pdf.core.documentProcessing.PDFDocumentPreprocessor;
+import invenio.pdf.features.GraphicalAreasProvider;
+import invenio.pdf.features.Plot;
+import invenio.pdf.features.Plots;
+import invenio.pdf.features.PlotsProvider;
+import invenio.pdf.features.TextAreasProvider;
 import java.io.IOException;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
@@ -63,22 +69,22 @@ public class ExtractorInterface {
         this.openFileLabel.setText("The file currently open in the editor: " + this.openFileName);
     }
 
-    private TabItem createPdfPage(String title, PDFPageManager opManager) {
+    private TabItem createPdfPage(String title, PDFPageManager opManager, java.util.List<Plot> plots) throws FeatureNotPresentException {
         TabItem pageTab = new TabItem(this.pdfPagesTabFolder, SWT.NONE);
-        PdfPageComposite content = new PdfPageComposite(this.pdfPagesTabFolder, opManager);
+        PdfPageComposite content = new PdfPageComposite(this.pdfPagesTabFolder, opManager, plots);
         pageTab.setControl(content);
         pageTab.setText(title);
         return pageTab;
     }
 
-    protected void openDocument(String filename) throws IOException, COSLoadException {
+    protected void openDocument(String filename) throws IOException, COSLoadException, FeatureNotPresentException {
         PDFDocumentManager manager = PDFDocumentPreprocessor.readPDFDocument(filename);
 
         this.openFileName = filename;
         this.updateOpenFileLabel();
-
+        Plots plots = (Plots) manager.getDocumentFeature(Plots.featureName);
         for (int page = 0; page < manager.getPagesNumber(); page++) {
-            TabItem tabPage = createPdfPage("Page " + (page + 1), manager.getPage(page));
+            TabItem tabPage = createPdfPage("Page " + (page + 1), manager.getPage(page), plots.plots.get(page));
         }
     }
 
@@ -100,7 +106,13 @@ public class ExtractorInterface {
         this.display.dispose();
     }
 
-    public static void main(String[] args) throws IOException, COSLoadException {
+    public static void main(String[] args) throws IOException, COSLoadException, FeatureNotPresentException {
+        // registering feature providers
+        
+        PDFPageManager.registerFeatureProvider(new GraphicalAreasProvider());
+        PDFPageManager.registerFeatureProvider(new TextAreasProvider());
+        PDFDocumentManager.registerFeatureProvider(new PlotsProvider());
+
 
         ExtractorInterface exInterface = new ExtractorInterface();
         //exInterface.openDocument("c:\\pdf\\tests\\proper_raster_image_one_page.pdf");

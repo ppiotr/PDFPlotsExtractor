@@ -390,7 +390,11 @@ public class IntervalTree<IntervalObjectType> {
      *
      */
     public void removeInterval(IntervalTreeNode operationRoot, int b, int e, IntervalObjectType data) {
-
+//        try {
+//            Images.writeImageToFile(this.renderTree(), "/home/piotr/treedump.png");
+//        } catch (IOException ex) {
+//            Logger.getLogger(IntervalTree.class.getName()).log(Level.SEVERE, null, ex);
+//        }
         if (operationRoot.intBeginning == b && operationRoot.intEnd == e) {
             // we have found the exact node
             operationRoot.associatedObjects.remove(data); // removes only the 1st occurance !

@@ -1,2 +1,20 @@
-LIGATURES: Find out, how to treat situations when one glyph represents many characters ... hwo is it treated by other solutions ?
-OPERATION DISTANCE: It might be useful to add a new distance measure based on the distance inside the PDF operations stream. (might be useful when for example excluding page template graphics from plots in slides)
+LIGATURES: Find out, how to treat situations when one glyph represents
+   many characters ... hwo is it treated by other solutions ?
+
+OPERATION DISTANCE: It might be useful to add a new distance measure
+   based on the distance inside the PDF operations stream. (might be
+   useful when for example excluding page template graphics from plots
+   in slides)
+
+Text block splitting: Currently there is a global vertical margin
+   value which is usually enoug to separate plot captions from the
+   rest of the test. This should be replaced by some local proparty of
+   text lines -> for example distance bigger than average from last N
+   lines.
+
+GUI Parameters: change GUI in order to allow dynamic extractor
+   parameters manipulation - this would allow to show how different
+   documents behave with different sets of parameters
+
+Parameters: Make parameters serialisable (and deserialisable) to the
+   configuration file

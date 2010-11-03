@@ -4,6 +4,7 @@
 package invenio.common;
 
 import java.awt.Rectangle;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -129,6 +130,9 @@ public class SpatialClusterManager<StoredObjectType> {
         int newObjectIdentifier = this.getNextNumber();
         this.mappingsToObjects.put(newObjectIdentifier, obj);
         Map<Integer, Boolean> intersecting = null;
+//        ArrayList<Map<Integer, Boolean>> dbgIntersectingHistory = new ArrayList<Map<Integer, Boolean>>();
+//        Map<Integer, Boolean> dbgLastIntersecting = null;
+
         do {
             // finding intervals intersecting in x and y planes alone
             Map<Integer, int[]> xIntersecting = xIntervalTree.getIntersectingIntervals(
@@ -138,14 +142,17 @@ public class SpatialClusterManager<StoredObjectType> {
                     minY, maxY);
 
             intersecting = new HashMap<Integer, Boolean>();
+           // dbgLastIntersecting = new HashMap<Integer, Boolean>();
+           
             for (Integer key : xIntersecting.keySet()) {
                 if (yIntersecting.containsKey(key)) {
                     intersecting.put(key, Boolean.TRUE);
+                  //  dbgLastIntersecting.put(key, Boolean.TRUE);
                     this.mappingsToParents.put(key, newObjectIdentifier); // fixing the parential relationship ..
                     // the new elements becomes a parent
                 }
             }
-
+// dbgIntersectingHistory.add(dbgLastIntersecting);
             // find intersection of both sets of intervals ... and calculate the boundary of the intersection
 
 

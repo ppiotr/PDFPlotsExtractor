@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package invenio.pdf.plots;
+package invenio.pdf.features;
 
 import invenio.pdf.core.Operation;
 import java.awt.Rectangle;
@@ -27,6 +27,7 @@ public class Plot {
     private String caption; // Detected caption of the plot
     private List<String> references; // a list of references to the plot, from the article text
     private List<Operation> operations; // a list of all the PDF operations creating this plot
+    private int pageNumber;
 
     /**
      * A default constructor - creates a plot descriptor holding empty information
@@ -37,6 +38,22 @@ public class Plot {
         this.boundary = new Rectangle(0, 0, 0, 0);
         this.pageBoundary = new Rectangle(0, 0, 0, 0);
         this.operations = new LinkedList<Operation>();
+    }
+
+    /**
+     * Sets the page on which the plot is located
+     * @param num
+     */
+    public void setPageNumber(int num) {
+        this.pageNumber = num;
+    }
+
+    /**
+     * returns the number of the page on which the plot is located
+     * @return
+     */
+    public int setPageNumber(){
+        return this.pageNumber;
     }
 
     /**
@@ -80,12 +97,13 @@ public class Plot {
     public void addOperation(Operation op) {
         this.operations.add(op);
     }
+
     /**
      * Return all the CS operations (Operations forming the PDF content stream)
      * associated with the current plot.
      * @return list of CSOperation instances
      */
-    public List<Operation> getOperations(){
+    public List<Operation> getOperations() {
         return this.operations;
     }
 
@@ -93,8 +111,7 @@ public class Plot {
      * Add the entire list of operations constituting the plot
      * @param operations list of CSOperation instances
      */
-    public void addOperations(List<Operation> operations){
+    public void addOperations(List<Operation> operations) {
         this.operations.addAll(operations);
     }
-    
 }

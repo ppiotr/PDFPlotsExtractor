@@ -29,7 +29,7 @@ public class ExtractorGeometryTools {
     public static Rectangle extendRectangle(Rectangle original,
             int hMargin, int vMargin) {
         return new Rectangle((int) original.getX() - hMargin,
-                (int) original.getY() - hMargin,
+                (int) original.getY() - vMargin,
                 original.width + (2 * hMargin),
                 original.height + (2 * vMargin));
     }

@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package invenio.pdf.plots;
+package invenio.pdf.features;
 
 import invenio.common.ExtractorGeometryTools;
 import invenio.pdf.core.ExtractorParameters;
@@ -11,6 +11,7 @@ import invenio.pdf.core.IPDFDocumentFeatureProvider;
 import invenio.pdf.core.Operation;
 import invenio.pdf.core.PDFDocumentManager;
 import invenio.pdf.core.PDFPageManager;
+import invenio.pdf.core.PDFCommonTools;
 import java.awt.Rectangle;
 import java.util.LinkedList;
 import java.util.List;
@@ -37,28 +38,6 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
         return Plots.featureName;
     }
 
-    /**
-     * Based on the content of the page, calculate the most likely safe margins
-     * between graphic operations inside one plot.
-     *
-     *
-     * @param manager Page manager containing all the operations creating one
-     *                document page
-     * @return the integer array with two elements : horizontal and vertical
-     *          margins.
-     */
-    private static int[] calculateGraphicsMargins(PDFPageManager manager) {
-        ExtractorParameters parameters =
-                ExtractorParameters.getExtractorParameters();
-        double hPercentage = parameters.getHorizontalMargin();
-        double vPercentage = parameters.getVerticalMargin();
-
-        Rectangle boundary = manager.getPageBoundary();
-        int hMargin = (int) (boundary.getWidth() * hPercentage);
-        int vMargin = (int) (boundary.getHeight() * vPercentage);
-        System.out.println("Margins: horizontal=" + hMargin + " vertical=" + vMargin);
-        return new int[]{hMargin, vMargin};
-    }
 
     /**
      * Finds all the plots present in the PDF page. Plots are extracted together
@@ -71,7 +50,7 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
     public static List<Plot> getPlotsFromPage(PDFPageManager manager) throws FeatureNotPresentException {
         List<Plot> plots = new LinkedList<Plot>();
 
-        int[] margins = calculateGraphicsMargins(manager);
+        int[] margins = PDFCommonTools.calculateGraphicsMargins(manager);
 
         /*************
          * Treating graphics operations - clustering them, filtering and

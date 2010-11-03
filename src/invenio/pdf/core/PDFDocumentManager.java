@@ -6,6 +6,7 @@ package invenio.pdf.core;
 
 import de.intarsys.pdf.pd.PDDocument;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -18,11 +19,13 @@ public class PDFDocumentManager {
     private String fileName;
     private String resultsDirectory;
     private PDDocument pdDocument;
+    private HashMap<String, IPDFDocumentFeature> documentFeatures;
 
-    public PDFDocumentManager(){
+    public PDFDocumentManager() {
         this.pages = new ArrayList<PDFPageManager>();
         this.fileName = "";
         this.resultsDirectory = "";
+        this.documentFeatures = new HashMap<String, IPDFDocumentFeature>();
     }
 
     /**
@@ -50,7 +53,7 @@ public class PDFDocumentManager {
      * Return the number of pages present in the document
      * @return
      */
-    public int getPagesNumber(){
+    public int getPagesNumber() {
         return this.pages.size();
     }
 
@@ -62,4 +65,24 @@ public class PDFDocumentManager {
         this.pdDocument = doc;
     }
     
+    private static HashMap<String, IPDFDocumentFeatureProvider> featureProviders =
+            new HashMap<String, IPDFDocumentFeatureProvider>();
+
+    public static void registerFeatureProvider(IPDFDocumentFeatureProvider provider) {
+        PDFDocumentManager.featureProviders.put(provider.getProvidedFeatureName(), provider);
+    }
+
+    public IPDFDocumentFeature getDocumentFeature(String featureName) throws FeatureNotPresentException {
+        if (this.documentFeatures.containsKey(featureName)) {
+            // the feature is alreadsy precalculated and we can jsut return it
+            return this.documentFeatures.get(featureName);
+        } else {
+            if (featureProviders.containsKey(featureName)) {
+                this.documentFeatures.put(featureName,
+                        featureProviders.get(featureName).calculateFeature(this));
+                return this.documentFeatures.get(featureName);
+            }
+        }
+        return null;
+    }
 }
