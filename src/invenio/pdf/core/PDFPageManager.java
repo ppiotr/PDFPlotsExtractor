@@ -99,7 +99,7 @@ public class PDFPageManager {
         PDFPageManager.featureProviders.put(provider.getProvidedFeatureName(), provider);
     }
 
-    public IPDFPageFeature getPageFeature(String featureName) throws FeatureNotPresentException {
+    public IPDFPageFeature getPageFeature(String featureName) throws FeatureNotPresentException, Exception {
         if (this.pageFeatures.containsKey(featureName)) {
             // the feature is already precalculated and we can jsut return it
             return this.pageFeatures.get(featureName);

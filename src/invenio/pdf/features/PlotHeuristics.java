@@ -79,7 +79,7 @@ public class PlotHeuristics {
      * @return
      */
     public static Map<Rectangle, List<Operation>> includeTextParts(
-            Map<Rectangle, List<Operation>> areas, PDFPageManager manager) {
+            Map<Rectangle, List<Operation>> areas, PDFPageManager manager) throws Exception {
         // each region will be represented by one of CSOperation instances
         // constituting it
         HashMap<Operation, Rectangle> areaIdentifiers =

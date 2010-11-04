@@ -32,7 +32,7 @@ public class GraphicalAreasProvider implements IPDFPageFeatureProvider {
      */
     private static Map<Rectangle, List<Operation>> clusterOperations(
             Collection<Operation> operations, PDFPageManager manager, int horizontalMargin,
-            int verticalMargin) {
+            int verticalMargin) throws Exception {
 
         SpatialClusterManager<Operation> clusterManager =
                 new SpatialClusterManager<Operation>(
@@ -52,14 +52,14 @@ public class GraphicalAreasProvider implements IPDFPageFeatureProvider {
         return clusterManager.getFinalBoundaries();
     }
 
-    private static Map<Rectangle, List<Operation>> clusterOperations(PDFPageManager manager) {
+    private static Map<Rectangle, List<Operation>> clusterOperations(PDFPageManager manager) throws Exception {
         Set<Operation> interestingOperations = manager.getGraphicalOperations();
         int[] margins = PDFCommonTools.calculateGraphicsMargins(manager);
         return clusterOperations(interestingOperations, manager, margins[0], margins[1]);
     }
 
     @Override
-    public IPDFPageFeature calculateFeature(PDFPageManager pageManager) {
+    public IPDFPageFeature calculateFeature(PDFPageManager pageManager) throws Exception {
         GraphicalAreas result = new GraphicalAreas();
         result.areas = clusterOperations(pageManager);
         return result;

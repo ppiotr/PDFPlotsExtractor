@@ -9,6 +9,6 @@ package invenio.pdf.core;
  * @author piotr
  */
 public interface IPDFDocumentFeatureProvider {
-    IPDFDocumentFeature calculateFeature(PDFDocumentManager docManager) throws FeatureNotPresentException;
+    IPDFDocumentFeature calculateFeature(PDFDocumentManager docManager) throws FeatureNotPresentException, Exception;
     String getProvidedFeatureName();
 }

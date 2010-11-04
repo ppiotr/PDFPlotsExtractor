@@ -28,6 +28,7 @@ public class Plot {
     private List<String> references; // a list of references to the plot, from the article text
     private List<Operation> operations; // a list of all the PDF operations creating this plot
     private int pageNumber;
+    private String id; // Plot identifier iside the document
 
     /**
      * A default constructor - creates a plot descriptor holding empty information

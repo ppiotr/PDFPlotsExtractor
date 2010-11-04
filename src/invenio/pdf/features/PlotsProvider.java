@@ -24,7 +24,7 @@ import java.util.Map;
 public class PlotsProvider implements IPDFDocumentFeatureProvider {
 
     @Override
-    public Plots calculateFeature(PDFDocumentManager docManager) throws FeatureNotPresentException{
+    public Plots calculateFeature(PDFDocumentManager docManager) throws FeatureNotPresentException, Exception {
         // gathering all the plot descriptors from all the pages and generaing one collection
         Plots result = new Plots();
         for (int pageNum = 0; pageNum < docManager.getPagesNumber(); ++pageNum) {
@@ -38,7 +38,6 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
         return Plots.featureName;
     }
 
-
     /**
      * Finds all the plots present in the PDF page. Plots are extracted together
      * with captions but without references because captions appear
@@ -47,7 +46,7 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
      * @param manager
      * @return List of plot descriptors
      */
-    public static List<Plot> getPlotsFromPage(PDFPageManager manager) throws FeatureNotPresentException {
+    public static List<Plot> getPlotsFromPage(PDFPageManager manager) throws FeatureNotPresentException, Exception {
         List<Plot> plots = new LinkedList<Plot>();
 
         int[] margins = PDFCommonTools.calculateGraphicsMargins(manager);
@@ -75,8 +74,6 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
         Map<Rectangle, List<Operation>> plotRegions =
                 PlotHeuristics.includeTextParts(graphicalPlotRegions, manager);
 
-//        Map<Rectangle, List<CSOperation>> plotRegions = graphicalPlotRegions;
-
         // we are done with plot images -> creating plot structures for every
         // selected region
 
@@ -85,30 +82,48 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
             plot.setBoundary(area);
             plot.addOperations(plotRegions.get(area));
             plot.setPageNumber(manager.getPageNumber());
+            plot.setCaption(getPlotCaption(plot, manager));
             plots.add(plot);
+
         }
 
-        // 2) too small areas/areas with too small aspect rations -> not plots !
-
-        // Now including text operations that are overlapping with plots -> they
-        // are part of a plot
-
-//        for (TextOp operation : textOperations) {
-//            Rectangle intersecting = findIntersectingRegion(operation, graphicalRegions);
-//            if (intersecting != null) {
-//                extendRegionByRectangle();
-//            }
-//        }
-
-
-
-        /** Treating text operations - we want to recover the text flow and a \
-         * very general view of its structure - division to blocks
-
-         */
-        // now clustering the text operations - we want to be able to detect
-        // text blocks. For example caption is usually a separate block that is
-        // separated by a bigger distance than others
         return plots;
+    }
+
+    private static String getPlotCaption(Plot plot, PDFPageManager pageManager) throws FeatureNotPresentException, Exception {
+        TextAreas textAreas =
+                (TextAreas) pageManager.getPageFeature(TextAreas.featureName);
+        // finding the first text area below the plot
+        Rectangle currentArea = null;
+
+        double plotEnding = plot.getBoundary().getMaxY();
+
+        for (Rectangle textRegion : textAreas.areas.keySet()) {
+            if (currentArea == null
+                    || (currentArea.getMinY() > textRegion.getMinY()
+                    && textRegion.getMinY() > plotEnding)) {
+                currentArea = textRegion;
+            }
+        }
+
+        if (currentArea == null) {
+            return "";
+        } else {
+            // we have to determine if the area is really a plot caption !
+            String candidate = textAreas.areas.get(currentArea).first;
+            if (isPlotCaption(candidate)) {
+                return candidate;
+            } else {
+                return "";
+            }
+        }
+    }
+
+    private static boolean isPlotCaption(String candidate) {
+        String prepared = candidate.toLowerCase().trim();
+        return prepared.startsWith("figure")
+                || prepared.startsWith("plot")
+                || prepared.startsWith("image")
+                || prepared.startsWith("table");
     }
 }

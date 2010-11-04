@@ -72,7 +72,7 @@ public class PDFDocumentManager {
         PDFDocumentManager.featureProviders.put(provider.getProvidedFeatureName(), provider);
     }
 
-    public IPDFDocumentFeature getDocumentFeature(String featureName) throws FeatureNotPresentException {
+    public IPDFDocumentFeature getDocumentFeature(String featureName) throws FeatureNotPresentException, Exception {
         if (this.documentFeatures.containsKey(featureName)) {
             // the feature is alreadsy precalculated and we can jsut return it
             return this.documentFeatures.get(featureName);

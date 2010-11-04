@@ -69,7 +69,7 @@ public class ExtractorInterface {
         this.openFileLabel.setText("The file currently open in the editor: " + this.openFileName);
     }
 
-    private TabItem createPdfPage(String title, PDFPageManager opManager, java.util.List<Plot> plots) throws FeatureNotPresentException {
+    private TabItem createPdfPage(String title, PDFPageManager opManager, java.util.List<Plot> plots) throws FeatureNotPresentException, Exception {
         TabItem pageTab = new TabItem(this.pdfPagesTabFolder, SWT.NONE);
         PdfPageComposite content = new PdfPageComposite(this.pdfPagesTabFolder, opManager, plots);
         pageTab.setControl(content);
@@ -77,7 +77,7 @@ public class ExtractorInterface {
         return pageTab;
     }
 
-    protected void openDocument(String filename) throws IOException, COSLoadException, FeatureNotPresentException {
+    protected void openDocument(String filename) throws IOException, COSLoadException, FeatureNotPresentException, Exception {
         PDFDocumentManager manager = PDFDocumentPreprocessor.readPDFDocument(filename);
 
         this.openFileName = filename;
@@ -106,29 +106,30 @@ public class ExtractorInterface {
         this.display.dispose();
     }
 
-    public static void main(String[] args) throws IOException, COSLoadException, FeatureNotPresentException {
+    public static void main(String[] args) throws IOException, COSLoadException, FeatureNotPresentException, Exception {
         // registering feature providers
-        
+
         PDFPageManager.registerFeatureProvider(new GraphicalAreasProvider());
         PDFPageManager.registerFeatureProvider(new TextAreasProvider());
         PDFDocumentManager.registerFeatureProvider(new PlotsProvider());
 
-
         ExtractorInterface exInterface = new ExtractorInterface();
+
         //exInterface.openDocument("c:\\pdf\\tests\\proper_raster_image_one_page.pdf");
-//        exInterface.openDocument("c:\\pdf\\1007.0043.pdf");
-      //   exInterface.openDocument("c:\\pdf\\tests\\modified7_1007.0043.pdf");
+        //exInterface.openDocument("c:\\pdf\\1007.0043.pdf");
+        //exInterface.openDocument("c:\\pdf\\tests\\modified7_1007.0043.pdf");
         exInterface.openDocument("/home/piotr/pdf/1007.0043.pdf");
-        //     exInterface.openDocument("c:\\pdf\\tests\\problematic_page.pdf");
+        //exInterface.openDocument("c:\\pdf\\tests\\problematic_page.pdf");
 
         //exInterface.openDocument("c:\\pdf\\tests\\two_plots_one_page.pdf");
-//        exInterface.openDocument("c:\\pdf\\tests\\no_plots.pdf");
+        //exInterface.openDocument("c:\\pdf\\tests\\no_plots.pdf");
         //exInterface.openDocument("c:\\pdf\\tests\\some_math.pdf");
 
         //exInterface.openDocument("c:\\pdf\\tests\\overlaping_one_page.pdf");
 
-//         exInterface.openDocument("c:\\pdf\\tibor_1.pdf");
-        //       exInterface.openDocument("c:\\pdf\\1007.0043.pdf");
+        //exInterface.openDocument("c:\\pdf\\tibor_1.pdf");
+        //exInterface.openDocument("c:\\pdf\\1007.0043.pdf");
+
         exInterface.run();
     }
 }

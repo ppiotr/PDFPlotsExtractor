@@ -106,7 +106,7 @@ public class PdfPageComposite extends Composite {
         return null;
     }
 
-    public PdfPageComposite(TabFolder folder, PDFPageManager opManager, List<Plot> plots) throws FeatureNotPresentException {
+    public PdfPageComposite(TabFolder folder, PDFPageManager opManager, List<Plot> plots) throws FeatureNotPresentException, Exception {
         super(folder, SWT.NONE);
         this.operationsManager = opManager;
         GridLayout pageLayout = new GridLayout();

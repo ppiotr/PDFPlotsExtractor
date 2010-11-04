@@ -21,7 +21,6 @@ public class SpatialClusterManager<StoredObjectType> {
     IntervalTree<Integer> yIntervalTree;
     private Rectangle boundary;
     private int hMargin, vMargin;
-
     private Map<Integer, StoredObjectType> mappingsToObjects; // mapping numbers to the original objects
     private Map<Integer, Integer> mappingsToParents; // mapping numbers to list of objects contained in a given cathegory
     private int currentNumber = -1;
@@ -40,7 +39,6 @@ public class SpatialClusterManager<StoredObjectType> {
      * @param vM the margin by which each added rectangle will be extended
      *                in vertical directions
      */
-    
     public SpatialClusterManager(Rectangle b, int hM, int vM) {
         this.xIntervalTree = new IntervalTree<Integer>(b.x, b.x + b.width);
         this.yIntervalTree = new IntervalTree<Integer>(b.y, b.y + b.height);
@@ -48,6 +46,7 @@ public class SpatialClusterManager<StoredObjectType> {
         this.mappingsToParents = new HashMap<Integer, Integer>();
         this.hMargin = hM;
         this.vMargin = vM;
+        this.boundary = b;
     }
 
     /**
@@ -119,8 +118,16 @@ public class SpatialClusterManager<StoredObjectType> {
      * @param rec
      * @param obj
      */
-    public void addRectangle(Rectangle rec, StoredObjectType obj) {
-        // update the original mapping
+    public void addRectangle(Rectangle rec, StoredObjectType obj) throws Exception {
+        // a simple check allowing not to corrupt trees in case of incorrect data and to debug much more easily
+
+        if (rec.getMinX() < this.boundary.getMinX()
+                || rec.getMinY() < this.boundary.getMinY()
+                || rec.getMaxX() > this.boundary.getMaxX()
+                || rec.getMaxY() > this.boundary.getMaxY()) {
+            throw new Exception("Trying to add a region that is outside the declared space boundary");
+        }
+
 
         int minX = rec.x - this.hMargin;
         int maxX = rec.x + rec.width + this.hMargin;
@@ -130,8 +137,6 @@ public class SpatialClusterManager<StoredObjectType> {
         int newObjectIdentifier = this.getNextNumber();
         this.mappingsToObjects.put(newObjectIdentifier, obj);
         Map<Integer, Boolean> intersecting = null;
-//        ArrayList<Map<Integer, Boolean>> dbgIntersectingHistory = new ArrayList<Map<Integer, Boolean>>();
-//        Map<Integer, Boolean> dbgLastIntersecting = null;
 
         do {
             // finding intervals intersecting in x and y planes alone
@@ -142,17 +147,14 @@ public class SpatialClusterManager<StoredObjectType> {
                     minY, maxY);
 
             intersecting = new HashMap<Integer, Boolean>();
-           // dbgLastIntersecting = new HashMap<Integer, Boolean>();
-           
+
             for (Integer key : xIntersecting.keySet()) {
                 if (yIntersecting.containsKey(key)) {
                     intersecting.put(key, Boolean.TRUE);
-                  //  dbgLastIntersecting.put(key, Boolean.TRUE);
                     this.mappingsToParents.put(key, newObjectIdentifier); // fixing the parential relationship ..
                     // the new elements becomes a parent
                 }
             }
-// dbgIntersectingHistory.add(dbgLastIntersecting);
             // find intersection of both sets of intervals ... and calculate the boundary of the intersection
 
 

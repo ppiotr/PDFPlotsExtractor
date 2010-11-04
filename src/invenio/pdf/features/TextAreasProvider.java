@@ -15,8 +15,12 @@ import invenio.pdf.core.PDFCommonTools;
 import invenio.pdf.core.PDFPageManager;
 import invenio.pdf.core.TextOperation;
 import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  *
@@ -34,7 +38,7 @@ public class TextAreasProvider implements IPDFPageFeatureProvider {
      * @throws FeatureNotPresentException
      */
     @Override
-    public TextAreas calculateFeature(PDFPageManager pageManager) throws FeatureNotPresentException {
+    public TextAreas calculateFeature(PDFPageManager pageManager) throws FeatureNotPresentException, Exception {
         TextAreas result = new TextAreas();
 
         int[] margins = PDFCommonTools.calculateTextMargins(pageManager);
@@ -64,6 +68,8 @@ public class TextAreasProvider implements IPDFPageFeatureProvider {
             List<Operation> operations = tmpResults.get(bd);
             result.areas.put(ExtractorGeometryTools.shrinkRectangle(bd, margins[0], margins[1]),
                     new Pair<String, List<Operation>>(getTextAreaString(operations), operations));
+            
+            System.out.println("Text area found: " + getTextAreaString(operations));
         }
         return result;
     }
@@ -80,10 +86,27 @@ public class TextAreasProvider implements IPDFPageFeatureProvider {
      */
     private String getTextAreaString(List<Operation> operations) {
         StringBuilder sb = new StringBuilder();
+        // we want to return in the order identical as in page string
+
+
+        ArrayList<TextOperation> tmpOperations = new ArrayList<TextOperation>();
+
         for (Operation op : operations) {
             TextOperation to = (TextOperation) op;
+            tmpOperations.add(to);
+        }
+
+        Collections.sort(tmpOperations, new Comparator<TextOperation>() {
+            @Override
+            public int compare(TextOperation o1, TextOperation o2) {
+                return o1.getTextBeginning() - o2.getTextBeginning();
+            }
+        });
+        
+        for (TextOperation to: tmpOperations){
             sb.append(to.getText());
         }
+        
         return sb.toString();
     }
 }
