@@ -78,7 +78,6 @@ public class SpatialClusterManagerTest {
     /**
      * Test of getFinalBoundaries method, of class SpatialClusterManager.
      */
-    
     @Test
     public void testGetFinalBoundaries() throws Exception {
         SpatialClusterManager<Integer> instance =

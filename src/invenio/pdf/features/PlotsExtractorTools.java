@@ -25,7 +25,7 @@ public class PlotsExtractorTools {
 
         graphics.setColor(Color.green);
         for (Rectangle bd : textAreas.areas.keySet()) {
-            graphics.drawRect((int) bd.getX(), (int) bd.getY(),
+        graphics.drawRect((int) bd.getX(), (int) bd.getY(),
                     (int) bd.getWidth(), (int) bd.getHeight());
         }
 

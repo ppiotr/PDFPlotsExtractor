@@ -9,10 +9,13 @@ import invenio.pdf.core.PDFPageManager;
 import invenio.pdf.core.TextOperation;
 import invenio.pdf.core.TransformationOperation;
 import java.awt.Rectangle;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 /**
  *
@@ -157,15 +160,22 @@ class PDFPageOperationsManager {
     public PDFPageManager transformToPDFPageManager() {
         PDFPageManager result = new PDFPageManager();
         result.setPageBoundary(this.getPageBoundary());
+        result.setPageText(this.getPageText());
         for (CSOperation op : this.operations) {
             if (this.isTextOperation(op)) {
-                TextOperation newOp = new TextOperation(op, this.getOperationBoundary(op));
-                int[] substrInd = this.getOperationTextIndices(op);
-                newOp.setText(this.getPageText().substring(substrInd[0], substrInd[1]));
-                newOp.setTextRange(substrInd[0], substrInd[1]);
-                result.addTextOperation(newOp);
-                // check if text operation fits inside the page !
-                
+                TextOperation newOp = new TextOperation(op,
+                        this.getOperationBoundary(op));
+                Rectangle bd = this.getOperationBoundary(op);
+                if (bd != null) {
+                    int[] substrInd = this.getOperationTextIndices(op);
+                    String operationString = this.getPageText().substring(
+                            substrInd[0], substrInd[1]);
+                    newOp.setText(operationString);
+                    newOp.setTextRange(substrInd[0], substrInd[1]);
+                    result.addTextOperation(newOp);
+                    // check if text operation fits inside the page !
+                }
+
             } else if (this.isGraphicalOperation(op)) {
                 GraphicalOperation newOp = new GraphicalOperation(op, this.getOperationBoundary(op));
                 result.addGraphicalOperation(newOp);

@@ -27,6 +27,7 @@ public class PDFPageManager {
     private BufferedImage renderedPage;
     private Map<String, IPDFPageFeature> pageFeatures;
     private int pageNumber;
+    private String pageText;
 
     // at some point we might need a mapping operation -> index
     public PDFPageManager() {
@@ -60,34 +61,80 @@ public class PDFPageManager {
         this.transformationOperations.add(newOp);
     }
 
+    /**
+     * Returns a set of all teh graphical operations
+     * 
+     * @return
+     */
     public Set<Operation> getGraphicalOperations() {
         return this.graphicalOperations;
     }
 
+    /**
+     * Returns the rectangle bounding the page inside its coordinates system
+     * @return
+     */
     public Rectangle getPageBoundary() {
         return this.pageBoundary;
     }
 
+    /**
+     * Sets the rectangle that defines page boundary in its coordinates system
+     * @param bd
+     */
     public void setPageBoundary(Rectangle bd) {
         this.pageBoundary = bd;
     }
 
+    /**
+     * Returns a set of all the text-related operations
+     * @return
+     */
     public Set<Operation> getTextOperations() {
         return this.textOperations;
     }
 
+    /**
+     * Returns teh rendered version of the page
+     * @return
+     */
     public BufferedImage getRenderedPage() {
         return this.renderedPage;
     }
 
+    /**
+     * Sets the image being a rendered representation of the page
+     * @param rp
+     */
     public void setRenderedPage(BufferedImage rp) {
         this.renderedPage = rp;
     }
 
+    /**
+     * Sets the page number inside the document.
+     * The page number is not the one that is visible (sometimes numbering varies),
+     * but rather an offset (starting from 0) from the beginning of the PDF file
+     * @param num
+     */
     public void setPageNumber(int num) {
         this.pageNumber = num;
     }
 
+    /**
+     * Sets the text representation of the page
+     * @param t
+     */
+    public void setPageText(String t){
+        this.pageText = t;
+    }
+
+    /**
+     * Returns the text representation of the page
+     * @return
+     */
+    public String getPageText(){
+        return this.pageText;
+    }
     public int getPageNumber() {
         return this.pageNumber;
     }

@@ -19,7 +19,7 @@ class ExtractorCSTextInterpreter extends CSDeviceBasedInterpreter {
 
     protected PDFPageOperationsManager operationsManager;
     protected CSTextExtractor extractor;
-    
+
     public ExtractorCSTextInterpreter(Map paramOptions, CSTextExtractor device, PDFPageOperationsManager manager) {
         super(paramOptions, device);
         this.operationsManager = manager;
@@ -29,7 +29,18 @@ class ExtractorCSTextInterpreter extends CSDeviceBasedInterpreter {
     @Override
     protected void process(CSOperation operation) throws CSException {
         int initialIndex = extractor.getContent().length();
-        super.process(operation);        
+
+        //TODO: This is an ugly hack to avoid the library error
+        // This should be fixed in the jPod library and then try{}catch should be removed
+        // bug report: https://sourceforge.net/tracker/?func=detail&aid=3103823&group_id=203731&atid=986772
+        
+        try {
+            super.process(operation);
+        } catch (CSException e) {
+            // oops ... error but we have to continue !
+        } catch (Exception e){
+            // throw new Exception("Ugly workaround exception !");
+        }
         int finalIndex = extractor.getContent().length();
         this.operationsManager.setOperationTextIndices(operation, new int[]{initialIndex, finalIndex});
     }

@@ -23,7 +23,10 @@ import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.Charset;
 
 /**
  * This class provides interface for the external world, producing an instance
@@ -93,7 +96,7 @@ public class PDFDocumentPreprocessor {
             CSTextExtractor extractor = new CSTextExtractor();
             AffineTransform pageTx = new AffineTransform();
             PDFGeometryTools.adjustTransform(pageTx, page);
-                                        extractor.setDeviceTransform(pageTx);
+            extractor.setDeviceTransform(pageTx);
 
 
 
@@ -109,12 +112,12 @@ public class PDFDocumentPreprocessor {
                         graphics, opManager);
 
                 ExtractorCSTextInterpreter textInterpreter =
-                    new ExtractorCSTextInterpreter(null, extractor, opManager);
-                
+                        new ExtractorCSTextInterpreter(null, extractor, opManager);
+
                 renderer.process(content, page.getResources());
                 textInterpreter.process(content, page.getResources());
                 opManager.setPageText(extractor.getContent());
-               // System.out.println("Page text: " + extractor.getContent());
+                // System.out.println("Page text: " + extractor.getContent());
                 //  annotateImage(g2, opManager);
                 result = opManager.transformToPDFPageManager();
                 result.setRenderedPage(image);
@@ -142,6 +145,21 @@ public class PDFDocumentPreprocessor {
             documentManager.addPage(currentPageManager);
             page = page.getNextPage();
             pageNum++;
+
+            // debug... writing the page text... trying to figure out the encoding things
+            try {
+                //Map<String, Charset> sets = Charset.availableCharsets();
+                FileOutputStream os = new FileOutputStream("/home/piotr/pagedump_" + pageNum + ".txt");
+                OutputStreamWriter str = new OutputStreamWriter(os, Charset.forName("UTF8"));
+                str.write(currentPageManager.getPageText());
+                str.close();
+                os.close();
+//                  BufferedWriter writer = new BufferedWriter(new FileWriter("/home/piotr/pagedump_" + pageNum + ".txt"));
+//                writer.write(currentPageManager.getPageText().toCharArray()); // cc is a char[] that stores the characters
+//                writer.close();
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
         }
 
         return documentManager;

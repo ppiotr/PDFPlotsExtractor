@@ -4,6 +4,7 @@
  */
 package invenio.pdf.gui;
 
+import invenio.common.Images;
 import invenio.pdf.core.DisplayedOperation;
 import invenio.pdf.core.FeatureNotPresentException;
 import invenio.pdf.core.Operation;
@@ -121,8 +122,9 @@ public class PdfPageComposite extends Composite {
         TextAreas tAreas = (TextAreas) opManager.getPageFeature(TextAreas.featureName);
 
         PlotsExtractorTools.annotateImage((Graphics2D) pageImage.getGraphics(), plots, tAreas);
+        // saving a copy of the rendered image
 
-
+        Images.writeImageToFile(pageImage, "/home/piotr/pdf/output_" + opManager.getPageNumber() + ".png");
 
 
         ScrolledComposite canvasComposite = new ScrolledComposite(this,
