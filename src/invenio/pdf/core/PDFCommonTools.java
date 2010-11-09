@@ -7,7 +7,7 @@ package invenio.pdf.core;
 import java.awt.Rectangle;
 
 /**
- *
+ * A set of useful operations used across the PDF extractor
  * @author piotr
  */
 public class PDFCommonTools {

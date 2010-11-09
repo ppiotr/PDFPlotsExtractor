@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg width="266.347mm" height="182.386mm"
+<svg width="291.747mm" height="282.928mm"
  xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"  version="1.2" baseProfile="tiny">
 <title>Qt Svg Document</title>
 <desc>Generated with Qt</desc>
@@ -7,235 +7,445 @@
 </defs>
 <g fill="none" stroke="black" stroke-width="1" fill-rule="evenodd" stroke-linecap="square" stroke-linejoin="bevel" >
 
-<g fill="#ffffff" fill-opacity="1" stroke="none" transform="matrix(1,0,0,1,-123,-28)"
+<g fill="#ffffff" fill-opacity="1" stroke="none" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M83,28 L910,28 L910,830 L83,830 L83,28"/>
+</g>
+
+<g fill="none" stroke="#ff0000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+<polyline fill="none" vector-effect="non-scaling-stroke" points="593,198 593,371 " />
+<polyline fill="none" vector-effect="non-scaling-stroke" points="407,169 523,169 " />
+<polyline fill="none" vector-effect="non-scaling-stroke" points="337,169 153,208 " />
+<polyline fill="none" vector-effect="non-scaling-stroke" points="655,401 655,695 " />
+<polyline fill="none" vector-effect="non-scaling-stroke" points="593,198 758,226 " />
+<polyline fill="none" vector-effect="non-scaling-stroke" points="523,198 386,379 " />
+<polyline fill="none" vector-effect="non-scaling-stroke" points="593,170 761,155 " />
+<polyline fill="none" vector-effect="non-scaling-stroke" points="589,203 597,203 " />
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M599,204 C599,207.314 596.314,210 593,210 C589.686,210 587,207.314 587,204 C587,200.686 589.686,198 593,198 C596.314,198 599,200.686 599,204 "/>
+<polyline fill="none" vector-effect="non-scaling-stroke" points="412,173 412,165 " />
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M419,169 C419,172.314 416.314,175 413,175 C409.686,175 407,172.314 407,169 C407,165.686 409.686,163 413,163 C416.314,163 419,165.686 419,169 "/>
+<polyline fill="none" vector-effect="non-scaling-stroke" points="332,166 333,174 " />
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M337,170 C337,173.314 334.314,176 331,176 C327.686,176 325,173.314 325,170 C325,166.686 327.686,164 331,164 C334.314,164 337,166.686 337,170 "/>
+<polyline fill="none" vector-effect="non-scaling-stroke" points="651,406 659,406 " />
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M661,407 C661,410.314 658.314,413 655,413 C651.686,413 649,410.314 649,407 C649,403.686 651.686,401 655,401 C658.314,401 661,403.686 661,407 "/>
+<polyline fill="none" vector-effect="non-scaling-stroke" points="597,202 598,195 " />
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M605,199 C605,202.314 602.314,205 599,205 C595.686,205 593,202.314 593,199 C593,195.686 595.686,193 599,193 C602.314,193 605,195.686 605,199 "/>
+<polyline fill="none" vector-effect="non-scaling-stroke" points="517,200 523,204 " />
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M525,203 C525,206.314 522.314,209 519,209 C515.686,209 513,206.314 513,203 C513,199.686 515.686,197 519,197 C522.314,197 525,199.686 525,203 "/>
+<polyline fill="none" vector-effect="non-scaling-stroke" points="598,173 597,166 " />
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M605,169 C605,172.314 602.314,175 599,175 C595.686,175 593,172.314 593,169 C593,165.686 595.686,163 599,163 C602.314,163 605,165.686 605,169 "/>
+</g>
+
+<g fill="none" stroke="#323232" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
 font-family="Sans Serif" font-size="28" font-weight="400" font-style="normal" 
 >
-<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M123,28 L878,28 L878,545 L123,545 L123,28"/>
+<text fill="#323232" fill-opacity="1" stroke="none" xml:space="preserve" x="294" y="61" font-family="Sans Serif" font-size="28" font-weight="400" font-style="normal" 
+ >Namespaces</text>
 </g>
 
-<g fill="none" stroke="#ff0000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
+<g fill="#ffff00" fill-opacity="1" stroke="#ff0000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
 font-family="Sans Serif" font-size="28" font-weight="400" font-style="normal" 
 >
-<polyline fill="none" vector-effect="non-scaling-stroke" points="469,303 375,418 " />
-<polyline fill="none" vector-effect="non-scaling-stroke" points="539,303 679,405 " />
-<polyline fill="none" vector-effect="non-scaling-stroke" points="419,157 469,265 " />
-<polyline fill="none" vector-effect="non-scaling-stroke" points="349,157 193,196 " />
-<polyline fill="none" vector-effect="non-scaling-stroke" points="749,443 749,507 " />
-<polyline fill="none" vector-effect="non-scaling-stroke" points="527,303 527,422 " />
-<polyline fill="none" vector-effect="non-scaling-stroke" points="482,303 482,426 " />
-<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M471,308 C471,311.314 468.314,314 465,314 C461.686,314 459,311.314 459,308 C459,304.686 461.686,302 465,302 C468.314,302 471,304.686 471,308 "/>
-<polyline fill="none" vector-effect="non-scaling-stroke" points="463,304 469,309 " />
-<polyline fill="none" vector-effect="non-scaling-stroke" points="541,309 545,303 " />
-<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M550,307 C550,310.314 547.314,313 544,313 C540.686,313 538,310.314 538,307 C538,303.686 540.686,301 544,301 C547.314,301 550,303.686 550,307 "/>
-<polyline fill="none" vector-effect="non-scaling-stroke" points="418,163 424,160 " />
-<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M428,162 C428,165.314 425.314,168 422,168 C418.686,168 416,165.314 416,162 C416,158.686 418.686,156 422,156 C425.314,156 428,158.686 428,162 "/>
-<polyline fill="none" vector-effect="non-scaling-stroke" points="343,155 345,162 " />
-<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M349,158 C349,161.314 346.314,164 343,164 C339.686,164 337,161.314 337,158 C337,154.686 339.686,152 343,152 C346.314,152 349,154.686 349,158 "/>
-<polyline fill="none" vector-effect="non-scaling-stroke" points="745,448 753,448 " />
-<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M755,449 C755,452.314 752.314,455 749,455 C745.686,455 743,452.314 743,449 C743,445.686 745.686,443 749,443 C752.314,443 755,445.686 755,449 "/>
-<polyline fill="none" vector-effect="non-scaling-stroke" points="523,308 531,308 " />
-<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M533,309 C533,312.314 530.314,315 527,315 C523.686,315 521,312.314 521,309 C521,305.686 523.686,303 527,303 C530.314,303 533,305.686 533,309 "/>
-<polyline fill="none" vector-effect="non-scaling-stroke" points="478,308 486,308 " />
-<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M488,309 C488,312.314 485.314,315 482,315 C478.686,315 476,312.314 476,309 C476,305.686 478.686,303 482,303 C485.314,303 488,305.686 488,309 "/>
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M523,160 L573,160 L573,170 L523,170 L523,160"/>
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M523,169 L593,169 L593,197 L523,197 L523,169"/>
 </g>
 
-<g fill="#ffff00" fill-opacity="1" stroke="#ff0000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
-font-family="Sans Serif" font-size="28" font-weight="400" font-style="normal" 
->
-<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M349,119 L399,119 L399,129 L349,129 L349,119"/>
-<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M349,128 L419,128 L419,156 L349,156 L349,128"/>
-</g>
-
-<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
 font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
 >
 </g>
 
-<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
 font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
 >
-<text fill="#000000" fill-opacity="1" stroke="none" xml:space="preserve" x="366" y="142" font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
- >invenio</text>
-</g>
-
-<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
-font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
->
-</g>
-
-<g fill="#ffff00" fill-opacity="1" stroke="#ff0000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
-font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
->
-<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M469,265 L519,265 L519,275 L469,275 L469,265"/>
-<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M469,274 L539,274 L539,302 L469,302 L469,274"/>
-</g>
-
-<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
-font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
->
-</g>
-
-<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
-font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
->
-<text fill="#000000" fill-opacity="1" stroke="none" xml:space="preserve" x="496" y="288" font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
+<text fill="#000000" fill-opacity="1" stroke="none" xml:space="preserve" x="550" y="183" font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
  >pdf</text>
 </g>
 
-<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
 font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
 >
 </g>
 
-<g fill="#ffff00" fill-opacity="1" stroke="#ff0000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
+<g fill="#ffff00" fill-opacity="1" stroke="#ff0000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
 font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
 >
-<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M436,426 L486,426 L486,436 L436,436 L436,426"/>
-<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M436,435 L506,435 L506,463 L436,463 L436,435"/>
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M316,379 L366,379 L366,389 L316,389 L316,379"/>
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M316,388 L386,388 L386,408 L316,408 L316,388"/>
 </g>
 
-<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
-font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
->
-</g>
-
-<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
-font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
->
-<text fill="#000000" fill-opacity="1" stroke="none" xml:space="preserve" x="459" y="449" font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
- >plots</text>
-</g>
-
-<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
 font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
 >
 </g>
 
-<g fill="#ffff00" fill-opacity="1" stroke="#ff0000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
 font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
 >
-<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M679,405 L729,405 L729,415 L679,415 L679,405"/>
-<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M679,414 L749,414 L749,442 L679,442 L679,414"/>
+<text fill="#000000" fill-opacity="1" stroke="none" xml:space="preserve" x="330.5" y="402" font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
+ >features</text>
 </g>
 
-<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
-font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
->
-</g>
-
-<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
-font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
->
-<text fill="#000000" fill-opacity="1" stroke="none" xml:space="preserve" x="703.5" y="428" font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
- >core</text>
-</g>
-
-<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
 font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
 >
 </g>
 
-<g fill="#ffff00" fill-opacity="1" stroke="#ff0000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
+<g fill="#ffff00" fill-opacity="1" stroke="#ff0000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
 font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
 >
-<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M725,507 L775,507 L775,517 L725,517 L725,507"/>
-<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M725,516 L878,516 L878,544 L725,544 L725,516"/>
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M761,125 L811,125 L811,135 L761,135 L761,125"/>
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M761,134 L831,134 L831,154 L761,154 L761,134"/>
 </g>
 
-<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
-font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
->
-</g>
-
-<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
-font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
->
-<text fill="#000000" fill-opacity="1" stroke="none" xml:space="preserve" x="751" y="530" font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
- >documentProcessing</text>
-</g>
-
-<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
 font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
 >
 </g>
 
-<g fill="#ffff00" fill-opacity="1" stroke="#ff0000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
 font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
 >
-<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M305,418 L355,418 L355,428 L305,428 L305,418"/>
-<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M305,427 L375,427 L375,447 L305,447 L305,427"/>
-</g>
-
-<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
-font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
->
-</g>
-
-<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
-font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
->
-<text fill="#000000" fill-opacity="1" stroke="none" xml:space="preserve" x="334.5" y="441" font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
+<text fill="#000000" fill-opacity="1" stroke="none" xml:space="preserve" x="790.5" y="148" font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
  >cli</text>
 </g>
 
-<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
 font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
 >
 </g>
 
-<g fill="#ffff00" fill-opacity="1" stroke="#ff0000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
+<g fill="#ffff00" fill-opacity="1" stroke="#ff0000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
 font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
 >
-<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M527,422 L577,422 L577,432 L527,432 L527,422"/>
-<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M527,431 L597,431 L597,459 L527,459 L527,431"/>
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M83,208 L133,208 L133,218 L83,218 L83,208"/>
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M83,217 L153,217 L153,237 L83,237 L83,217"/>
 </g>
 
-<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
-font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
->
-</g>
-
-<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
-font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
->
-<text fill="#000000" fill-opacity="1" stroke="none" xml:space="preserve" x="554.5" y="445" font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
- >gui</text>
-</g>
-
-<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
 font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
 >
 </g>
 
-<g fill="#ffff00" fill-opacity="1" stroke="#ff0000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
 font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
 >
-<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M123,196 L173,196 L173,206 L123,206 L123,196"/>
-<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M123,205 L193,205 L193,233 L123,233 L123,205"/>
-</g>
-
-<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
-font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
->
-</g>
-
-<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
-font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
->
-<text fill="#000000" fill-opacity="1" stroke="none" xml:space="preserve" x="137.5" y="219" font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
+<text fill="#000000" fill-opacity="1" stroke="none" xml:space="preserve" x="97.5" y="231" font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
  >common</text>
 </g>
 
-<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
 font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
 >
 </g>
 
-<g fill="none" stroke="#323232" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-123,-28)"
-font-family="Sans Serif" font-size="28" font-weight="400" font-style="normal" 
+<g fill="#ffff00" fill-opacity="1" stroke="#ff0000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
 >
-<text fill="#323232" fill-opacity="1" stroke="none" xml:space="preserve" x="264" y="56" font-family="Sans Serif" font-size="28" font-weight="400" font-style="normal" 
- >Namespaces</text>
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M83,242 L83,291 L132,291 L132,252 L122,242 L83,242"/>
+<polyline fill="none" vector-effect="non-scaling-stroke" points="122,242 122,252 " />
+<polyline fill="none" vector-effect="non-scaling-stroke" points="122,252 132,252 " />
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+<text fill="#000000" fill-opacity="1" stroke="none" xml:space="preserve" x="92" y="266" font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+ >ExtractorGeometryTools</text>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+<text fill="#000000" fill-opacity="1" stroke="none" xml:space="preserve" x="92" y="286" font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+ >Images</text>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#ff0000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M316,416 L316,465 L365,465 L365,426 L355,416 L316,416"/>
+<polyline fill="none" vector-effect="non-scaling-stroke" points="355,416 355,426 " />
+<polyline fill="none" vector-effect="non-scaling-stroke" points="355,426 365,426 " />
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+<text fill="#000000" fill-opacity="1" stroke="none" xml:space="preserve" x="325" y="440" font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+ >GraphicalAreas</text>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+<text fill="#000000" fill-opacity="1" stroke="none" xml:space="preserve" x="325" y="460" font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+ >GraphicalAreasProvider</text>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#ff0000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M585,371 L635,371 L635,381 L585,381 L585,371"/>
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M585,380 L655,380 L655,400 L585,400 L585,380"/>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
+>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
+>
+<text fill="#000000" fill-opacity="1" stroke="none" xml:space="preserve" x="609.5" y="394" font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
+ >core</text>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
+>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#ff0000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
+>
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M561,695 L611,695 L611,705 L561,705 L561,695"/>
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M561,704 L672,704 L672,724 L561,724 L561,704"/>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
+>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
+>
+<text fill="#000000" fill-opacity="1" stroke="none" xml:space="preserve" x="566" y="718" font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
+ >documentProcessing</text>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
+>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#ff0000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
+>
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M337,139 L387,139 L387,149 L337,149 L337,139"/>
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M337,148 L407,148 L407,168 L337,168 L337,148"/>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
+>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
+>
+<text fill="#000000" fill-opacity="1" stroke="none" xml:space="preserve" x="354" y="162" font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
+ >invenio</text>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
+>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#ff0000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
+>
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M585,413 L585,462 L634,462 L634,423 L624,413 L585,413"/>
+<polyline fill="none" vector-effect="non-scaling-stroke" points="624,413 624,423 " />
+<polyline fill="none" vector-effect="non-scaling-stroke" points="624,423 634,423 " />
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+<text fill="#000000" fill-opacity="1" stroke="none" xml:space="preserve" x="594" y="437" font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+ >Operation</text>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+<text fill="#000000" fill-opacity="1" stroke="none" xml:space="preserve" x="594" y="457" font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+ >DisplayedOperation</text>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#ff0000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M761,159 L761,208 L810,208 L810,169 L800,159 L761,159"/>
+<polyline fill="none" vector-effect="non-scaling-stroke" points="800,159 800,169 " />
+<polyline fill="none" vector-effect="non-scaling-stroke" points="800,169 810,169 " />
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+<text fill="#000000" fill-opacity="1" stroke="none" xml:space="preserve" x="770" y="183" font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+ >PlotsExtractorCli</text>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#ff0000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M758,226 L808,226 L808,236 L758,236 L758,226"/>
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M758,235 L828,235 L828,255 L758,255 L758,235"/>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
+>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
+>
+<text fill="#000000" fill-opacity="1" stroke="none" xml:space="preserve" x="785.5" y="249" font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
+ >gui</text>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
+>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#ff0000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="700" font-style="normal" 
+>
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M758,262 L758,311 L807,311 L807,272 L797,262 L758,262"/>
+<polyline fill="none" vector-effect="non-scaling-stroke" points="797,262 797,272 " />
+<polyline fill="none" vector-effect="non-scaling-stroke" points="797,272 807,272 " />
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+<text fill="#000000" fill-opacity="1" stroke="none" xml:space="preserve" x="767" y="286" font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+ >ExtractorInterface</text>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+<text fill="#000000" fill-opacity="1" stroke="none" xml:space="preserve" x="767" y="306" font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+ >PdfPageComposite</text>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#ff0000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+<path vector-effect="non-scaling-stroke" fill-rule="evenodd" d="M561,731 L561,780 L610,780 L610,741 L600,731 L561,731"/>
+<polyline fill="none" vector-effect="non-scaling-stroke" points="600,731 600,741 " />
+<polyline fill="none" vector-effect="non-scaling-stroke" points="600,741 610,741 " />
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+<text fill="#000000" fill-opacity="1" stroke="none" xml:space="preserve" x="570" y="755" font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+ >ExtractorCSInterpreter</text>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
+<text fill="#000000" fill-opacity="1" stroke="none" xml:space="preserve" x="570" y="775" font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+ >ExtractorCSTextInterpreter</text>
+</g>
+
+<g fill="#ffff00" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,-83,-28)"
+font-family="Sans Serif" font-size="9" font-weight="400" font-style="normal" 
+>
 </g>
 </g>
 </svg>

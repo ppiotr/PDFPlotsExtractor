@@ -10,7 +10,9 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- *
+ * A class whose objects describe one PDF document.
+ * Besides storing global metadata of the document, a list of PDFPageManagers is
+ * maintained.
  * @author piotr
  */
 public class PDFDocumentManager {

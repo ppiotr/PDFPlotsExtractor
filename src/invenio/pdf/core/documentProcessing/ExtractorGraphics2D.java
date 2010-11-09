@@ -26,12 +26,28 @@ import java.text.AttributedCharacterIterator;
 import java.util.Map;
 
 import java.awt.geom.Rectangle2D;
-
+/**
+ * The purpose of this class is to emulate a standard Java Graphics2D.
+ * When the renderer passes direct graphical operations necessary to render
+ * a PDF operator, we have access to the exact boundaries of the result.
+ *
+ * This implementation allows to completely abstract from the internal way
+ * of PDF commands processing done by the PDF library (jPod) and even from the
+ * nuances of the PDF specification itself.
+ *
+ * @author piotr
+ */
 class ExtractorGraphics2D extends Graphics2D {
 
     private Graphics2D originalGraphics;
     private PDFPageOperationsManager operationsManager; // keeping track of the current operation and of its parameters
 
+    /**
+     * A standard constructor - requies one more parameter being a
+     * PDFPageOperatonsManager operating on the currently processed page.
+     * @param original
+     * @param opManager
+     */
     public ExtractorGraphics2D(Graphics2D original, PDFPageOperationsManager opManager) {
         this.originalGraphics = original;
         this.operationsManager = opManager;
@@ -76,20 +92,16 @@ class ExtractorGraphics2D extends Graphics2D {
 
     @Override
     public void addRenderingHints(Map<?, ?> arg0) {
-        // TODO Auto-generated method stub
         this.originalGraphics.addRenderingHints(arg0);
     }
 
     @Override
     public void clip(Shape arg0) {
-        //System.out.println("clip(Shape arg0)");
         this.originalGraphics.clip(arg0);
     }
 
     @Override
-    public void draw(Shape arg0) {
-        //System.out.println("draw(Shape arg0 = " + arg0.toString() + ")");
-        
+    public void draw(Shape arg0) {        
         this.processOperatorBoundary(arg0.getBounds2D());
         this.operationsManager.addRenderingMethod("draw");
         this.originalGraphics.draw(arg0);
@@ -97,7 +109,6 @@ class ExtractorGraphics2D extends Graphics2D {
 
     @Override
     public void drawGlyphVector(GlyphVector arg0, float arg1, float arg2) {
-        System.out.println("no boundary information : drawGlyphVector(GlyphVector arg0, float arg1, float arg2)");
         this.originalGraphics.drawGlyphVector(arg0, arg1, arg2);
         this.operationsManager.addRenderingMethod("drawGlyphVector");
 
@@ -106,8 +117,6 @@ class ExtractorGraphics2D extends Graphics2D {
     @Override
     public boolean drawImage(Image arg0, AffineTransform arg1,
             ImageObserver arg2) {
-        System.out.println("ARE the coordinates calculated correctly ? drawImage(Image arg0, AffineTransform arg1, ImageObserver arg2)");
-        //this.originalGraphics.drawI
         int width = arg0.getWidth(null);
         int height = arg0.getHeight(null);
         double originals[] = {0.0, 0.0, 0.0, (double) height,
@@ -122,7 +131,6 @@ class ExtractorGraphics2D extends Graphics2D {
     @Override
     public void drawImage(BufferedImage arg0, BufferedImageOp arg1, int arg2,
             int arg3) {
-        System.out.println("drawImage(BufferedImage arg0, BufferedImageOp arg1, int arg2, int arg3);");
         this.originalGraphics.drawImage(arg0, arg1, arg2, arg3);
     }
 
@@ -134,7 +142,6 @@ class ExtractorGraphics2D extends Graphics2D {
 
     @Override
     public void drawRenderedImage(RenderedImage arg0, AffineTransform arg1) {
-        // TODO Auto-generated method stub
         System.out.println("drawRenderedImage(RenderedImage arg0, AffineTransform arg1);");
         this.originalGraphics.drawRenderedImage(arg0, arg1);
     }
@@ -180,55 +187,46 @@ class ExtractorGraphics2D extends Graphics2D {
 
     @Override
     public Color getBackground() {
-        // TODO Auto-generated method stub
         return this.originalGraphics.getBackground();
     }
 
     @Override
     public Composite getComposite() {
-        // TODO Auto-generated method stub
         return this.originalGraphics.getComposite();
     }
 
     @Override
     public GraphicsConfiguration getDeviceConfiguration() {
-        // TODO Auto-generated method stub
         return this.originalGraphics.getDeviceConfiguration();
     }
 
     @Override
     public FontRenderContext getFontRenderContext() {
-        // TODO Auto-generated method stub
         return this.originalGraphics.getFontRenderContext();
     }
 
     @Override
     public Paint getPaint() {
-        // TODO Auto-generated method stub
         return this.originalGraphics.getPaint();
     }
 
     @Override
     public Object getRenderingHint(Key arg0) {
-        // TODO Auto-generated method stub
         return this.originalGraphics.getRenderingHint(arg0);
     }
 
     @Override
     public RenderingHints getRenderingHints() {
-        // TODO Auto-generated method stub
         return this.originalGraphics.getRenderingHints();
     }
 
     @Override
     public Stroke getStroke() {
-        // TODO Auto-generated method stub
         return this.originalGraphics.getStroke();
     }
 
     @Override
     public AffineTransform getTransform() {
-        // TODO Auto-generated method stub
         return this.originalGraphics.getTransform();
     }
 
@@ -240,121 +238,99 @@ class ExtractorGraphics2D extends Graphics2D {
 
     @Override
     public void rotate(double arg0) {
-        // TODO Auto-generated method stub
         this.originalGraphics.rotate(arg0);
     }
 
     @Override
     public void rotate(double arg0, double arg1, double arg2) {
-        // TODO Auto-generated method stub
         this.originalGraphics.rotate(arg0, arg1, arg2);
     }
 
     @Override
     public void scale(double arg0, double arg1) {
-        // TODO Auto-generated method stub
         System.out.println("scale(double arg0, double arg1)");
         this.originalGraphics.scale(arg0, arg1);
     }
 
     @Override
     public void setBackground(Color arg0) {
-        // TODO Auto-generated method stub
         this.originalGraphics.setBackground(arg0);
     }
 
     @Override
     public void setComposite(Composite arg0) {
-        // TODO Auto-generated method stub
         this.originalGraphics.setComposite(arg0);
     }
 
     @Override
     public void setPaint(Paint arg0) {
-        // TODO Auto-generated method stub
         this.originalGraphics.setPaint(arg0);
     }
 
     @Override
     public void setRenderingHint(Key arg0, Object arg1) {
-        // TODO Auto-generated method stub
         this.originalGraphics.setRenderingHint(arg0, arg1);
     }
 
     @Override
     public void setRenderingHints(Map<?, ?> arg0) {
-        // TODO Auto-generated method stub
         this.originalGraphics.setRenderingHints(arg0);
     }
 
     @Override
     public void setStroke(Stroke arg0) {
-        // TODO Auto-generated method stub
-        //System.out.println("setStroke(stroke arg0 = " + arg0.toString() + ")");
         this.operationsManager.addRenderingMethod("setStroke");
         this.originalGraphics.setStroke(arg0);
     }
 
     @Override
     public void setTransform(AffineTransform arg0) {
-        // TODO Auto-generated method stub
         this.originalGraphics.setTransform(arg0);
     }
 
     @Override
     public void shear(double arg0, double arg1) {
-        // TODO Auto-generated method stub
         this.originalGraphics.shear(arg0, arg1);
     }
 
     @Override
     public void transform(AffineTransform arg0) {
-        // TODO Auto-generated method stub
-        //System.out.println("transform(AffineTransform arg0 = " + arg0.toString() + ")");
         this.originalGraphics.transform(arg0);
     }
 
     @Override
     public void translate(int arg0, int arg1) {
-        // TODO Auto-generated method stub
         this.originalGraphics.translate(arg0, arg1);
     }
 
     @Override
     public void translate(double arg0, double arg1) {
-        // TODO Auto-generated method stub
-        // System.out.println("translate(double arg0 = " + arg0 + ", double arg1 = " + arg1 + ");");
         this.originalGraphics.translate(arg0, arg1);
     }
 
     @Override
     public void clearRect(int arg0, int arg1, int arg2, int arg3) {
-        // TODO Auto-generated method stub
         this.originalGraphics.clearRect(arg0, arg1, arg2, arg3);
     }
 
     @Override
     public void clipRect(int arg0, int arg1, int arg2, int arg3) {
-        // TODO Auto-generated method stub
         this.originalGraphics.clipRect(arg0, arg1, arg2, arg3);
     }
 
     @Override
     public void copyArea(int arg0, int arg1, int arg2, int arg3, int arg4,
             int arg5) {
-        // TODO Auto-generated method stub
         this.originalGraphics.copyArea(arg0, arg1, arg2, arg3, arg4, arg5);
     }
 
     @Override
     public Graphics create() {
-        // TODO Auto-generated method stub
         return this.originalGraphics.create();
     }
 
     @Override
     public void dispose() {
-        // TODO Auto-generated method stub
         this.originalGraphics.dispose();
     }
 
@@ -475,49 +451,41 @@ class ExtractorGraphics2D extends Graphics2D {
 
     @Override
     public Shape getClip() {
-        // TODO Auto-generated method stub
         return this.originalGraphics.getClip();
     }
 
     @Override
     public Rectangle getClipBounds() {
-        // TODO Auto-generated method stub
         return this.originalGraphics.getClipBounds();
     }
 
     @Override
     public Color getColor() {
-        // TODO Auto-generated method stub
         return this.originalGraphics.getColor();
     }
 
     @Override
     public Font getFont() {
-        // TODO Auto-generated method stub
         return this.originalGraphics.getFont();
     }
 
     @Override
     public FontMetrics getFontMetrics(Font arg0) {
-        // TODO Auto-generated method stub
         return this.originalGraphics.getFontMetrics(arg0);
     }
 
     @Override
     public void setClip(Shape arg0) {
-        // TODO Auto-generated method stub
         this.originalGraphics.setClip(arg0);
     }
 
     @Override
     public void setClip(int arg0, int arg1, int arg2, int arg3) {
-        // TODO Auto-generated method stub
         this.originalGraphics.setClip(arg0, arg1, arg2, arg3);
     }
 
     @Override
     public void setColor(Color arg0) {
-        // TODO Auto-generated method stub
         this.originalGraphics.setColor(arg0);
     }
 
@@ -529,13 +497,11 @@ class ExtractorGraphics2D extends Graphics2D {
 
     @Override
     public void setPaintMode() {
-        // TODO Auto-generated method stub
         this.originalGraphics.setPaintMode();
     }
 
     @Override
     public void setXORMode(Color arg0) {
-        // TODO Auto-generated method stub
         this.originalGraphics.setXORMode(arg0);
     }
 }

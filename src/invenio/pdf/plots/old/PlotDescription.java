@@ -64,7 +64,6 @@ public class PlotDescription {
     }
 
     public void setXObject(PDXObject xobject) {
-        // TODO Auto-generated method stub
         this.xobject = xobject;
     }
 

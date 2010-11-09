@@ -6,7 +6,7 @@
 package invenio.pdf.core;
 
 /**
- *
+ * Excepton thrown when some module is trying to access a feature that is not registered
  * @author piotr
  */
 public class FeatureNotPresentException extends Exception{

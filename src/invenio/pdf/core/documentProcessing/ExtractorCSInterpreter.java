@@ -10,12 +10,34 @@ import de.intarsys.pdf.content.text.CSTextExtractor;
 import de.intarsys.pdf.cos.COSArray;
 import de.intarsys.pdf.cos.COSObject;
 import de.intarsys.pdf.cos.COSString;
-import de.intarsys.pdf.font.PDGlyphs;
 import de.intarsys.pdf.platform.cwt.rendering.CSPlatformRenderer;
-import java.awt.geom.Rectangle2D;
 import java.util.Iterator;
 import java.util.List;
 
+
+/**
+ * An implementation of the jPod CSPlatformRenderer - a class responsible for
+ * processing PDF operators.
+ *
+ * All the operations are passed to the super class implementation.
+ * The only purpose of this class is keeping track of which operation is
+ * currentlly processed.
+ *
+ * This is achieved by sharing an instance of PDFPageOperationsManager with
+ * an instance of ExtractorGraphics2D. When an operation is about to be
+ * processed, it is marked as a current operation inside the manager.
+ * After processing an operation, the current operation is reseted in the
+ * manager. As a result, all the ExtractorGraphics2D calls executed by the
+ * superclass between the beginning of processing of an operation and ending,
+ * do have access to the currently processed operation and so, are able to
+ * assign various parameters to it.
+ *
+ * WARNING:
+ *    This implementation assumes that all the graphical operations are
+ *    immediately passed to the Graphics2D instance, which is the case with
+ *    jPod.
+ * @author piotr
+ */
 class ExtractorCSInterpreter extends CSPlatformRenderer {
 
     private PDFPageOperationsManager operationsManager;
@@ -33,80 +55,4 @@ class ExtractorCSInterpreter extends CSPlatformRenderer {
         this.operationsManager.unsetCurrentOperation();
     }
 
-    @Override
-    protected void render_Do(CSOperation operation) throws CSException {
-        super.render_Do(operation);
-    }
-    // Handlers for 4 main text operators (we do not care about changing the text
-    // state. only real drawin matters here)
-
-    @Override
-    protected void render_DoubleQuote(CSOperation operation) throws CSException {
-        this.operationsManager.addTextOperation(operation);
-        extractTextOperationString(operation);
-        super.render_DoubleQuote(operation);
-    }
-
-    @Override
-    protected void render_Quote(CSOperation operation) throws CSException {
-        this.operationsManager.addTextOperation(operation);
-        extractTextOperationString(operation);
-        super.render_Quote(operation);
-    }
-
-    @Override
-    protected void render_Tj(CSOperation operation) throws CSException {
-        this.operationsManager.addTextOperation(operation);
-        extractTextOperationString(operation);
-        super.render_Tj(operation);
-    }
-
-    @Override
-    protected void render_TJ(CSOperation operation) throws CSException {
-        this.operationsManager.addTextOperation(operation);
-        extractTextOperationString(operation);
-        super.render_TJ(operation);
-    }
-
-    /**
-     * Text is passed to text operations in more or less standard manner - this 
-     * function tries to extract this text in a geenral manner
-     * @param operation
-     * @return
-     */
-    private String extractTextOperationString(CSOperation operation) {
-        CSTextExtractor extractor = new CSTextExtractor();
-        CSDeviceBasedInterpreter interpreter = new CSDeviceBasedInterpreter(null, extractor);
-
-        CSContent content = CSContent.createNew();
-        content.addOperation(operation);
-        interpreter.process(content, null);
-        System.out.print(extractor.getContent());
-        //System.out.println("Extracted text: " + extractor.getContent());
-        return "";
-    }
-
-    private String extractTextOperationStringOld(CSOperation operation) {
-        // interpreting the arguments -> reading the spring
-        Iterator<COSObject> operandsIter = operation.getOperands();
-        COSObject firstOperand = null;
-        if (operandsIter.hasNext()) {
-            firstOperand = operandsIter.next();
-        }
-
-        if (firstOperand instanceof COSArray) {
-            COSArray operandsArray = (COSArray) firstOperand;
-            for (COSObject operand : (List<COSObject>) operandsArray.getObjects()) {
-                if (operand instanceof COSString) {
-                    COSString stringArg = (COSString) operand;
-                    System.out.print(stringArg.getValueString(""));
-                }
-            }
-        } else if (firstOperand instanceof COSString) {
-            COSString arg = (COSString) firstOperand;
-            System.out.print(arg.getValueString(""));
-        }
-        System.out.print(" ");
-        return "";
-    }
 }

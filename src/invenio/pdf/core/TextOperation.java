@@ -9,7 +9,7 @@ import de.intarsys.pdf.content.CSOperation;
 import java.awt.Rectangle;
 
 /**
- *
+ * A description of a text operation - an operation that paints text.
  * @author piotr
  */
 public class TextOperation extends DisplayedOperation{

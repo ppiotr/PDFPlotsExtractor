@@ -7,12 +7,15 @@ package invenio.pdf.core.documentProcessing;
 import de.intarsys.pdf.content.CSDeviceBasedInterpreter;
 import de.intarsys.pdf.content.CSException;
 import de.intarsys.pdf.content.CSOperation;
-import de.intarsys.pdf.content.ICSDevice;
 import de.intarsys.pdf.content.text.CSTextExtractor;
 import java.util.Map;
 
 /**
- *
+ * A class allowing the extraction of the text painted by text operators.
+ * This information can not be retrieved inside the ExtractorGraphics2D calss
+ * because all the text information is lost there in favour of painting a
+ * particular shape
+ * 
  * @author piotr
  */
 class ExtractorCSTextInterpreter extends CSDeviceBasedInterpreter {
@@ -42,6 +45,11 @@ class ExtractorCSTextInterpreter extends CSDeviceBasedInterpreter {
             // throw new Exception("Ugly workaround exception !");
         }
         int finalIndex = extractor.getContent().length();
-        this.operationsManager.setOperationTextIndices(operation, new int[]{initialIndex, finalIndex});
+        if (initialIndex != finalIndex){
+            // mark current operation as a text operation
+            this.operationsManager.setOperationTextIndices(operation, new int[]{initialIndex, finalIndex});
+            this.operationsManager.addTextOperation(operation);
+        }
+
     }
 }

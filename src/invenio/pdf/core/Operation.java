@@ -7,6 +7,12 @@ package invenio.pdf.core;
 import de.intarsys.pdf.content.CSOperation;
 
 /**
+ * A class describing any PDF operation on a higher level. When displaying a
+ * PDF file, a series of operations are performed. Those operations are
+ * described on a low level by the PDF manipulations library. Objects of this
+ * class store informations that are less display-oriented.
+ *
+ * More specific types of operations are described by subclasses
  *
  * @author piotr
  */

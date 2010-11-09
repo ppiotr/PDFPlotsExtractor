@@ -8,7 +8,7 @@ import de.intarsys.pdf.content.CSOperation;
 import java.awt.Rectangle;
 
 /**
- *
+ *  A representation of a PDF operation that explicitly displays something
  * @author piotr
  */
 public class DisplayedOperation extends Operation {

@@ -9,7 +9,7 @@ import de.intarsys.pdf.content.CSOperation;
 import java.awt.Rectangle;
 
 /**
- *
+ * Class describing operation that is purely graphical
  * @author piotr
  */
 public class GraphicalOperation extends DisplayedOperation {

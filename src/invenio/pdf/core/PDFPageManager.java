@@ -14,7 +14,9 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- *
+ * Call managing one PDF document page and giving access to PDF operations
+ * constituting it.
+ * 
  * @author piotr
  */
 public class PDFPageManager {

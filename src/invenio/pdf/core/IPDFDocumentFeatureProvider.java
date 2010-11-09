@@ -5,7 +5,7 @@
 package invenio.pdf.core;
 
 /**
- *
+ * An interface that has to be implemented by classes providinga particular feature
  * @author piotr
  */
 public interface IPDFDocumentFeatureProvider {

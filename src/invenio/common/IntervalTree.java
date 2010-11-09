@@ -335,8 +335,7 @@ public class IntervalTree<IntervalObjectType> {
         }
     }
 
-//        void addInterval
-    public void addInterval(
+    private void addInterval(
             int b, int e, IntervalObjectType data, Boolean avoidRotations) {
         if (b != e) {
             this.addInterval(this.root, b, e, data, avoidRotations);
@@ -389,7 +388,7 @@ public class IntervalTree<IntervalObjectType> {
      * @param data the data associated with the interval - to be removed from the reference list
      *
      */
-    public void removeInterval(IntervalTreeNode operationRoot, int b, int e, IntervalObjectType data) {
+    private void removeInterval(IntervalTreeNode operationRoot, int b, int e, IntervalObjectType data) {
 //        try {
 //            Images.writeImageToFile(this.renderTree(), "/home/piotr/treedump.png");
 //        } catch (IOException ex) {
@@ -489,7 +488,7 @@ public class IntervalTree<IntervalObjectType> {
      * @param nodes - a list of affected tree nodes
      * @param rotationRoot - the highest affected node (after rotation, not before !!!)
      */
-    public void repairIntervalsAfterRotation(HashMap<IntervalObjectType, TreeMap<Integer, int[]>> intervals,
+    private void repairIntervalsAfterRotation(HashMap<IntervalObjectType, TreeMap<Integer, int[]>> intervals,
             List<IntervalTreeNode> nodes, IntervalTreeNode rotationRoot) {
         // now reseting the associated intervals in affected nodes
         for (IntervalTreeNode curNode : nodes) {
@@ -534,7 +533,7 @@ public class IntervalTree<IntervalObjectType> {
     }
 
     // now functions performing the tree rotations
-    public boolean isRotationANecessary(IntervalTreeNode rotationRoot) {
+    private boolean isRotationANecessary(IntervalTreeNode rotationRoot) {
         int depthSt1 = 0;
         int depthSt3 = 0;
 
@@ -568,7 +567,7 @@ public class IntervalTree<IntervalObjectType> {
      *
      * @return The tree node replacing rotationRoot
      */
-    public IntervalTreeNode rotationA(IntervalTreeNode rotationRoot) {
+    private IntervalTreeNode rotationA(IntervalTreeNode rotationRoot) {
 
         IntervalTreeNode A = rotationRoot;
         IntervalTreeNode B = rotationRoot.firstChild;
@@ -628,7 +627,7 @@ public class IntervalTree<IntervalObjectType> {
         return B;
     }
 
-    public boolean isRotationBNecessary(IntervalTreeNode rotationRoot) {
+    private boolean isRotationBNecessary(IntervalTreeNode rotationRoot) {
         int depthSt1 = 0;
         int depthSt3 = 0;
 
@@ -722,7 +721,7 @@ public class IntervalTree<IntervalObjectType> {
         return B;
     }
 
-    public boolean isRotationCNecessary(IntervalTreeNode rotationRoot) {
+    private boolean isRotationCNecessary(IntervalTreeNode rotationRoot) {
         int depthSt1 = 0;
         int depthC = 0;
         int depthSt4 = 0;
@@ -837,7 +836,7 @@ public class IntervalTree<IntervalObjectType> {
         return C;
     }
 
-    public boolean isRotationDNecessary(IntervalTreeNode rotationRoot) {
+    private boolean isRotationDNecessary(IntervalTreeNode rotationRoot) {
         int depthSt1 = 0;
         int depthC = 0;
         int depthSt4 = 0;
@@ -963,7 +962,7 @@ public class IntervalTree<IntervalObjectType> {
      *
      * @return
      */
-    public IntervalTreeNode balanceSubtree(IntervalTreeNode operationRoot) {
+    private IntervalTreeNode balanceSubtree(IntervalTreeNode operationRoot) {
         IntervalTreeNode currentRoot = null;
         IntervalTreeNode newRoot = operationRoot;
         while (newRoot != currentRoot) {
@@ -1063,7 +1062,7 @@ public class IntervalTree<IntervalObjectType> {
      * @param data
      * @return
      */
-    public Boolean isIntervalPresentInTree(IntervalTreeNode currentNode, int b, int e, IntervalObjectType data) {
+    private Boolean isIntervalPresentInTree(IntervalTreeNode currentNode, int b, int e, IntervalObjectType data) {
         if (b == currentNode.intBeginning && e == currentNode.intEnd) {
             return currentNode.associatedObjects.contains(data);
         }
@@ -1087,8 +1086,7 @@ public class IntervalTree<IntervalObjectType> {
      * @param rotationRoot roor of the place that will be rotated
      * @return a node replacing the previous root
      */
-    public IntervalTreeNode performNecessaryRotations(IntervalTreeNode rotationRoot) {
-//        return rotationRoot;
+    private IntervalTreeNode performNecessaryRotations(IntervalTreeNode rotationRoot) {
 
         if (isRotationANecessary(rotationRoot)) {
             return rotationA(rotationRoot);
@@ -1178,7 +1176,7 @@ public class IntervalTree<IntervalObjectType> {
     }
 
     /**
-     * Check a node for being correct
+     * Check a node for correctness ... useful when testing
      * @param node
      */
     public Boolean isTreeNodeCorrect(IntervalTreeNode node) {

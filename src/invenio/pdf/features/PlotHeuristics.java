@@ -43,10 +43,6 @@ public class PlotHeuristics {
                 result.put(curRec, areas.get(curRec)); // copying all the
                 // operations belonging to a valid area
             }
-//            } else {
-//                //TODO: remove this debugging code
-//              //  System.out.println("some areas filtered out !");
-//            }
         }
 
         return result;
@@ -60,7 +56,7 @@ public class PlotHeuristics {
      */
     public static Map<Rectangle, List<Operation>> removeBasedOnNumberOfOperations() {
         //Map<Rectangle, List<CSOperation>> result = new HashMap<Rectangle
-        //TODO Implement... for the moment this heuristic seems not to be crucial in order
+        //TODO Implement... for the moment this heuristic seems not to be crucial
         //     for everything to work
 
         return null;

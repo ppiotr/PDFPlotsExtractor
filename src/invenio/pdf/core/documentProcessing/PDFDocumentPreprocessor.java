@@ -29,13 +29,32 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 
 /**
- * This class provides interface for the external world, producing an instance
- * if PDFDocumentManager based on a PDF file name;
+ * The purpose of this class is to provide interface to a lower level PDF
+ * library (in this implementation it is jPod, but could be easily replaced
+ * by rewriting the functionality of this class).
+ *
+ * The only method visible to the external world reads the PDF document whose
+ * URI has been specified as an argument, parses it and constructs an instance
+ * of PDFPageManager describing the document.
+ *
+ * The purpose of this transformation is extracting informations useful from
+ * the PDF extractor point of view rather than those interesting from the
+ * rendering point of view, like native current coordinate-system transformation
+ * matrix.
+ * 
  * @author piotr
  */
 public class PDFDocumentPreprocessor {
 
-    public static PDFDocumentManager readPDFDocument(String fileName) throws IOException {
+    /**
+     * A method reading the PDF file and returning a corresponding
+     * PDFDocumentManager
+     * @param fileName path to the input file
+     * @return PDFDocumentManager instance
+     * @throws IOException
+     */
+    public static PDFDocumentManager readPDFDocument(String fileName)
+            throws IOException {
         FileLocator locator = new FileLocator(fileName);
         PDDocument doc;
         try {
@@ -93,17 +112,14 @@ public class PDFDocumentPreprocessor {
             PDFPageManager result = new PDFPageManager();
 
             // now the text extraction part
-            CSTextExtractor extractor = new CSTextExtractor();
+            CSTextExtractor textExtractor = new CSTextExtractor();
             AffineTransform pageTx = new AffineTransform();
             PDFGeometryTools.adjustTransform(pageTx, page);
-            extractor.setDeviceTransform(pageTx);
+            textExtractor.setDeviceTransform(pageTx);
 
 
 
             if (content != null) {
-                //CSPlatformRenderer renderer = new CSPlatformRenderer(null,
-                //		graphics);
-
                 // we inject our own implementation of the renderer -> before performing an operation, it is
                 // marked as currently performed. In such a way, out graphics device will be able to detect the operation
                 // and assign its attributes
@@ -112,13 +128,13 @@ public class PDFDocumentPreprocessor {
                         graphics, opManager);
 
                 ExtractorCSTextInterpreter textInterpreter =
-                        new ExtractorCSTextInterpreter(null, extractor, opManager);
+                        new ExtractorCSTextInterpreter(null, textExtractor, opManager);
 
                 renderer.process(content, page.getResources());
                 textInterpreter.process(content, page.getResources());
-                opManager.setPageText(extractor.getContent());
-                // System.out.println("Page text: " + extractor.getContent());
-                //  annotateImage(g2, opManager);
+
+                opManager.setPageText(textExtractor.getContent());
+
                 result = opManager.transformToPDFPageManager();
                 result.setRenderedPage(image);
             }

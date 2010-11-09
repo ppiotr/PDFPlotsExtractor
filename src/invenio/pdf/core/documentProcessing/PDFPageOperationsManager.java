@@ -9,13 +9,10 @@ import invenio.pdf.core.PDFPageManager;
 import invenio.pdf.core.TextOperation;
 import invenio.pdf.core.TransformationOperation;
 import java.awt.Rectangle;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 /**
  *
@@ -168,6 +165,9 @@ class PDFPageOperationsManager {
                 Rectangle bd = this.getOperationBoundary(op);
                 if (bd != null) {
                     int[] substrInd = this.getOperationTextIndices(op);
+                    if (substrInd == null || this.getPageText() == null){
+                        System.out.println("epic failure");
+                    }
                     String operationString = this.getPageText().substring(
                             substrInd[0], substrInd[1]);
                     newOp.setText(operationString);
