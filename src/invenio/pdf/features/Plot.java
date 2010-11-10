@@ -5,8 +5,10 @@
 package invenio.pdf.features;
 
 import invenio.pdf.core.Operation;
+import invenio.pdf.core.PDFPageManager;
 import java.awt.Rectangle;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -29,6 +31,10 @@ public class Plot {
     private List<Operation> operations; // a list of all the PDF operations creating this plot
     private int pageNumber;
     private String id; // Plot identifier iside the document
+    private HashMap<String, String> fileNames;
+    private PDFPageManager pageManager;
+    
+    private static int identifierFactory = 0;
 
     /**
      * A default constructor - creates a plot descriptor holding empty information
@@ -39,6 +45,7 @@ public class Plot {
         this.boundary = new Rectangle(0, 0, 0, 0);
         this.pageBoundary = new Rectangle(0, 0, 0, 0);
         this.operations = new LinkedList<Operation>();
+        this.fileNames = new HashMap<String, String>();
     }
 
     /**
@@ -53,7 +60,7 @@ public class Plot {
      * returns the number of the page on which the plot is located
      * @return
      */
-    public int setPageNumber(){
+    public int setPageNumber() {
         return this.pageNumber;
     }
 
@@ -115,4 +122,39 @@ public class Plot {
     public void addOperations(List<Operation> operations) {
         this.operations.addAll(operations);
     }
+
+    public String getFileName(String type) {
+        return this.fileNames.get(type);
+    }
+
+    public void addFileName(String type, String name) {
+        this.fileNames.put(type, name);
+    }
+
+    public String getId() {
+        return this.id;
+    }
+
+    public void setId(String i) {
+        this.id = i;
+    }
+
+    public PDFPageManager getPageManager() {
+        return this.pageManager;
+    }
+
+    public void setPageManager(PDFPageManager mng) {
+        this.pageManager = mng;
+    }
+    
+    /**
+     * Returns an unique identifier generated for a plot. This identifier is 
+     * useful in case, we are not able to detect the internal plot identification
+     * @return
+     */
+    public static String getUniqueIdentifier(){
+        identifierFactory++;
+        return "plot" + identifierFactory;
+    }
+
 }

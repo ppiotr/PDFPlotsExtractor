@@ -4,6 +4,7 @@
  */
 package invenio.pdf.core;
 
+import de.intarsys.pdf.pd.PDPage;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -19,7 +20,7 @@ import java.util.Set;
  * 
  * @author piotr
  */
-public class PDFPageManager {
+public class PDFPageManager<InternalPageType> {
 
     private List<Operation> operations;
     private Set<Operation> textOperations; // we need to be able to quicly acces the information if the opretation is graphical
@@ -30,6 +31,7 @@ public class PDFPageManager {
     private Map<String, IPDFPageFeature> pageFeatures;
     private int pageNumber;
     private String pageText;
+    private InternalPageType internalPage; // internal representation of the page
 
     // at some point we might need a mapping operation -> index
     public PDFPageManager() {
@@ -38,6 +40,7 @@ public class PDFPageManager {
         this.graphicalOperations = new HashSet<Operation>();
         this.transformationOperations = new HashSet<Operation>();
         this.pageFeatures = new HashMap<String, IPDFPageFeature>();
+        this.internalPage = null;
     }
 
     public void addTextOperation(TextOperation newOp) {
@@ -160,5 +163,17 @@ public class PDFPageManager {
             }
         }
         return null;
+    }
+
+    public void setInternalPage(InternalPageType page) {
+        this.internalPage = page;
+    }
+
+    public InternalPageType getInternalPage(){
+        return this.internalPage;
+    }
+
+    public Set<Operation> getTransOperations() {
+        return this.transformationOperations;
     }
 }

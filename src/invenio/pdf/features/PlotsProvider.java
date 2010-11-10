@@ -23,6 +23,11 @@ import java.util.Map;
  */
 public class PlotsProvider implements IPDFDocumentFeatureProvider {
 
+    private static String getPlotIdFromCaption(String caption) {
+        //TODO: implement using regular expressions
+        return Plot.getUniqueIdentifier();
+    }
+
     @Override
     public Plots calculateFeature(PDFDocumentManager docManager) throws FeatureNotPresentException, Exception {
         // gathering all the plot descriptors from all the pages and generaing one collection
@@ -83,6 +88,8 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
             plot.addOperations(plotRegions.get(area));
             plot.setPageNumber(manager.getPageNumber());
             plot.setCaption(getPlotCaption(plot, manager));
+            plot.setPageManager(manager);
+            plot.setId(getPlotIdFromCaption(plot.getCaption()));
             plots.add(plot);
 
         }

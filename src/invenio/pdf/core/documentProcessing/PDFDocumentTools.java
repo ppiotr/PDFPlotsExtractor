@@ -7,14 +7,17 @@ package invenio.pdf.core.documentProcessing;
 import de.intarsys.cwt.awt.environment.CwtAwtGraphicsContext;
 import de.intarsys.cwt.environment.IGraphicsContext;
 import de.intarsys.pdf.content.CSContent;
+import de.intarsys.pdf.content.CSOperation;
 import de.intarsys.pdf.content.text.CSTextExtractor;
 import de.intarsys.pdf.parser.COSLoadException;
 import de.intarsys.pdf.pd.PDDocument;
 import de.intarsys.pdf.pd.PDPage;
 import de.intarsys.pdf.pd.PDPageTree;
+import de.intarsys.pdf.platform.cwt.rendering.CSPlatformRenderer;
 import de.intarsys.pdf.tools.kernel.PDFGeometryTools;
 import de.intarsys.tools.locator.FileLocator;
 import invenio.pdf.core.ExtractorParameters;
+import invenio.pdf.core.Operation;
 import invenio.pdf.core.PDFDocumentManager;
 import invenio.pdf.core.PDFPageManager;
 import java.awt.Color;
@@ -27,6 +30,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * The purpose of this class is to provide interface to a lower level PDF
@@ -44,7 +51,7 @@ import java.nio.charset.Charset;
  * 
  * @author piotr
  */
-public class PDFDocumentPreprocessor {
+public class PDFDocumentTools {
 
     /**
      * A method reading the PDF file and returning a corresponding
@@ -70,7 +77,7 @@ public class PDFDocumentPreprocessor {
         return documentManager;
     }
 
-    private static PDFPageManager getOperationsFromPage(PDPage page) {
+    private static PDFPageManager<PDPage> getOperationsFromPage(PDPage page) {
         Rectangle2D rect = page.getCropBox().toNormalizedRectangle();
         BufferedImage image = null;
         IGraphicsContext graphics = null;
@@ -109,7 +116,8 @@ public class PDFDocumentPreprocessor {
             CSContent content = page.getContentStream();
             //CSOperation[] operations = content.getOperations();
 
-            PDFPageManager result = new PDFPageManager();
+            PDFPageManager<PDPage> result = new PDFPageManager<PDPage>();
+            result.setInternalPage(page);
 
             // now the text extraction part
             CSTextExtractor textExtractor = new CSTextExtractor();
@@ -137,6 +145,7 @@ public class PDFDocumentPreprocessor {
 
                 result = opManager.transformToPDFPageManager();
                 result.setRenderedPage(image);
+                result.setInternalPage(page);
             }
             return result;
         } finally {
@@ -179,5 +188,57 @@ public class PDFDocumentPreprocessor {
         }
 
         return documentManager;
+    }
+
+    /**
+     * Renders a page ommiting all the graphical and textual operations except
+     * given ones
+     */
+    public static void renderSomePageOperations(PDFPageManager pageManager, Iterable<Operation> operations, Graphics2D canvas, double scale) {
+        // preparing a stucture that will allow us to quickly identify
+        // if a given operation should be rendered or not
+
+        HashSet<CSOperation> acceptedOperations = new HashSet<CSOperation>();
+
+        for (Operation operation : operations) {
+            acceptedOperations.add(operation.getOriginalOperation());
+        }
+
+        for (Operation operation : (Set<Operation>) pageManager.getTransOperations()) {
+            acceptedOperations.add(operation.getOriginalOperation());
+        }
+
+
+        PDFPageManager<PDPage> mgr = (PDFPageManager<PDPage>) pageManager;
+
+        PDPage page = mgr.getInternalPage();
+
+
+        /// now an almost regular rendering ... using our selective renderer
+
+        Rectangle2D rect = page.getCropBox().toNormalizedRectangle();
+
+        IGraphicsContext graphics = null;
+        try {
+            graphics = new CwtAwtGraphicsContext(canvas);
+            // setup user space
+            AffineTransform imgTransform = graphics.getTransform();
+
+            imgTransform.scale(scale, -scale);
+            imgTransform.translate(-rect.getMinX(), -rect.getMaxY());
+            graphics.setTransform(imgTransform);
+            graphics.setBackgroundColor(Color.WHITE);
+            graphics.fill(rect);
+            CSContent content = page.getContentStream();
+            if (content != null) {
+                ExtractorSelectiveInterpreter renderer = new ExtractorSelectiveInterpreter(null,
+                        graphics, acceptedOperations);
+                renderer.process(content, page.getResources());
+            }
+        } finally {
+            if (graphics != null) {
+                graphics.dispose();
+            }
+        }
     }
 }

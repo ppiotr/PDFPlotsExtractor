@@ -59,7 +59,7 @@ public class GraphicalAreasProvider implements IPDFPageFeatureProvider {
     }
 
     @Override
-    public IPDFPageFeature calculateFeature(PDFPageManager pageManager) throws Exception {
+    public <T> IPDFPageFeature calculateFeature(PDFPageManager<T> pageManager) throws Exception {
         GraphicalAreas result = new GraphicalAreas();
         result.areas = clusterOperations(pageManager);
         return result;

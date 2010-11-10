@@ -8,7 +8,7 @@ import de.intarsys.pdf.parser.COSLoadException;
 import invenio.pdf.core.FeatureNotPresentException;
 import invenio.pdf.core.PDFDocumentManager;
 import invenio.pdf.core.PDFPageManager;
-import invenio.pdf.core.documentProcessing.PDFDocumentPreprocessor;
+import invenio.pdf.core.documentProcessing.PDFDocumentTools;
 import invenio.pdf.features.GraphicalAreasProvider;
 import invenio.pdf.features.Plot;
 import invenio.pdf.features.Plots;
@@ -78,7 +78,7 @@ public class ExtractorInterface {
     }
 
     protected void openDocument(String filename) throws IOException, COSLoadException, FeatureNotPresentException, Exception {
-        PDFDocumentManager manager = PDFDocumentPreprocessor.readPDFDocument(filename);
+        PDFDocumentManager manager = PDFDocumentTools.readPDFDocument(filename);
 
         this.openFileName = filename;
         this.updateOpenFileLabel();
@@ -121,7 +121,7 @@ public class ExtractorInterface {
         //exInterface.openDocument("/home/piotr/pdf/1007.0043-12.pdf");
 //        exInterface.openDocument("/home/piotr/pdf/riemann.pdf");
         //exInterface.openDocument("c:\\pdf\\tests\\problematic_page.pdf");
-                exInterface.openDocument("./sampledata/two_columns_with_plots.pdf");
+                exInterface.openDocument("./sampledata/lhc.pdf");
 
 
         //exInterface.openDocument("c:\\pdf\\tests\\two_plots_one_page.pdf");

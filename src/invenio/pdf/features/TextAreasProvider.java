@@ -38,7 +38,7 @@ public class TextAreasProvider implements IPDFPageFeatureProvider {
      * @throws FeatureNotPresentException
      */
     @Override
-    public TextAreas calculateFeature(PDFPageManager pageManager) throws FeatureNotPresentException, Exception {
+    public <T> TextAreas calculateFeature(PDFPageManager<T> pageManager) throws FeatureNotPresentException, Exception {
         TextAreas result = new TextAreas();
 
         int[] margins = PDFCommonTools.calculateTextMargins(pageManager);

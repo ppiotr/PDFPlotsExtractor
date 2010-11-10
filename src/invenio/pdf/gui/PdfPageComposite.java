@@ -55,7 +55,7 @@ public class PdfPageComposite extends Composite {
     private TableColumn columnRenderingMethods;
     private TableColumn columnOperatorArguments;
     private TableColumn columnIsTextOperator;
-    private PDFPageManager operationsManager;
+    private PDFPageManager<Object> operationsManager;
 
     static ImageData convertToSWT(BufferedImage bufferedImage) {
         /**
@@ -107,7 +107,7 @@ public class PdfPageComposite extends Composite {
         return null;
     }
 
-    public PdfPageComposite(TabFolder folder, PDFPageManager opManager, List<Plot> plots) throws FeatureNotPresentException, Exception {
+    public PdfPageComposite(TabFolder folder, PDFPageManager<Object> opManager, List<Plot> plots) throws FeatureNotPresentException, Exception {
         super(folder, SWT.NONE);
         this.operationsManager = opManager;
         GridLayout pageLayout = new GridLayout();

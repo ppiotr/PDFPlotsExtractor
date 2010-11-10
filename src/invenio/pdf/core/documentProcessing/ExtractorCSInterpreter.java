@@ -2,17 +2,9 @@ package invenio.pdf.core.documentProcessing;
 
 import java.util.Map;
 import de.intarsys.cwt.environment.IGraphicsContext;
-import de.intarsys.pdf.content.CSContent;
-import de.intarsys.pdf.content.CSDeviceBasedInterpreter;
 import de.intarsys.pdf.content.CSException;
 import de.intarsys.pdf.content.CSOperation;
-import de.intarsys.pdf.content.text.CSTextExtractor;
-import de.intarsys.pdf.cos.COSArray;
-import de.intarsys.pdf.cos.COSObject;
-import de.intarsys.pdf.cos.COSString;
 import de.intarsys.pdf.platform.cwt.rendering.CSPlatformRenderer;
-import java.util.Iterator;
-import java.util.List;
 
 
 /**
