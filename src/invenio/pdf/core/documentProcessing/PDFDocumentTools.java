@@ -7,6 +7,7 @@ package invenio.pdf.core.documentProcessing;
 import de.intarsys.cwt.awt.environment.CwtAwtGraphicsContext;
 import de.intarsys.cwt.environment.IGraphicsContext;
 import de.intarsys.pdf.content.CSContent;
+import de.intarsys.pdf.content.CSDeviceBasedInterpreter;
 import de.intarsys.pdf.content.CSOperation;
 import de.intarsys.pdf.content.text.CSTextExtractor;
 import de.intarsys.pdf.parser.COSLoadException;
@@ -30,8 +31,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -194,25 +193,12 @@ public class PDFDocumentTools {
      * Renders a page ommiting all the graphical and textual operations except
      * given ones
      */
-    public static void renderSomePageOperations(PDFPageManager pageManager, Iterable<Operation> operations, Graphics2D canvas, double scale) {
+    public static void renderToCanvas(PDFPageManager pageManager, Graphics2D canvas, double scale) {
         // preparing a stucture that will allow us to quickly identify
         // if a given operation should be rendered or not
 
-        HashSet<CSOperation> acceptedOperations = new HashSet<CSOperation>();
-
-        for (Operation operation : operations) {
-            acceptedOperations.add(operation.getOriginalOperation());
-        }
-
-        for (Operation operation : (Set<Operation>) pageManager.getTransOperations()) {
-            acceptedOperations.add(operation.getOriginalOperation());
-        }
-
-
         PDFPageManager<PDPage> mgr = (PDFPageManager<PDPage>) pageManager;
-
         PDPage page = mgr.getInternalPage();
-
 
         /// now an almost regular rendering ... using our selective renderer
 
@@ -231,8 +217,7 @@ public class PDFDocumentTools {
             graphics.fill(rect);
             CSContent content = page.getContentStream();
             if (content != null) {
-                ExtractorSelectiveInterpreter renderer = new ExtractorSelectiveInterpreter(null,
-                        graphics, acceptedOperations);
+                CSPlatformRenderer renderer = new CSPlatformRenderer(null, graphics);
                 renderer.process(content, page.getResources());
             }
         } finally {

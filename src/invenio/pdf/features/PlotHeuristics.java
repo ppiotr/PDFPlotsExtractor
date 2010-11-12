@@ -1,5 +1,6 @@
 package invenio.pdf.features;
 
+import de.intarsys.tools.geometry.GeometryTools;
 import invenio.pdf.core.ExtractorParameters;
 import invenio.common.ExtractorGeometryTools;
 import invenio.common.SpatialClusterManager;
@@ -68,6 +69,22 @@ public class PlotHeuristics {
     }
 
     /**
+     * Includes text parts that are more distant that margin settings would
+     * allow, but are small enough and so, unlikely to be part of the text corpus
+     * 
+     * @param <T>
+     * @param areas
+     * @param manager
+     * @return
+     * @throws Exception
+     */
+    public static <T> Map<Rectangle, List<Operation>> includeLooseTextParts(
+            Map<Rectangle, List<Operation>> areas, PDFPageManager<T> manager) throws Exception {
+        return null;
+
+    }
+
+    /**
      * If any text operation is intersecting with the plot area, include it inside !
      * We assume that areas are not overlapping !
      * @param areas
@@ -78,6 +95,13 @@ public class PlotHeuristics {
             Map<Rectangle, List<Operation>> areas, PDFPageManager<T> manager) throws Exception {
         // each region will be represented by one of CSOperation instances
         // constituting it
+
+        ExtractorParameters params = ExtractorParameters.getExtractorParameters();
+        int hPlotTextMargin = (int) (params.getHorizontalPlotTextMargin()
+                * manager.getPageBoundary().getWidth());
+        int vPlotTextMargin = (int) (params.getVerticalPlotTextMargin()
+                * manager.getPageBoundary().getHeight());
+
         HashMap<Operation, Rectangle> areaIdentifiers =
                 new HashMap<Operation, Rectangle>();
 
@@ -89,15 +113,22 @@ public class PlotHeuristics {
         for (Rectangle rec : areas.keySet()) {
             Operation representant = areas.get(rec).get(0);
             areaIdentifiers.put(representant, rec);
-            clusterManager.addRectangle(rec, representant);
+            clusterManager.addRectangle(
+                    ExtractorGeometryTools.extendRectangle(rec, hPlotTextMargin, vPlotTextMargin),
+                    representant);
         }
 
         // now processing all the text operations
+
         for (Operation textOp : manager.getTextOperations()) {
 
             if (textOp instanceof TextOperation) {
-                Rectangle boundary = ((TextOperation) textOp).getBoundary();
-                clusterManager.addRectangle(boundary, textOp);
+                Rectangle boundary = ExtractorGeometryTools.extendRectangle(
+                        ((TextOperation) textOp).getBoundary(),
+                        hPlotTextMargin, vPlotTextMargin);
+
+                clusterManager.addRectangle(
+                        boundary, textOp);
             }
         }
 
@@ -118,7 +149,8 @@ public class PlotHeuristics {
             if (oldRect != null) {
                 // we have a cluster containing a plot !
                 toAdd.addAll(areas.get(oldRect));
-                result.put(rec, toAdd);
+                result.put(ExtractorGeometryTools.shrinkRectangle(rec,
+                        hPlotTextMargin, vPlotTextMargin), toAdd);
             }
         }
         return result;

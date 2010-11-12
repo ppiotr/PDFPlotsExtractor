@@ -13,6 +13,10 @@ public class ExtractorParameters extends Properties {
 
     private static ExtractorParameters properties = null;
 
+    private ExtractorParameters(){
+        // we do not want to create instances manually
+    }
+
     /**
      * Getting an instance of the project properties
      * 
@@ -45,8 +49,8 @@ public class ExtractorParameters extends Properties {
      * @return
      */
     public double getVerticalGraphicalMargin() {
-        //return 0.03;
-        return 0.003;
+        return 0.02;
+        //return 0.003;
     }
 
     /**
@@ -55,8 +59,19 @@ public class ExtractorParameters extends Properties {
      * @return
      */
     public double getHorizontalGraphicalMargin() {
-        return 0.003;
-  //      return 0.15;
+        //return 0.003;
+        return 0.10;
+    }
+
+    /**
+     * Returns a fraction of the page height that will be considered a vertical
+     * margin for all text operations being considered part of a plot
+     *
+     * @return
+     */
+    public double getVerticalTextMargin() {
+        return 0.00065;
+        //return 0.007;
     }
 
     /**
@@ -65,9 +80,18 @@ public class ExtractorParameters extends Properties {
      * 
      * @return
      */
-    public double getVerticalTextMargin() {
-        //return 0.0065;
-        return 0.003;
+    public double getVerticalPlotTextMargin() {
+        return 0.00065;
+        //return 0.003;
+    }
+
+    /**
+     * Returns a fraction of the page width that will be considered the horizontal
+     * margin of all text operations
+     * @return
+     */
+    public double getHorizontalPlotTextMargin() {
+        return 0.01;
     }
 
     /**

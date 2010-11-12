@@ -128,7 +128,8 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
 
     private static boolean isPlotCaption(String candidate) {
         String prepared = candidate.toLowerCase().trim();
-        return prepared.startsWith("figure")
+        System.out.println("Processing a potential caption : " + candidate);
+        return prepared.startsWith("fig")
                 || prepared.startsWith("plot")
                 || prepared.startsWith("image")
                 || prepared.startsWith("table");
