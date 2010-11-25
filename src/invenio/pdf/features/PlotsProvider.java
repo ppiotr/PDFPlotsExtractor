@@ -5,7 +5,6 @@
 package invenio.pdf.features;
 
 import invenio.common.ExtractorGeometryTools;
-import invenio.pdf.core.ExtractorParameters;
 import invenio.pdf.core.FeatureNotPresentException;
 import invenio.pdf.core.IPDFDocumentFeatureProvider;
 import invenio.pdf.core.Operation;
@@ -54,7 +53,11 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
     public static List<Plot> getPlotsFromPage(PDFPageManager manager) throws FeatureNotPresentException, Exception {
         List<Plot> plots = new LinkedList<Plot>();
 
+        // first we generate algorithm parameters depending on the page parameters
+        //TODO: extend this
+        
         int[] margins = PDFCommonTools.calculateGraphicsMargins(manager);
+
 
         /*************
          * Treating graphics operations - clustering them, filtering and

@@ -22,7 +22,25 @@ import java.util.Map;
  * @author piotr
  */
 public class PlotHeuristics {
+    public abstract class Predicate<T, S>{
+        public abstract boolean evaluate(T v1, S v2);
+    }
 
+    /**
+     * @param sourceAreas
+     * @param candidates
+     * @param condition
+     * @return
+     */
+    public static Map<Rectangle, List<Operation>> includeAreas(
+            Map<Rectangle, List<Operation>> sourceAreas,
+            Map<Rectangle, List<Operation>> candidates,
+            Predicate condition){
+        return sourceAreas;
+    }
+
+
+   
     /**
      * Removes areas that can not be plots because of a wrong aspect ratio
      * (plots can not for example be half of the page hight and few pixels broad
@@ -82,6 +100,49 @@ public class PlotHeuristics {
             Map<Rectangle, List<Operation>> areas, PDFPageManager<T> manager) throws Exception {
         return null;
 
+    }
+
+    /**
+     * Takes a list of areas and includes all the text areas overlaping with them.
+     * Possibly joins input areas
+     * @param areas
+     * @param manager
+     * @return
+     */
+    public static <T> Map<Rectangle, List<Operation>> includeTextAreas(
+            Map<Rectangle, List<Operation>> areas, PDFPageManager<T> manager) throws Exception {
+        return areas;   
+    }
+
+    /**
+     * Include text areas that are located farther than the threshold, but
+     * are small enough that it is not likely, they will live on their own.
+     * @param <T>
+     * @param areas
+     * @param manager
+     * @return
+     * @throws Exception
+     */
+    public static <T> Map<Rectangle, List<Operation>> includeLooseTextAreas(
+            Map<Rectangle, List<Operation>> areas, PDFPageManager<T> manager) throws Exception {
+        // if there is a text part in a bigger radius than searched before and the region is small enough,
+        // include it in the plot
+        
+        return areas;
+    }
+
+    /**
+     * Include areas satisfying some criterias 
+     * @param <T>
+     * @param areas
+     * @param manager
+     * @return
+     * @throws Exception
+     */
+    public static <T> Map<Rectangle, List<Operation>> includeLooseAreas(
+            Map<Rectangle, List<Operation>> areas, PDFPageManager<T> manager) throws Exception {
+        
+        return areas;
     }
 
     /**

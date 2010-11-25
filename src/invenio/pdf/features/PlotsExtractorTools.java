@@ -12,7 +12,7 @@ import java.awt.Rectangle;
 public class PlotsExtractorTools {
 
     public static void annotateImage(Graphics2D graphics, List<Plot> plots,
-            TextAreas textAreas) {
+            TextAreas textAreas, PageLayout layout) {
         // annotate image with plot information
         graphics.setTransform(AffineTransform.getRotateInstance(0));
         graphics.setPaintMode();
@@ -25,13 +25,22 @@ public class PlotsExtractorTools {
 
         graphics.setColor(Color.green);
         for (Rectangle bd : textAreas.areas.keySet()) {
-        graphics.drawRect((int) bd.getX(), (int) bd.getY(),
+            graphics.drawRect((int) bd.getX(), (int) bd.getY(),
                     (int) bd.getWidth(), (int) bd.getHeight());
         }
+        // drawing column rectangles
+        graphics.setColor(Color.pink);
 
+        if (layout.columns.isEmpty()){
+            System.out.println("Page without a layout ! ");
+        }
+
+        for (Rectangle bd : layout.columns) {
+            graphics.drawRect(bd.x, bd.y, bd.width, bd.height);
+            graphics.drawRect(bd.x + 1, bd.y + 1, bd.width - 2, bd.height - 2);
+        }
         return;
     }
-
     /**
      * Perform a complete processing for one document
      *

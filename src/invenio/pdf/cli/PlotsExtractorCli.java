@@ -11,6 +11,8 @@ import invenio.pdf.core.PDFDocumentManager;
 import invenio.pdf.core.PDFPageManager;
 import invenio.pdf.core.documentProcessing.PDFDocumentTools;
 import invenio.pdf.features.GraphicalAreasProvider;
+import invenio.pdf.features.PageLayout;
+import invenio.pdf.features.PageLayoutProvider;
 import invenio.pdf.features.Plots;
 import invenio.pdf.features.PlotsExtractorTools;
 import invenio.pdf.features.PlotsProvider;
@@ -41,7 +43,8 @@ public class PlotsExtractorCli {
             BufferedImage img = pageMgr.getRenderedPage();
             PlotsExtractorTools.annotateImage((Graphics2D) img.getGraphics(),
                     plots.plots.get(i),
-                    (TextAreas) pageMgr.getPageFeature(TextAreas.featureName));
+                    (TextAreas) pageMgr.getPageFeature(TextAreas.featureName),
+                    (PageLayout) pageMgr.getPageFeature(PageLayout.featureName));
             Images.writeImageToFile(img, "/home/piotr/pdf/output" + i + ".png");
         }
     }
@@ -51,6 +54,8 @@ public class PlotsExtractorCli {
 
         PDFPageManager.registerFeatureProvider(new GraphicalAreasProvider());
         PDFPageManager.registerFeatureProvider(new TextAreasProvider());
+        PDFPageManager.registerFeatureProvider(new PageLayoutProvider());
+
         PDFDocumentManager.registerFeatureProvider(new PlotsProvider());
 
         if (args.length != 1) {
