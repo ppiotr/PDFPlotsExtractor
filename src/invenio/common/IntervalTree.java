@@ -343,6 +343,8 @@ public class IntervalTree<IntervalObjectType> {
             if (val == null) {
                 System.out.println("Epic failure ! ");
             }
+
+
             this.intervalsStored.put(data, val);
         }
     }

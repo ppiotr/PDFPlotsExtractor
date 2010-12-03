@@ -66,8 +66,12 @@ public class SpatialClusterManager<StoredObjectType> {
                 int[] dx = intervalsX.get(i);
                 int[] dy = intervalsY.get(i);
 
-                partialResults.put(i, new Rectangle(
-                        dx[0], dy[0], dx[1] - dx[0], dy[1] - dy[0]));
+                if (dx == null || dy == null) {
+                    System.out.println("Please increase the document scale ! some operations are rendered into no points !");
+                } else {
+                    partialResults.put(i, new Rectangle(
+                            dx[0], dy[0], dx[1] - dx[0], dy[1] - dy[0]));
+                }
             }
         }
 
@@ -104,7 +108,9 @@ public class SpatialClusterManager<StoredObjectType> {
             }
 
             // we have the parent whose boundary is the boundary of the group
-
+            if (partialResults.get(currentNum) == null){
+                System.out.println("something wrong happened ! ");
+            }
             result.get(partialResults.get(currentNum)).add(
                     this.mappingsToObjects.get(internalIdent));
         }

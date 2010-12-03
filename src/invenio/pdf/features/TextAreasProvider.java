@@ -87,8 +87,7 @@ public class TextAreasProvider implements IPDFPageFeatureProvider {
     private String getTextAreaString(List<Operation> operations) {
         StringBuilder sb = new StringBuilder();
         // we want to return in the order identical as in page string
-
-
+        
         ArrayList<TextOperation> tmpOperations = new ArrayList<TextOperation>();
 
         for (Operation op : operations) {

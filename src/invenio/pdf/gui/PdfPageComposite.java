@@ -9,6 +9,7 @@ import invenio.pdf.core.DisplayedOperation;
 import invenio.pdf.core.FeatureNotPresentException;
 import invenio.pdf.core.Operation;
 import invenio.pdf.core.PDFPageManager;
+import invenio.pdf.features.PageLayout;
 import invenio.pdf.features.Plot;
 import invenio.pdf.features.PlotsExtractorTools;
 import invenio.pdf.features.TextAreas;
@@ -116,12 +117,12 @@ public class PdfPageComposite extends Composite {
 
         BufferedImage pageImage = opManager.getRenderedPage();
         // now annotating the image !
-        
+
         //List<Plot> plots = PlotsExtractorTools.getPlotsFromPage(opManager);
 
         TextAreas tAreas = (TextAreas) opManager.getPageFeature(TextAreas.featureName);
-
-        PlotsExtractorTools.annotateImage((Graphics2D) pageImage.getGraphics(), plots, tAreas);
+        PageLayout pdfPageLayout = (PageLayout) opManager.getPageFeature(PageLayout.featureName);
+        PlotsExtractorTools.annotateImage((Graphics2D) pageImage.getGraphics(), plots, tAreas, pdfPageLayout);
         // saving a copy of the rendered image
 
         Images.writeImageToFile(pageImage, "/home/piotr/pdf/output_" + opManager.getPageNumber() + ".png");
@@ -210,8 +211,8 @@ public class PdfPageComposite extends Composite {
             // preparing the data about a particular operation
             String operator = operation.getOriginalOperation().getOperator().toString();
 
-            java.awt.Rectangle boundaryRec = new java.awt.Rectangle(0,0,0,0);
-            if (operation instanceof DisplayedOperation){
+            java.awt.Rectangle boundaryRec = new java.awt.Rectangle(0, 0, 0, 0);
+            if (operation instanceof DisplayedOperation) {
                 boundaryRec = ((DisplayedOperation) operation).getBoundary();
             }
 

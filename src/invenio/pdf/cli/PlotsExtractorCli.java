@@ -41,6 +41,8 @@ public class PlotsExtractorCli {
         for (int i = 0; i < document.getPagesNumber(); ++i) {
             PDFPageManager pageMgr = document.getPage(i);
             BufferedImage img = pageMgr.getRenderedPage();
+            Images.writeImageToFile(img, "/home/piotr/pdf/raw_output" + i + ".png");
+
             PlotsExtractorTools.annotateImage((Graphics2D) img.getGraphics(),
                     plots.plots.get(i),
                     (TextAreas) pageMgr.getPageFeature(TextAreas.featureName),
