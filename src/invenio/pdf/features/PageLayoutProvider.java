@@ -4,7 +4,6 @@
  */
 package invenio.pdf.features;
 
-import invenio.common.Pair;
 import invenio.pdf.core.FeatureNotPresentException;
 import invenio.pdf.core.IPDFPageFeature;
 import invenio.pdf.core.IPDFPageFeatureProvider;
@@ -12,7 +11,6 @@ import invenio.pdf.core.PDFPageManager;
 import java.awt.Rectangle;
 import java.awt.image.Raster;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -35,138 +33,19 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
         return Math.sqrt(res) < 10;
     }
 
-    /**
-     * For each point of the raster calculate its distance to the closest non-empty box
-     * 
-     * @param preallocated
-     * @return
-     */
-    private static int[][] calculateDistances(Raster raster, int[][] preallocated) {
-        int[][] result;
-
-        if (preallocated != null && preallocated.length == raster.getWidth()
-                && preallocated[0].length == raster.getHeight()) {
-            result = preallocated;
-        } else {
-            result = new int[raster.getWidth()][raster.getHeight()];
-        }
-
-        // clearing the array
-        for (int x = 0; x < raster.getWidth(); ++x) {
-            for (int y = 0; y < raster.getHeight(); ++y) {
-                result[x][y] = -1;
-            }
-        }
-
-        // initialisation finished, now real calculations-> first we have to fing all the non-zero pixels
-
-        LinkedList<Pair<Integer, Integer>> bfsQueue = new LinkedList<Pair<Integer, Integer>>();
-        int initiallyAdded = 0;
-        int[] curPixel = new int[3]; // an array storing the current pixel
-        for (int x = 0; x < raster.getWidth(); ++x) {
-            for (int y = 0; y < raster.getHeight(); ++y) {
-                if (!isPixelEmpty(raster.getPixel(x, y, curPixel))) {
-                    initiallyAdded++;
-                    bfsQueue.addLast(new Pair<Integer, Integer>(x, y));
-                    result[x][y] = 0;
-                }
-            }
-        }
-        System.out.println("initially added " + initiallyAdded + " pixels");
-
-        while (!bfsQueue.isEmpty()) {
-            Pair<Integer, Integer> point = bfsQueue.removeFirst();
-            int x = point.first;
-            int y = point.second;
-
-            // now treating all the neighbours of the point
-            result[x][y] = raster.getHeight() + raster.getWidth();
-            result[x][y] = updateMin(result[x][y], x - 1, y, result, raster);
-            result[x][y] = updateMin(result[x][y], x + 1, y, result, raster);
-            result[x][y] = updateMin(result[x][y], x, y - 1, result, raster);
-            result[x][y] = updateMin(result[x][y], x, y + 1, result, raster);
-            result[x][y]++;
-
-            // conditionally adding adjacent points to the queue
-            conditionallyAddIntoQueue(x - 1, y, result, raster, bfsQueue);
-            conditionallyAddIntoQueue(x + 1, y, result, raster, bfsQueue);
-            conditionallyAddIntoQueue(x, y - 1, result, raster, bfsQueue);
-            conditionallyAddIntoQueue(x, y + 1, result, raster, bfsQueue);
-        }
-
-        return result;
-    }
-
-    /**
-     * If this place has not been processed yet, add it to the queue
-     * @param x
-     * @param y
-     * @param dists
-     * @param raster
-     */
-    private static void conditionallyAddIntoQueue(int x, int y, int[][] dists,
-            Raster raster, LinkedList<Pair<Integer, Integer>> queue) {
-        if (x >= 0 && y >= 0 && x < raster.getWidth() && y < raster.getHeight()
-                && dists[x][y] == -1) {
-            queue.addLast(new Pair<Integer, Integer>(x, y));
-        }
-    }
-
-    /**
-     * update minimum -> don't take into account negative numbers
-     * @param curMin
-     * @param x
-     * @param y
-     * @param dists
-     * @param raster
-     * @return
-     */
-    private static int updateMin(int curMin, int x, int y, int[][] dists, Raster raster) {
-        if (x < 0 || y < 0 || x >= raster.getWidth() || y >= raster.getHeight()) {
-            return curMin;
-        }
-        if (dists[x][y] < 0) {
-            return curMin;
-        }
-        if (curMin > dists[x][y]) {
-            return dists[x][y];
-        } else {
-            return curMin;
-        }
-    }
-
-    /**
-     * Checks if the point and its surroundings are empty
-     * @param x
-     * @param y
-     * @param raster
-     * @return
-     */
-    private static boolean isPointEmpty(int x, int y, Raster raster, int[][] distances) {
-        double emptinessRadius = 0.002;
-
-        int r = (int) (emptinessRadius * raster.getWidth());
-        return distances[x][y] >= r;
-    }
-
     private static boolean isPointEmpty(int x, int y, Raster raster) {
         int[] currentPixel = new int[3];
-        double emptinessRadius = 0.01;
+        double emptinessRadius = 0.005;
 
         int r = (int) (emptinessRadius * raster.getWidth());
         for (int dx = -r; dx < r; ++dx) {
             currentPixel = raster.getPixel(x + dx, y, currentPixel);
             if (!isPixelEmpty(currentPixel)) {
-                if (x == 622) {
-                    System.out.println("here we go !");
-                }
-
                 return false;
             }
         }
         return true;
     }
-    private static int[][] distancesArray = null; // array of distences from non-empty pixels
 
     /** Detects a layout of the page by searching high consistent blocks of
      *  empty space in the rendered version of the page. (a minimal width and
@@ -180,7 +59,7 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
     public static List<Rectangle> getPageColumns(PDFPageManager pageManager) {
         double minimalFractionOfColumnSeparatorHeight = 0.4; // minimal height of an area separating columns
         //       double minimalFractionOfColumnSeparatorWidth = 0.01; // minimal height of an area separating columns
-        double minimalFractionOfMarginWidth = 0.1; // minimal height of an area separating columns
+        double minimalFractionOfMarginWidth = 0.15; // minimal height of an area separating columns
 
         Raster raster = pageManager.getRenderedPage().getData();
 
@@ -195,13 +74,7 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
         ArrayList<Rectangle> columns = new ArrayList<Rectangle>();
         ArrayList<Rectangle> startedColumns = new ArrayList<Rectangle>(); // started columns. Wodth is invalid as we do not know them yet
         ArrayList<Integer> emptyAreas = new ArrayList<Integer>();
-//        distancesArray = calculateDistances(raster, distancesArray);
         startedColumns.add(new Rectangle(0, 0, raster.getWidth(), raster.getHeight()));
-
-        // for debugging ... we want this data to be visible
-
-        int debug_page_width = raster.getWidth();
-        int debug_page_height = raster.getHeight();
 
 
         boolean inMaximisationMode = false; // the mode where we choose the biggest separator.
@@ -217,8 +90,8 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
             int emptyAreaBeginning = 0;
 
             emptyAreas.clear();
-            boolean isEmpty = true;
-
+            currentColumnEvaluation = 0;
+            
             for (int y = 0; y < raster.getHeight(); ++y) {
                 if (!isPointEmpty(x, y, raster) || (y == (raster.getHeight() - 1))) {
                     if ((y - emptyAreaBeginning) > minimalHeight) {
@@ -244,12 +117,10 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
             if (inMaximisationMode) {
                 if (emptyAreas.isEmpty()) {
                     // apply the maximal separator
-                    startedColumns = updateCurrentColumns(columns, maximalSeparators, startedColumns, xOfMaximum);
-
+                    startedColumns = updateCurrentColumns(columns,
+                            maximalSeparators, startedColumns, xOfMaximum);
                     // now reseting maximal values
-
                     maximalWeight = 0;
-
                     inMaximisationMode = false;
                 }
             } else {
@@ -259,13 +130,12 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
             }
         }
 
-// now closing all the unfinished columns -> equivalent to a separator going from the top to the bottom
+        // now closing all the unfinished columns -> equivalent to a separator going from the top to the bottom
         ArrayList<Integer> finalSeparator = new ArrayList<Integer>();
 
         finalSeparator.add(0);
 
-        finalSeparator.add(raster.getHeight()
-                - 1);
+        finalSeparator.add(raster.getHeight() - 1);
 
         updateCurrentColumns(columns, finalSeparator, startedColumns, raster.getWidth()); // we do not care
         // of the currently

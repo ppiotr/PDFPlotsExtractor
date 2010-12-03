@@ -113,4 +113,51 @@ public class ExtractorParameters extends Properties {
     public int getPageScale() {
         return 2;
     }
+
+    ///// Parameters connected with detection of the page layout
+
+    /**
+     * Returns the minimal fraction of the page width that will not be broken into
+     * @return
+     */
+    public double getMinimalMarginWidth(){
+        return 0.15;
+    }
+
+    /**
+     * When we check if a point is empty, the pixel must be empty together with
+     * its surrounding of some radius.
+     *
+     * This function returns the fraction of the page width that is considered
+     * to be this radius.
+     * 
+     * @return
+     */
+    public double getEmptinessRadius(){
+        return 0.005;
+    }
+
+    /**
+     * Returns the fraction of the page height that can be covered with
+     * non-empty pixels and not break a separator.
+     *
+     * @return
+     */
+    public double getMaximalNonBreakingFraction(){
+        return 0.005;
+    }
+
+    public int getColorEmptinessThreshold(){
+        return 10;
+    }
+
+    /**
+     * Returns the color that can be considered an empty space inside an image
+     * @return
+     */
+    public int[] getEmptyPixelColor(){
+        int[] res = {255, 255, 255};
+        return res;
+    }
+    
 }
