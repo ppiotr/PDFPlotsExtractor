@@ -4,6 +4,7 @@
  */
 package invenio.pdf.features;
 
+import invenio.pdf.core.ExtractorParameters;
 import invenio.pdf.core.FeatureNotPresentException;
 import invenio.pdf.core.IPDFPageFeature;
 import invenio.pdf.core.IPDFPageFeatureProvider;
@@ -19,6 +20,18 @@ import java.util.List;
  */
 public class PageLayoutProvider implements IPDFPageFeatureProvider {
 
+    private ExtractorParameters parameters;
+    double emptinessRadius;
+    double minimalFractionOfColumnSeparatorHeight;
+    double minimalFractionOfMarginWidth;
+
+    public PageLayoutProvider() {
+        this.parameters = ExtractorParameters.getExtractorParameters();
+        this.emptinessRadius = this.parameters.getEmptinessRadius();
+        this.minimalFractionOfColumnSeparatorHeight = this.parameters.getMinimalSeparatorHeight();
+        this.minimalFractionOfMarginWidth = this.parameters.getMinimalMarginWidth(); // minimal height of an area separating columns
+    }
+
     /**
      * Determines if the pixel can be considered empty. This is the case if
      * its distance from being white is not high
@@ -33,11 +46,20 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
         return Math.sqrt(res) < 10;
     }
 
-    private static boolean isPointEmpty(int x, int y, Raster raster) {
+    /**
+     * Returns an information if the area surrounding a given point is empty.
+     * The surrounding is a horizontal interval having a given point in its center.
+     * The length of the interval is determined in a configuration file.
+     *
+     * @param x
+     * @param y
+     * @param raster
+     * @return
+     */
+    private boolean isAreaEmpty(int x, int y, Raster raster) {
         int[] currentPixel = new int[3];
-        double emptinessRadius = 0.005;
 
-        int r = (int) (emptinessRadius * raster.getWidth());
+        int r = (int) (this.emptinessRadius * raster.getWidth());
         for (int dx = -r; dx < r; ++dx) {
             currentPixel = raster.getPixel(x + dx, y, currentPixel);
             if (!isPixelEmpty(currentPixel)) {
@@ -56,17 +78,13 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
      * @param pageManager
      * @return
      */
-    public static List<Rectangle> getPageColumns(PDFPageManager pageManager) {
-        double minimalFractionOfColumnSeparatorHeight = 0.4; // minimal height of an area separating columns
-        //       double minimalFractionOfColumnSeparatorWidth = 0.01; // minimal height of an area separating columns
-        double minimalFractionOfMarginWidth = 0.15; // minimal height of an area separating columns
-
+    public List<Rectangle> getPageColumns(PDFPageManager pageManager) {
         Raster raster = pageManager.getRenderedPage().getData();
 
-        int minimalHeight = (int) (raster.getHeight() * minimalFractionOfColumnSeparatorHeight);
+        int minimalHeight = (int) (raster.getHeight() * this.minimalFractionOfColumnSeparatorHeight);
         //       int minimalWidth = (int) (raster.getWidth() * minimalFractionOfColumnSeparatorWidth);
-        int minimalLeft = (int) (raster.getWidth() * minimalFractionOfMarginWidth);
-        int maximalLeft = (int) (raster.getWidth() * (1 - minimalFractionOfMarginWidth));
+        int minimalLeft = (int) (raster.getWidth() * this.minimalFractionOfMarginWidth);
+        int maximalLeft = (int) (raster.getWidth() * (1 - this.minimalFractionOfMarginWidth));
 
 
         //ArrayList<ArrayList<Pair<Integer, Integer>>>  = new ArrayList<ArrayList<Pair<Integer, Integer>>>();
@@ -91,9 +109,9 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
 
             emptyAreas.clear();
             currentColumnEvaluation = 0;
-            
+
             for (int y = 0; y < raster.getHeight(); ++y) {
-                if (!isPointEmpty(x, y, raster) || (y == (raster.getHeight() - 1))) {
+                if (!isAreaEmpty(x, y, raster) || (y == (raster.getHeight() - 1))) {
                     if ((y - emptyAreaBeginning) > minimalHeight) {
                         emptyAreas.add(emptyAreaBeginning);
                         emptyAreas.add(y);
@@ -156,7 +174,7 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
      * @param curX - x coordinate at which we are currently
      * @return
      */
-    public static ArrayList<Rectangle> updateCurrentColumns(ArrayList<Rectangle> columns, ArrayList<Integer> separatorPoints,
+    public ArrayList<Rectangle> updateCurrentColumns(ArrayList<Rectangle> columns, ArrayList<Integer> separatorPoints,
             ArrayList<Rectangle> startedColumns, int curX) {
 
         if (separatorPoints.isEmpty()) {

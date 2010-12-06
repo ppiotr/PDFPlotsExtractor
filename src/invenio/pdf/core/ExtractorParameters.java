@@ -121,7 +121,7 @@ public class ExtractorParameters extends Properties {
      * @return
      */
     public double getMinimalMarginWidth(){
-        return 0.15;
+        return 0.3;
     }
 
     /**
@@ -159,5 +159,14 @@ public class ExtractorParameters extends Properties {
         int[] res = {255, 255, 255};
         return res;
     }
-    
+
+    /**
+     * The percentage of hte page height that is considered to be the minimal
+     * separator
+     *
+     * @return
+     */
+    public double getMinimalSeparatorHeight(){
+        return 0.4;
+    }
 }
