@@ -55,7 +55,7 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
 
         // first we generate algorithm parameters depending on the page parameters
         //TODO: extend this
-        
+
         int[] margins = PDFCommonTools.calculateGraphicsMargins(manager);
 
 
@@ -94,15 +94,17 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
             plot.setPageManager(manager);
             plot.setId(getPlotIdFromCaption(plot.getCaption()));
             plots.add(plot);
-
         }
 
         return plots;
     }
 
-    private static String getPlotCaption(Plot plot, PDFPageManager pageManager) throws FeatureNotPresentException, Exception {
+    private static String getPlotCaption(Plot plot, PDFPageManager pageManager)
+	throws FeatureNotPresentException, Exception {
+
         TextAreas textAreas =
                 (TextAreas) pageManager.getPageFeature(TextAreas.featureName);
+
         // finding the first text area below the plot
         Rectangle currentArea = null;
 

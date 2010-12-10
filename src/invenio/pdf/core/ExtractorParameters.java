@@ -133,7 +133,16 @@ public class ExtractorParameters extends Properties {
      * 
      * @return
      */
-    public double getEmptinessRadius(){
+    public double getHorizontalEmptinessRadius(){
+        return 0.005;
+    }
+
+   /**
+     * Used to determine the minimal empty surrounding of a horizontal separator
+     *
+     * @return
+     */
+    public double getVerticalEmptinessRadius(){
         return 0.005;
     }
 
@@ -166,7 +175,8 @@ public class ExtractorParameters extends Properties {
      *
      * @return
      */
-    public double getMinimalSeparatorHeight(){
+    public double getMinimalVerticalSeparatorHeight(){
         return 0.4;
     }
+
 }

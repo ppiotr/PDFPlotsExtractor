@@ -4,8 +4,19 @@
  */
 package invenio.pdf.features;
 
+import java.util.List;
+import invenio.common.Images;
+import de.intarsys.cwt.image.ImageTools;
+import java.awt.Color;
+import java.awt.image.BufferedImage;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.image.Raster;
 import java.awt.Rectangle;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -29,9 +40,298 @@ public class PageLayoutTest {
     @AfterClass
     public static void tearDownClass() throws Exception {
     }
+    private PageLayoutProvider provider = new PageLayoutProvider();
 
     @Before
     public void setUp() {
+        /**
+         *  separators must be at least 1% of height/width
+         *  left/right margins are considered 0.2 of the width
+         *  column separators have to be at least 0.3 of the page height
+         */
+        this.provider = new PageLayoutProvider(0.01, 0.005, 0.3, 0.2);
+    }
+
+    /* Creation of a set of sample rasters */
+    /**
+     * Create the simplest case of a two column layout
+     * @return
+     */
+    private BufferedImage createSampleImage1() {
+        BufferedImage image = new BufferedImage(100, 200, BufferedImage.TYPE_INT_RGB);
+        Graphics graphics = image.getGraphics();
+        // first creating a white background
+        graphics.setColor(Color.white);
+        graphics.fillRect(0, 0, 100, 200);
+
+        // now the painting -> in order to stimulate data we paint black rectangles
+        graphics.setColor(Color.BLACK);
+        graphics.fillRect(10, 10, 40, 180);
+        graphics.fillRect(51, 10, 40, 180);
+
+        return image;
+    }
+
+    private BufferedImage createSampleImage2() {
+        BufferedImage image = new BufferedImage(100, 200, BufferedImage.TYPE_INT_RGB);
+        Graphics graphics = image.getGraphics();
+        // first creating a white background
+        graphics.setColor(Color.white);
+        graphics.fillRect(0, 0, 100, 200);
+
+        // now the painting -> in order to stimulate data we paint black rectangles
+        graphics.setColor(Color.BLACK);
+        graphics.fillRect(10, 10, 81, 40);
+        graphics.fillRect(10, 51, 40, 140);
+        graphics.fillRect(51, 51, 40, 140);
+
+
+        return image;
+    }
+
+    private BufferedImage createSampleImage3() {
+        BufferedImage image = new BufferedImage(100, 200, BufferedImage.TYPE_INT_RGB);
+        Graphics graphics = image.getGraphics();
+        // first creating a white background
+        graphics.setColor(Color.white);
+        graphics.fillRect(0, 0, 100, 200);
+
+        // now the painting -> in order to stimulate data we paint black rectangles
+        graphics.setColor(Color.BLACK);
+        graphics.fillRect(10, 10, 40, 140);
+        graphics.fillRect(51, 10, 40, 140);
+        graphics.fillRect(10, 151, 81, 40);
+
+        return image;
+    }
+
+    private BufferedImage createSampleImage4() {
+        BufferedImage image = new BufferedImage(100, 200, BufferedImage.TYPE_INT_RGB);
+        Graphics graphics = image.getGraphics();
+        // first creating a white background
+        graphics.setColor(Color.white);
+        graphics.fillRect(0, 0, 100, 200);
+
+        // now the painting -> in order to stimulate data we paint black rectangles
+        graphics.setColor(Color.BLACK);
+
+        graphics.fillRect(10, 10, 81, 40);
+        graphics.fillRect(10, 51, 40, 100);
+        graphics.fillRect(51, 51, 40, 100);
+        graphics.fillRect(10, 152, 81, 40);
+
+        return image;
+    }
+
+    /**
+     * The case of an area that requires the second algorithm to run
+     * @return
+     */
+    private BufferedImage createSampleImage5() {
+        BufferedImage image = new BufferedImage(100, 200, BufferedImage.TYPE_INT_RGB);
+        Graphics graphics = image.getGraphics();
+        // first creating a white background
+        graphics.setColor(Color.white);
+        graphics.fillRect(0, 0, 100, 200);
+
+        // now the painting -> in order to stimulate data we paint black rectangles
+        graphics.setColor(Color.BLACK);
+
+
+        graphics.fillRect(10, 10, 40, 45);
+        graphics.fillRect(50, 10, 41, 40);
+
+        graphics.fillRect(10, 56, 40, 95);
+        graphics.fillRect(51, 51, 40, 100);
+        graphics.fillRect(10, 152, 81, 40);
+
+        return image;
+    }
+
+    private BufferedImage createSampleImage6() {
+        BufferedImage image = new BufferedImage(100, 200, BufferedImage.TYPE_INT_RGB);
+        Graphics graphics = image.getGraphics();
+        // first creating a white background
+        graphics.setColor(Color.white);
+        graphics.fillRect(0, 0, 100, 200);
+
+        // now the painting -> in order to stimulate data we paint black rectangles
+        graphics.setColor(Color.BLACK);
+
+
+        graphics.fillRect(10, 10, 40, 45);
+        graphics.fillRect(50, 10, 41, 40);
+
+        graphics.fillRect(10, 56, 40, 90);
+        graphics.fillRect(51, 51, 40, 100);
+
+        graphics.fillRect(10, 147, 40, 45);
+        graphics.fillRect(50, 152, 41, 40);
+
+        return image;
+    }
+
+    private BufferedImage createSampleImage7() {
+        BufferedImage image = new BufferedImage(100, 200, BufferedImage.TYPE_INT_RGB);
+        Graphics graphics = image.getGraphics();
+        // first creating a white background
+        graphics.setColor(Color.white);
+        graphics.fillRect(0, 0, 100, 200);
+
+        // now the painting -> in order to stimulate data we paint black rectangles
+        graphics.setColor(Color.BLACK);
+
+
+        graphics.fillRect(10, 10, 40, 90);
+        graphics.fillRect(50, 10, 41, 40);
+
+
+        graphics.fillRect(51, 51, 40, 100);
+
+        graphics.fillRect(10, 101, 40, 91);
+        graphics.fillRect(50, 152, 41, 40);
+
+        return image;
+    }
+
+    private BufferedImage createSampleImage8() {
+        BufferedImage image = new BufferedImage(100, 200, BufferedImage.TYPE_INT_RGB);
+        Graphics graphics = image.getGraphics();
+        // first creating a white background
+        graphics.setColor(Color.white);
+        graphics.fillRect(0, 0, 100, 200);
+
+        // now the painting -> in order to stimulate data we paint black rectangles
+        graphics.setColor(Color.BLACK);
+        graphics.fillRect(10, 10, 40, 182);
+        graphics.fillRect(50, 10, 41, 40);
+        graphics.fillRect(51, 51, 40, 100);
+        graphics.fillRect(50, 152, 41, 40);
+
+        return image;
+    }
+
+    private BufferedImage createSampleImage9() {
+        BufferedImage image = new BufferedImage(100, 200, BufferedImage.TYPE_INT_RGB);
+        Graphics graphics = image.getGraphics();
+        // first creating a white background
+        graphics.setColor(Color.white);
+        graphics.fillRect(0, 0, 100, 200);
+
+        // now the painting -> in order to stimulate data we paint black rectangles
+        graphics.setColor(Color.BLACK);
+
+        graphics.fillRect(10, 10, 41, 40);
+        graphics.fillRect(51, 10, 40, 45);
+
+        graphics.fillRect(10, 51, 40, 100);
+        graphics.fillRect(51, 56, 40, 95);
+
+        graphics.fillRect(10, 152, 81, 40);
+
+        return image;
+    }
+
+    private BufferedImage createSampleImage10() {
+        BufferedImage image = new BufferedImage(100, 200, BufferedImage.TYPE_INT_RGB);
+        Graphics graphics = image.getGraphics();
+        // first creating a white background
+        graphics.setColor(Color.white);
+        graphics.fillRect(0, 0, 100, 200);
+
+        // now the painting -> in order to stimulate data we paint black rectangles
+        graphics.setColor(Color.BLACK);
+
+        graphics.fillRect(10, 10, 41, 40);
+        graphics.fillRect(10, 51, 40, 100);
+        graphics.fillRect(10, 152, 81, 40);
+        graphics.fillRect(51, 10, 40, 141);
+        return image;
+    }
+
+    private BufferedImage createSampleImage11() {
+        BufferedImage image = new BufferedImage(100, 200, BufferedImage.TYPE_INT_RGB);
+        Graphics graphics = image.getGraphics();
+        // first creating a white background
+        graphics.setColor(Color.white);
+        graphics.fillRect(0, 0, 100, 200);
+
+        // now the painting -> in order to stimulate data we paint black rectangles
+        graphics.setColor(Color.BLACK);
+
+        graphics.fillRect(10, 10, 81, 40);
+
+        graphics.fillRect(10, 51, 40, 100);
+        graphics.fillRect(51, 51, 40, 141);
+
+        graphics.fillRect(10, 152, 41, 40);
+
+
+        return image;
+    }
+    // now cases with having two columns above each other
+
+    private BufferedImage createSampleImage12() {
+
+        BufferedImage image = new BufferedImage(100, 200, BufferedImage.TYPE_INT_RGB);
+        Graphics graphics = image.getGraphics();
+        // first creating a white background
+        graphics.setColor(Color.white);
+        graphics.fillRect(0, 0, 100, 200);
+
+        // now the painting -> in order to stimulate data we paint black rectangles
+        graphics.setColor(Color.BLACK);
+
+        graphics.fillRect(10, 10, 40, 85);
+        graphics.fillRect(51, 10, 39, 85);
+
+        graphics.fillRect(10, 96, 80, 10);
+
+        graphics.fillRect(10, 107, 40, 85);
+        graphics.fillRect(51, 107, 39, 85);
+
+
+        return image;
+    }
+
+    private BufferedImage createSampleImage13() {
+
+        BufferedImage image = new BufferedImage(100, 200, BufferedImage.TYPE_INT_RGB);
+        Graphics graphics = image.getGraphics();
+        // first creating a white background
+        graphics.setColor(Color.white);
+        graphics.fillRect(0, 0, 100, 200);
+
+        // now the painting -> in order to stimulate data we paint black rectangles
+        graphics.setColor(Color.BLACK);
+        graphics.fillRect(10, 10, 40, 85);
+        graphics.fillRect(51, 10, 39, 85);
+        graphics.fillRect(10, 96, 80, 11);
+        graphics.fillRect(10, 107, 40, 85);
+        graphics.fillRect(51, 107, 39, 85);
+
+        return image;
+    }
+
+
+    /** Simple three columns */
+    private BufferedImage createSampleImage14() {
+
+        BufferedImage image = new BufferedImage(100, 200, BufferedImage.TYPE_INT_RGB);
+        Graphics graphics = image.getGraphics();
+        // first creating a white background
+        graphics.setColor(Color.white);
+        graphics.fillRect(0, 0, 100, 200);
+
+        // now the painting -> in order to stimulate data we paint black rectangles
+        graphics.setColor(Color.BLACK);
+        graphics.fillRect(10, 10, 40, 85);
+        graphics.fillRect(51, 10, 39, 85);
+        graphics.fillRect(10, 96, 80, 11);
+        graphics.fillRect(10, 107, 40, 85);
+        graphics.fillRect(51, 107, 39, 85);
+
+        return image;
     }
 
     @After
@@ -39,7 +339,75 @@ public class PageLayoutTest {
     }
 
     @Test
+    public void writeSampleRastersToFile() {
+        try {
+            Images.writeImageToFile(createSampleImage1(), "/home/piotr/pdf/sample1.png");
+            Images.writeImageToFile(createSampleImage2(), "/home/piotr/pdf/sample2.png");
+            Images.writeImageToFile(createSampleImage3(), "/home/piotr/pdf/sample3.png");
+            Images.writeImageToFile(createSampleImage4(), "/home/piotr/pdf/sample4.png");
+            Images.writeImageToFile(createSampleImage5(), "/home/piotr/pdf/sample5.png");
+            Images.writeImageToFile(createSampleImage6(), "/home/piotr/pdf/sample6.png");
+            Images.writeImageToFile(createSampleImage7(), "/home/piotr/pdf/sample7.png");
+            Images.writeImageToFile(createSampleImage8(), "/home/piotr/pdf/sample8.png");
+            Images.writeImageToFile(createSampleImage9(), "/home/piotr/pdf/sample9.png");
+            Images.writeImageToFile(createSampleImage10(), "/home/piotr/pdf/sample10.png");
+            Images.writeImageToFile(createSampleImage11(), "/home/piotr/pdf/sample11.png");
+
+            Images.writeImageToFile(createSampleImage12(), "/home/piotr/pdf/sample12.png");
+            Images.writeImageToFile(createSampleImage13(), "/home/piotr/pdf/sample13.png");
+
+
+        } catch (IOException ex) {
+            Logger.getLogger(PageLayoutTest.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private BufferedImage annotateImageWithColumns(BufferedImage img, List<Rectangle> columns) {
+        Graphics graphics = img.getGraphics();
+        graphics.setColor(Color.CYAN);
+        for (Rectangle column : columns) {
+            graphics.drawRect(column.x, column.y, column.width, column.height);
+        }
+        return img;
+    }
+
+    /**
+     *  Detect preliminary columns and annotate image
+     */
+    private BufferedImage detectAndAnnotate(BufferedImage img) {
+        List columns = provider.getPageColumns(img.getData());
+        return annotateImageWithColumns(img, columns);
+    }
+
+    /**
+     * Test of the detection of columns - the method detecting vertical separator
+     * not caring about the
+     */
+    @Test
+    public void testPreliminaryColumnDetection() {
+        try {
+            Images.writeImageToFile(detectAndAnnotate(createSampleImage1()), "/home/piotr/pdf/sample1_pdetected.png");
+            Images.writeImageToFile(detectAndAnnotate(createSampleImage2()), "/home/piotr/pdf/sample2_pdetected.png");
+            Images.writeImageToFile(detectAndAnnotate(createSampleImage3()), "/home/piotr/pdf/sample3_pdetected.png");
+            Images.writeImageToFile(detectAndAnnotate(createSampleImage4()), "/home/piotr/pdf/sample4_pdetected.png");
+            Images.writeImageToFile(detectAndAnnotate(createSampleImage5()), "/home/piotr/pdf/sample5_pdetected.png");
+            Images.writeImageToFile(detectAndAnnotate(createSampleImage6()), "/home/piotr/pdf/sample6_pdetected.png");
+            Images.writeImageToFile(detectAndAnnotate(createSampleImage7()), "/home/piotr/pdf/sample7_pdetected.png");
+            Images.writeImageToFile(detectAndAnnotate(createSampleImage8()), "/home/piotr/pdf/sample8_pdetected.png");
+            Images.writeImageToFile(detectAndAnnotate(createSampleImage9()), "/home/piotr/pdf/sample9_pdetected.png");
+            Images.writeImageToFile(detectAndAnnotate(createSampleImage10()), "/home/piotr/pdf/sample10_pdetected.png");
+            Images.writeImageToFile(detectAndAnnotate(createSampleImage11()), "/home/piotr/pdf/sample11_pdetected.png");
+            Images.writeImageToFile(detectAndAnnotate(createSampleImage12()), "/home/piotr/pdf/sample12_pdetected.png");
+            Images.writeImageToFile(detectAndAnnotate(createSampleImage13()), "/home/piotr/pdf/sample13_pdetected.png");
+            //List<Rectangle> getPageColumns(Raster raster)
+        } catch (IOException ex) {
+            Logger.getLogger(PageLayoutTest.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    @Test
     public void updateCurrentColumnsTest() {
+
         ArrayList<Integer> separatorPoints = new ArrayList<Integer>();
         separatorPoints.add(20);
         separatorPoints.add(30);
@@ -48,7 +416,7 @@ public class PageLayoutTest {
         ArrayList<Rectangle> startedColumns = new ArrayList<Rectangle>();
         startedColumns.add(new Rectangle(0, 0, 0, 100));
 
-        startedColumns = PageLayoutProvider.updateCurrentColumns(
+        startedColumns = provider.updateCurrentColumns(
                 columns, separatorPoints, startedColumns, 10);
 
         // now we should have three entries in current columns
@@ -78,7 +446,7 @@ public class PageLayoutTest {
         separatorPoints.add(0);
         separatorPoints.add(100);
 
-        startedColumns = PageLayoutProvider.updateCurrentColumns(
+        startedColumns = provider.updateCurrentColumns(
                 columns, separatorPoints, startedColumns, 20);
 
         assertEquals(1, startedColumns.size());
@@ -102,7 +470,7 @@ public class PageLayoutTest {
         ArrayList<Rectangle> startedColumns = new ArrayList<Rectangle>();
         startedColumns.add(new Rectangle(0, 0, 0, 10));
 
-        startedColumns = PageLayoutProvider.updateCurrentColumns(
+        startedColumns = provider.updateCurrentColumns(
                 columns, separatorPoints, startedColumns, 10);
 
         assertEquals(5, startedColumns.size());
@@ -127,7 +495,7 @@ public class PageLayoutTest {
         separatorPoints.clear();
         separatorPoints.add(0);
         separatorPoints.add(7);
-        startedColumns = PageLayoutProvider.updateCurrentColumns(
+        startedColumns = provider.updateCurrentColumns(
                 columns, separatorPoints, startedColumns, 11);
 
         assertEquals(2, startedColumns.size());
@@ -142,7 +510,7 @@ public class PageLayoutTest {
         separatorPoints.clear();
         separatorPoints.add(4);
         separatorPoints.add(10);
-        startedColumns = PageLayoutProvider.updateCurrentColumns(
+        startedColumns = provider.updateCurrentColumns(
                 columns, separatorPoints, startedColumns, 12);
 
         assertEquals(2, startedColumns.size());
@@ -157,7 +525,7 @@ public class PageLayoutTest {
         separatorPoints.clear();
         separatorPoints.add(0);
         separatorPoints.add(10);
-        startedColumns = PageLayoutProvider.updateCurrentColumns(
+        startedColumns = provider.updateCurrentColumns(
                 columns, separatorPoints, startedColumns, 20);
 
         assertEquals(1, startedColumns.size());
@@ -168,7 +536,6 @@ public class PageLayoutTest {
 
     }
 
-
     @Test
     public void updateCurrentColumnsImmediateClosureTest() {
         ArrayList<Integer> separatorPoints = new ArrayList<Integer>();
@@ -178,5 +545,11 @@ public class PageLayoutTest {
         ArrayList<Rectangle> columns = new ArrayList<Rectangle>();
         ArrayList<Rectangle> startedColumns = new ArrayList<Rectangle>();
         startedColumns.add(new Rectangle(0, 0, 0, 12345));
+    }
+
+    // now tests for moving the separators
+    @Test
+    public void testMoveOnCorrectData() {
+        // in this test no move should be performed becasue all the data is correct
     }
 }
