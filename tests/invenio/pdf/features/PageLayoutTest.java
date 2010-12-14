@@ -4,14 +4,16 @@
  */
 package invenio.pdf.features;
 
+import java.util.Random;
+import java.util.Comparator;
+import invenio.common.Pair;
+import java.util.HashMap;
+import java.util.TreeMap;
 import java.util.List;
 import invenio.common.Images;
-import de.intarsys.cwt.image.ImageTools;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.image.Raster;
 import java.awt.Rectangle;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -41,8 +43,10 @@ public class PageLayoutTest {
     @AfterClass
     public static void tearDownClass() throws Exception {
     }
-    private PageLayoutProvider provider = new PageLayoutProvider();
 
+    private PageLayoutProvider provider = new PageLayoutProvider();
+    private Random random = new Random();
+    
     @Before
     public void setUp() {
         /**
@@ -366,21 +370,30 @@ public class PageLayoutTest {
         Graphics graphics = img.getGraphics();
         graphics.setColor(Color.CYAN);
         for (Rectangle column : columns) {
-            graphics.drawRect(column.x, column.y, column.width, column.height);
+            graphics.drawRect(column.x + 1, column.y + 1, column.width - 2, column.height - 2);
         }
         return img;
     }
 
     private BufferedImage annotateImageWithAreas(BufferedImage img, List<List<Rectangle>> areas) {
-        Color[] colours = new Color[]{Color.CYAN, Color.RED, Color.GREEN, Color.BLUE, Color.PINK};
+        Color[] colours = new Color[]{Color.CYAN, Color.RED, Color.GREEN, Color.BLUE, Color.PINK, Color.YELLOW, Color.darkGray};
         int colourIndex = 0;
         Graphics graphics = img.getGraphics();
 
         for (List<Rectangle> area : areas) {
-            graphics.setColor(colours[colourIndex]);
+            if (colourIndex < colours.length) {
+                graphics.setColor(colours[colourIndex]);
+            } else {
+                // no predefiend colour-> generatign a random one
+                
+                graphics.setColor(new Color(random.nextInt(255), random.nextInt(255), random.nextInt(255)));
+            }
+
             colourIndex++;
+
+
             for (Rectangle rec : area) {
-                graphics.drawRect(rec.x, rec.y, rec.width, rec.height);
+                graphics.drawRect(rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2);
             }
         }
         return img;
@@ -393,8 +406,6 @@ public class PageLayoutTest {
         List columns = provider.getPageColumns(img.getData());
         return annotateImageWithColumns(img, columns);
     }
-
-
 
     private BufferedImage detectAdvancedAndAnnotate(BufferedImage img) {
         List<Rectangle> verticalSeparators = new LinkedList<Rectangle>();
@@ -450,6 +461,161 @@ public class PageLayoutTest {
         } catch (IOException ex) {
             Logger.getLogger(PageLayoutTest.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+
+    ////// testing the function for updating current horizontal separators
+    @Test
+    public void updateHorizontalSeparators1() {
+        HashMap<Integer, TreeMap<Rectangle, Pair<Integer, Integer>>> existingSeparators = new HashMap<Integer, TreeMap<Rectangle, Pair<Integer, Integer>>>();
+        int consideredY = 10;
+
+        TreeMap<Rectangle, Pair<Integer, Integer>> currentLine =
+                new TreeMap<Rectangle, Pair<Integer, Integer>>(new Comparator<Rectangle>() {
+
+            @Override
+            public int compare(Rectangle t, Rectangle t1) {
+                return t.x - t1.x;
+            }
+        });
+
+        existingSeparators.put(consideredY, currentLine);
+//        currentLine.put(new Rectangle(10, 10, 30, 0),
+//                new Pair<Integer, Integer>(-1, 1));
+//        
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(0, 10, 100, 0), 1, -1);
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(0, 10, 50, 0), -1, 2);
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(50, 10, 50, 0), -1, 3);
+        // now assertions
+
+        Rectangle r1 = new Rectangle(0, 10, 50, 0);
+        Rectangle r2 = new Rectangle(50, 10, 50, 0);
+
+        assertEquals(2, currentLine.size());
+
+        assertTrue(currentLine.containsKey(r1));
+        assertTrue(currentLine.containsKey(r2));
+
+        assertEquals(1, (int) currentLine.get(r1).first);
+        assertEquals(2, (int) currentLine.get(r1).second);
+
+        assertEquals(1, (int) currentLine.get(r2).first);
+        assertEquals(3, (int) currentLine.get(r2).second);
+
+        //provider.updateHorizontalSeparators(existingSeparators, new Rectangle(12, 10, 4, 0), 45 , -1);
+
+    }
+
+    @Test
+    public void updateHorizontalSeparators2() {
+        HashMap<Integer, TreeMap<Rectangle, Pair<Integer, Integer>>> existingSeparators = new HashMap<Integer, TreeMap<Rectangle, Pair<Integer, Integer>>>();
+        int consideredY = 10;
+
+        TreeMap<Rectangle, Pair<Integer, Integer>> currentLine =
+                new TreeMap<Rectangle, Pair<Integer, Integer>>(new Comparator<Rectangle>() {
+
+            @Override
+            public int compare(Rectangle t, Rectangle t1) {
+                return t.x - t1.x;
+            }
+        });
+
+        existingSeparators.put(consideredY, currentLine);
+
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(0, 10, 50, 0), -1, 2);
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(50, 10, 50, 0), -1, 3);
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(0, 10, 100, 0), 1, -1);
+        // now assertions
+
+        Rectangle r1 = new Rectangle(0, 10, 50, 0);
+        Rectangle r2 = new Rectangle(50, 10, 50, 0);
+
+        assertEquals(2, currentLine.size());
+
+        assertTrue(currentLine.containsKey(r1));
+        assertTrue(currentLine.containsKey(r2));
+
+        assertEquals(1, (int) currentLine.get(r1).first);
+        assertEquals(2, (int) currentLine.get(r1).second);
+
+        assertEquals(1, (int) currentLine.get(r2).first);
+        assertEquals(3, (int) currentLine.get(r2).second);
+
+    }
+
+    @Test
+    public void updateHorizontalSeparators3() {
+        HashMap<Integer, TreeMap<Rectangle, Pair<Integer, Integer>>> existingSeparators = new HashMap<Integer, TreeMap<Rectangle, Pair<Integer, Integer>>>();
+        int consideredY = 10;
+
+        TreeMap<Rectangle, Pair<Integer, Integer>> currentLine =
+                new TreeMap<Rectangle, Pair<Integer, Integer>>(new Comparator<Rectangle>() {
+
+            @Override
+            public int compare(Rectangle t, Rectangle t1) {
+                return t.x - t1.x;
+            }
+        });
+
+        existingSeparators.put(consideredY, currentLine);
+
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(0, 10, 50, 0), -1, 2);
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(0, 10, 100, 0), 1, -1);
+        // now assertions
+
+        Rectangle r1 = new Rectangle(0, 10, 50, 0);
+        Rectangle r2 = new Rectangle(50, 10, 50, 0);
+
+        assertEquals(2, currentLine.size());
+
+        assertTrue(currentLine.containsKey(r1));
+        assertTrue(currentLine.containsKey(r2));
+
+        assertEquals(1, (int) currentLine.get(r1).first);
+        assertEquals(2, (int) currentLine.get(r1).second);
+
+        assertEquals(1, (int) currentLine.get(r2).first);
+        assertEquals(-1, (int) currentLine.get(r2).second);
+    }
+
+    @Test
+    public void updateHorizontalSeparators4() {
+        HashMap<Integer, TreeMap<Rectangle, Pair<Integer, Integer>>> existingSeparators = new HashMap<Integer, TreeMap<Rectangle, Pair<Integer, Integer>>>();
+        int consideredY = 10;
+
+        TreeMap<Rectangle, Pair<Integer, Integer>> currentLine =
+                new TreeMap<Rectangle, Pair<Integer, Integer>>(new Comparator<Rectangle>() {
+
+            @Override
+            public int compare(Rectangle t, Rectangle t1) {
+                return t.x - t1.x;
+            }
+        });
+
+        existingSeparators.put(consideredY, currentLine);
+
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(30, 10, 30, 0), -1, 2);
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(0, 10, 100, 0), 1, -1);
+        // now assertions
+
+        Rectangle r1 = new Rectangle(0, 10, 30, 0);
+        Rectangle r2 = new Rectangle(30, 10, 30, 0);
+        Rectangle r3 = new Rectangle(60, 10, 40, 0);
+
+        assertEquals(3, currentLine.size());
+
+        assertTrue(currentLine.containsKey(r1));
+        assertTrue(currentLine.containsKey(r2));
+        assertTrue(currentLine.containsKey(r3));
+
+
+        assertEquals(1, (int) currentLine.get(r1).first);
+        assertEquals(-1, (int) currentLine.get(r1).second);
+
+        assertEquals(1, (int) currentLine.get(r2).first);
+        assertEquals(2, (int) currentLine.get(r2).second);
+
+        assertEquals(1, (int) currentLine.get(r3).first);
+        assertEquals(-1, (int) currentLine.get(r3).second);
     }
 
     @Test

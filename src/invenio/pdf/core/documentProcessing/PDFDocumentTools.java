@@ -7,8 +7,6 @@ package invenio.pdf.core.documentProcessing;
 import de.intarsys.cwt.awt.environment.CwtAwtGraphicsContext;
 import de.intarsys.cwt.environment.IGraphicsContext;
 import de.intarsys.pdf.content.CSContent;
-import de.intarsys.pdf.content.CSDeviceBasedInterpreter;
-import de.intarsys.pdf.content.CSOperation;
 import de.intarsys.pdf.content.text.CSTextExtractor;
 import de.intarsys.pdf.parser.COSLoadException;
 import de.intarsys.pdf.pd.PDDocument;
@@ -18,7 +16,6 @@ import de.intarsys.pdf.platform.cwt.rendering.CSPlatformRenderer;
 import de.intarsys.pdf.tools.kernel.PDFGeometryTools;
 import de.intarsys.tools.locator.FileLocator;
 import invenio.pdf.core.ExtractorParameters;
-import invenio.pdf.core.Operation;
 import invenio.pdf.core.PDFDocumentManager;
 import invenio.pdf.core.PDFPageManager;
 import java.awt.Color;
@@ -31,8 +28,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * The purpose of this class is to provide interface to a lower level PDF
