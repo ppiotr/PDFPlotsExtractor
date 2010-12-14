@@ -4,6 +4,8 @@
  */
 package invenio.pdf.features;
 
+import com.sun.java.swing.plaf.windows.resources.windows_de;
+import invenio.common.Pair;
 import invenio.pdf.core.ExtractorParameters;
 import invenio.pdf.core.FeatureNotPresentException;
 import invenio.pdf.core.IPDFPageFeature;
@@ -17,6 +19,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -43,13 +46,13 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
     }
 
     /**
-        Useful for isolating unit tests from the rest of the environment
-     
-        her == getHorizontalEmptinessRadius();
-        ver == getVerticalEmptinessRadius();
+    Useful for isolating unit tests from the rest of the environment
 
-        mvsh == getMinimalVerticalSeparatorHeight();
-        mmw == getMinimalMarginWidth(); // minimal height of an area separating columns
+    her == getHorizontalEmptinessRadius();
+    ver == getVerticalEmptinessRadius();
+
+    mvsh == getMinimalVerticalSeparatorHeight();
+    mmw == getMinimalMarginWidth(); // minimal height of an area separating columns
      * @param her
      * @param ver
      * @param mvsh
@@ -90,8 +93,8 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
     private boolean isAreaEmpty(int x, int y, Raster raster) {
         int[] currentPixel = new int[3];
         int r = (int) (this.horizontalEmptinessRadius * raster.getWidth());
-        int minOffset = (int)(r / 2);
-                
+        int minOffset = (int) (r / 2);
+
         for (int dx = 0; dx < r; ++dx) {
             currentPixel = raster.getPixel(x + dx - minOffset, y, currentPixel);
             if (!isPixelEmpty(currentPixel)) {
@@ -117,13 +120,21 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
 
         for (int dx = 0; dx < width; dx++) {
             for (int dy = -er; dy <= er; dy++) {
-                currentPixel = raster.getPixel(x + dx, y, currentPixel);
-                if (!isPixelEmpty(currentPixel)) {
-                    return false;
+                if (x + dx >= 0 && x + dx < raster.getWidth() && y + dy >= 0
+                        && y + dy < raster.getHeight()) {
+                    currentPixel = raster.getPixel(x + dx, y + dy, currentPixel);
+                    if (!isPixelEmpty(currentPixel)) {
+                        return false;
+                    }
                 }
             }
         }
         return true;
+    }
+
+    public List<Rectangle> getPageColumns(Raster raster) {
+        LinkedList<Rectangle> separators = new LinkedList<Rectangle>();
+        return getPageColumns(raster, separators);
     }
 
     /** Detects a layout of the page by searching high consistent blocks of
@@ -135,7 +146,7 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
      * @param pageManager
      * @return
      */
-    public List<Rectangle> getPageColumns(Raster raster) {
+    public List<Rectangle> getPageColumns(Raster raster, List<Rectangle> verticalSeparators) {
         int minimalHeight = (int) (raster.getHeight() * this.minimalFractionOfColumnSeparatorHeight);
         //       int minimalWidth = (int) (raster.getWidth() * minimalFractionOfColumnSeparatorWidth);
         int minimalLeft = (int) (raster.getWidth() * this.minimalFractionOfMarginWidth);
@@ -165,11 +176,11 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
             emptyAreas.clear();
             currentColumnEvaluation = 0;
 
-            for (int y = 0; y < raster.getHeight(); ++y) {
-                if (!isAreaEmpty(x, y, raster) || (y == (raster.getHeight() - 1))) {
-                    if ((y - emptyAreaBeginning -1) > minimalHeight) {
+            for (int y = 0; y <= raster.getHeight(); ++y) {
+                if ((y == raster.getHeight()) || !isAreaEmpty(x, y, raster)) {
+                    if ((y - emptyAreaBeginning - 1) > minimalHeight) {
                         emptyAreas.add(emptyAreaBeginning);
-                        emptyAreas.add(y-1);
+                        emptyAreas.add(y);
                         currentColumnEvaluation += y - emptyAreaBeginning;
                     }
                     emptyAreaBeginning = y + 1;
@@ -192,9 +203,21 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
                     // apply the maximal separator
                     startedColumns = updateCurrentColumns(columns,
                             maximalSeparators, startedColumns, xOfMaximum);
+
                     // now reseting maximal values
                     maximalWeight = 0;
                     inMaximisationMode = false;
+
+
+                    // now updating the list of vertical separators
+
+                    int pos = 0;
+                    while (pos < maximalSeparators.size()) {
+                        verticalSeparators.add(new Rectangle(xOfMaximum,
+                                maximalSeparators.get(pos), 0,
+                                maximalSeparators.get(pos + 1) - maximalSeparators.get(pos)));
+                        pos += 2;
+                    }
                 }
             } else {
                 if (!emptyAreas.isEmpty()) {
@@ -208,12 +231,14 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
 
         finalSeparator.add(0);
 
-        finalSeparator.add(raster.getHeight() - 1);
+        finalSeparator.add(raster.getHeight());
 
         updateCurrentColumns(columns, finalSeparator, startedColumns, raster.getWidth()); // we do not care
         // of the currently
         // open columns any more
 
+        verticalSeparators.add(new Rectangle(0, 0, 0, raster.getHeight()));
+        verticalSeparators.add(new Rectangle(raster.getWidth(), 0, 0, raster.getHeight()));
 
         return columns;
 
@@ -305,12 +330,91 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
         return newColumns;
     }
 
+    /**
+     * Sometimes we need to split existing horizontal separators in order to accomodate new
+     * 
+     * @param existingSeparators : a map Y coordinate -> Separator (as a rectangle) -> Pair of top and pottom areas adjacent to it
+     * @param currentRectangle
+     * @param upperArea - the identifier of the area above the current separator (-1 in the case of missing area
+     * @param lowerArea - the identifier of the area below the current separator (-1 in the case of missing area
+     */
+    private void updateHorizontalSeparators(
+            Map<Integer, TreeMap<Rectangle, Pair<Integer, Integer>>> existingSeparators,
+            Rectangle currentRectangle, Integer upperArea, Integer lowerArea) {
+
+
+
+        LinkedList<Rectangle> intersecting = new LinkedList<Rectangle>();
+        TreeMap<Rectangle, Pair<Integer, Integer>> currentLine = existingSeparators.get(currentRectangle.y);
+        // 1) get all the intersecting separators from the tree -> all between beginning and end of our interval
+        // but also possibly one before the beginning if it intersects
+
+        Rectangle previous = currentLine.floorKey(new Rectangle(
+                currentRectangle.x, currentRectangle.y, 1, 0));
+
+        if (previous.x + previous.width > currentRectangle.x) {
+            intersecting.addLast(previous);
+        }
+
+        for (Rectangle r : currentLine.subMap(currentRectangle,
+                new Rectangle(currentRectangle.x + currentRectangle.width,
+                currentRectangle.y, 1, 0)).keySet()) {
+            intersecting.addLast(r);
+        }
+
+        // we remove first and last intersecting interval and the rest remains the same
+
+        if (intersecting.size() == 0) {
+            // there are no intersecting separators -> simply add a new one
+            currentLine.put(currentRectangle, new Pair<Integer, Integer>(upperArea, lowerArea));
+            return;
+        }
+
+        Rectangle first = intersecting.getFirst();
+        if (first == currentRectangle) {
+            // the simplest case -> we do not have to split anything
+            if (upperArea >= 0) {
+                currentLine.get(first).first = upperArea;
+            }
+            if (lowerArea >= 0) {
+                currentLine.get(first).second = lowerArea;
+            }
+            return;
+        }
+
+
+        // 1) split first and make new intersecting begin ogether with the one
+        Pair<Integer, Integer> firstVals = currentLine.get(first);
+
+        currentLine.remove(first);
+        intersecting.removeFirst();
+
+        Rectangle newFirst = new Rectangle(first.x, first.y,
+                currentRectangle.x - first.x, 0);
+
+        Rectangle newSecond = new Rectangle(currentRectangle.x,
+                currentRectangle.y,
+                currentRectangle.width - currentRectangle.x + first.x, 0);
+
+        currentLine.put(newFirst, firstVals);
+        currentLine.put(newSecond, new Pair<Integer, Integer>(firstVals.first, firstVals.second));
+        intersecting.addFirst(newSecond);
+        
+
+        for (Rectangle curRect: intersecting){
+            // we have to determin which one should be splitted now
+        }
+        
+        // we are in the case of really intersecting rectangles
+    }
+
     // Here comes the code for correcting the horizontal separators.
     // After the initial processing, vertical separators are correct but
     // horizontal separators might intersect some data points.
     // Those functions move horizontal boundaries in such a way that they
     // do not break in the middle of the data
-    public PageLayout fixHorizontalSeparators(List<Rectangle> preliminaryAreas, List<Rectangle> verticalSeparators, Raster raster) {
+    public PageLayout fixHorizontalSeparators(List<Rectangle> preliminaryAreas,
+            List<Rectangle> verticalSeparators, Raster raster) {
 
         // declarations of data structures required by the algorithm:
 
@@ -322,36 +426,12 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
         ArrayList<Rectangle> layoutElements =
                 new ArrayList<Rectangle>(preliminaryAreas.size());
 
-
-        // TreeSet<Rectangle> horizontalSeparators = new TreeSet<Rectangle>(new Comparator<Rectangle>(){
-        //     @Override
-        //     public int compare(Rectangle t, Rectangle t1) {
-        //         if (t.x < t1.x) return -1;
-        //         if (t.x > t1.x) return 1;
-
-        //         if (t.y < t1.y) return -1;
-        //         if (t.y > t1.y) return 1;
-
-        //         if (t.width < t1.width) return -1;
-        //         if (t.width > t1.width) return 1;
-
-        //         // height does not exist for us
-        //         return 0;
-        //     }
-        // });
         HashSet<Rectangle> horizontalSeparators = new HashSet<Rectangle>();
 
         // mapping from separators to rectangles (identified by their Id's)
 
         HashMap<Rectangle, Integer> upperRectangles = new HashMap<Rectangle, Integer>();
         HashMap<Rectangle, Integer> lowerRectangles = new HashMap<Rectangle, Integer>();
-
-        // maps from rectangles to separators. Separators do not move so we can
-        // simply save a value
-
-        HashMap<Integer, Rectangle> areaUpperSeparator = new HashMap<Integer, Rectangle>();
-        HashMap<Integer, Rectangle> areaLowerSeparator = new HashMap<Integer, Rectangle>();
-
 
         // mapping to the parent of a given area
         TreeMap<Integer, Integer> areasParents = new TreeMap<Integer, Integer>();
@@ -365,6 +445,7 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
 
         // all the separators are represented as Rectangles having either width or height set to 0
         // 1) locate all the horizontal lines and sort them
+
         for (Rectangle rectangle : preliminaryAreas) {
             // add upper and lower edges to the data structure
             int position = layoutElements.size();
@@ -378,11 +459,11 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
             Rectangle lowerSeparator = new Rectangle(rectangle.x,
                     rectangle.y + rectangle.height, rectangle.width, 0);
 
-            areaUpperSeparator.put(position, upperSeparator);
-            areaLowerSeparator.put(position, lowerSeparator);
-
             upperRectangles.put(lowerSeparator, position);
             lowerRectangles.put(upperSeparator, position);
+
+            // check if the separator is not intersecting another one
+
             upperSeparator.hashCode();
 
             // adding separators - only for the iteration purposes
@@ -391,17 +472,19 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
 
         }
 
+
         // now detecting which vetical separators are adjacent to horizontal ones
         for (Rectangle hSeparator : horizontalSeparators) {
+            LinkedList<Rectangle> adj = new LinkedList<Rectangle>();
             for (Rectangle vSeparator : verticalSeparators) { // TODO: this could be optimized in order to have a time better than quadratic
-                LinkedList<Rectangle> adj = new LinkedList<Rectangle>();
 
                 if ((hSeparator.x == vSeparator.x || hSeparator.x + hSeparator.width == vSeparator.x)
                         && (vSeparator.y <= hSeparator.y && vSeparator.y + vSeparator.height >= hSeparator.y)) {
                     adj.add(vSeparator);
                 }
-                adjacentVSeparators.put(hSeparator, adj);
+
             }
+            adjacentVSeparators.put(hSeparator, adj);
         }
 
 
@@ -442,7 +525,7 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
                     cSeparator.y -= separatorInc;
                 }
 
-                Integer shRectangleId = (moveDown ? lowerRectangles : upperRectangles).get(horizontalSeparators);
+                Integer shRectangleId = (moveDown ? lowerRectangles : upperRectangles).get(hSeparator);
                 Rectangle shRectangle = layoutElements.get(shRectangleId);
 
                 if (shRectangle.y == cSeparator.y || shRectangle.y + shRectangle.height == cSeparator.y) {
@@ -473,13 +556,9 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
                         upperRectangles.put(cSeparator, newId);
                         lowerRectangles.put(cSeparator, shRectangleId);
 
-                        areaUpperSeparator.put(newId, hSeparator);
-                        areaLowerSeparator.put(newId, cSeparator);
-
                         // updating existing informaions !
 
                         lowerRectangles.put(hSeparator, newId);
-                        areaUpperSeparator.put(shRectangleId, cSeparator);
 
                     } else {
                         Rectangle newShrinkedRectangle = new Rectangle(shRectangle.x, shRectangle.y, shRectangle.width, shRectangle.height - movedBy);
@@ -565,12 +644,12 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
      * @return
      */
     private boolean isValidSeparatorPositionV(Rectangle hSeparator, List<Rectangle> vSeparators) {
-        for (Rectangle vSeparator: vSeparators){
-            if (hSeparator.y < vSeparator.y  || hSeparator.y > vSeparator.y + vSeparator.height){
+        for (Rectangle vSeparator : vSeparators) {
+            if (hSeparator.y < vSeparator.y || hSeparator.y > vSeparator.y + vSeparator.height) {
                 return false;
             }
         }
-        
+
         return true;
     }
 

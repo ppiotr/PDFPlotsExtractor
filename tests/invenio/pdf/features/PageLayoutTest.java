@@ -15,6 +15,7 @@ import java.awt.image.Raster;
 import java.awt.Rectangle;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.junit.After;
@@ -313,7 +314,6 @@ public class PageLayoutTest {
         return image;
     }
 
-
     /** Simple three columns */
     private BufferedImage createSampleImage14() {
 
@@ -371,12 +371,37 @@ public class PageLayoutTest {
         return img;
     }
 
+    private BufferedImage annotateImageWithAreas(BufferedImage img, List<List<Rectangle>> areas) {
+        Color[] colours = new Color[]{Color.CYAN, Color.RED, Color.GREEN, Color.BLUE, Color.PINK};
+        int colourIndex = 0;
+        Graphics graphics = img.getGraphics();
+
+        for (List<Rectangle> area : areas) {
+            graphics.setColor(colours[colourIndex]);
+            colourIndex++;
+            for (Rectangle rec : area) {
+                graphics.drawRect(rec.x, rec.y, rec.width, rec.height);
+            }
+        }
+        return img;
+    }
+
     /**
      *  Detect preliminary columns and annotate image
      */
     private BufferedImage detectAndAnnotate(BufferedImage img) {
         List columns = provider.getPageColumns(img.getData());
         return annotateImageWithColumns(img, columns);
+    }
+
+
+
+    private BufferedImage detectAdvancedAndAnnotate(BufferedImage img) {
+        List<Rectangle> verticalSeparators = new LinkedList<Rectangle>();
+        List<Rectangle> columns = provider.getPageColumns(img.getData(), verticalSeparators);
+
+        PageLayout layout = provider.fixHorizontalSeparators(columns, verticalSeparators, img.getData());
+        return annotateImageWithAreas(img, layout.areas);
     }
 
     /**
@@ -399,6 +424,28 @@ public class PageLayoutTest {
             Images.writeImageToFile(detectAndAnnotate(createSampleImage11()), "/home/piotr/pdf/sample11_pdetected.png");
             Images.writeImageToFile(detectAndAnnotate(createSampleImage12()), "/home/piotr/pdf/sample12_pdetected.png");
             Images.writeImageToFile(detectAndAnnotate(createSampleImage13()), "/home/piotr/pdf/sample13_pdetected.png");
+            //List<Rectangle> getPageColumns(Raster raster)
+        } catch (IOException ex) {
+            Logger.getLogger(PageLayoutTest.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    @Test
+    public void testAdvancedColumnDetection() {
+        try {
+            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage1()), "/home/piotr/pdf/sample1_pdetecteda.png");
+            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage2()), "/home/piotr/pdf/sample2_pdetecteda.png");
+            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage3()), "/home/piotr/pdf/sample3_pdetecteda.png");
+            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage4()), "/home/piotr/pdf/sample4_pdetecteda.png");
+            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage5()), "/home/piotr/pdf/sample5_pdetecteda.png");
+            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage6()), "/home/piotr/pdf/sample6_pdetecteda.png");
+            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage7()), "/home/piotr/pdf/sample7_pdetecteda.png");
+            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage8()), "/home/piotr/pdf/sample8_pdetecteda.png");
+            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage9()), "/home/piotr/pdf/sample9_pdetecteda.png");
+            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage10()), "/home/piotr/pdf/sample10_pdetecteda.png");
+            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage11()), "/home/piotr/pdf/sample11_pdetecteda.png");
+            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage12()), "/home/piotr/pdf/sample12_pdetecteda.png");
+            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage13()), "/home/piotr/pdf/sample13_pdetecteda.png");
             //List<Rectangle> getPageColumns(Raster raster)
         } catch (IOException ex) {
             Logger.getLogger(PageLayoutTest.class.getName()).log(Level.SEVERE, null, ex);
