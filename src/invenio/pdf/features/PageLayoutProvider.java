@@ -232,7 +232,6 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
         ArrayList<Integer> finalSeparator = new ArrayList<Integer>();
 
         finalSeparator.add(0);
-
         finalSeparator.add(raster.getHeight());
 
         updateCurrentColumns(columns, finalSeparator, startedColumns, raster.getWidth()); // we do not care
@@ -582,6 +581,17 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
                     succededWithMove = isHorizontalSeparator(cSeparator.x, cSeparator.y, cSeparator.width, raster);
                     movedBy++;
                 }
+                // we have a separator of a limit of the movement -> in order to avoid potential empty space, we
+                // will move the separator as far as possible as long as it is a separator
+                
+                while (isValidSeparatorPositionV(cSeparator,
+                        adjacentVSeparators.get(hSeparator))
+                        && isHorizontalSeparator(cSeparator.x, cSeparator.y + separatorInc,
+                        cSeparator.width, raster) && cSeparator.y + separatorInc < raster.getHeight())  {
+
+                    cSeparator.y += separatorInc;
+                    movedBy++;
+                }
 
                 if (!succededWithMove) {
                     // we are in the first invalid position -> we have to go back by one
@@ -593,7 +603,7 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
                 Rectangle shRectangle = layoutElements.get(shRectangleId);
 
                 if (shRectangle.y == cSeparator.y || shRectangle.y + shRectangle.height == cSeparator.y) {
-                    // if we moved to far -> which means, the adjacent rectangle will be shrinked to zero
+                    // if we moved too far -> which means, the adjacent rectangle will be shrinked to zero
                     // what about the borders ?! in this case there will be no lower area !
 
                     Integer btmRecId = (moveDown ? lowerRectangles.get(cSeparator) : lowerRectangles.get(hSeparator));
@@ -624,6 +634,9 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
 
                         lowerRectangles.put(hSeparator, newId);
 
+                        // and now establishing the parental relation
+                        areasParents.put(newId, upperRectangles.get(hSeparator));
+
                     } else {
                         Rectangle newShrinkedRectangle = new Rectangle(shRectangle.x, shRectangle.y, shRectangle.width, shRectangle.height - movedBy);
                         Rectangle newRectangle = new Rectangle(shRectangle.x, cSeparator.y, shRectangle.width, movedBy);
@@ -642,7 +655,8 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
 
                         upperRectangles.put(hSeparator, newId);
                         //                       areaLowerSeparator.put(shRectangleId, cSeparator);
-
+                        // and finally establishing the parental relation
+                        areasParents.put(newId, lowerRectangles.get(hSeparator));
                     }
                 }
             }

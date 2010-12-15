@@ -4,6 +4,8 @@
  */
 package invenio.pdf.features;
 
+import java.util.HashSet;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.Comparator;
 import invenio.common.Pair;
@@ -43,10 +45,9 @@ public class PageLayoutTest {
     @AfterClass
     public static void tearDownClass() throws Exception {
     }
-
     private PageLayoutProvider provider = new PageLayoutProvider();
     private Random random = new Random();
-    
+
     @Before
     public void setUp() {
         /**
@@ -57,7 +58,89 @@ public class PageLayoutTest {
         this.provider = new PageLayoutProvider(0.01, 0.005, 0.3, 0.2);
     }
 
+    /**
+     * asserts that requested areas are present
+     * @param detectedAreas
+     * @param areasToBePresent
+     */
+    private void assertAreas(List<List<Rectangle>> detectedAreas, List<List<Rectangle>> expectedAreas) {
+        int totalExpected = 0;
+        int totalPresent = 0;
+
+        HashMap<Rectangle, Integer> invertedAreas = new HashMap<Rectangle, Integer>();
+        for (Integer areaInd = 0; areaInd < expectedAreas.size(); areaInd++) {
+            for (Rectangle rec : expectedAreas.get(areaInd)) {
+                invertedAreas.put(rec, areaInd);
+                totalPresent++;
+            }
+        }
+        HashMap<Integer, Integer> areasMapping = new HashMap<Integer, Integer>();
+
+        // end of preparing - now clear asserting
+        for (Integer areaInd = 0; areaInd < detectedAreas.size(); areaInd++) {
+            int correspondingArea = -1;
+            for (Rectangle rec : detectedAreas.get(areaInd)) {
+                assertTrue("Detected a rectangle not present in the expected set : " + rec.toString(), invertedAreas.containsKey(rec));
+                if (correspondingArea == -1) {
+                    correspondingArea = invertedAreas.get(rec);
+                }
+                assertEquals("the rectangle is present but appears in a wrong area", (int) correspondingArea, (int) invertedAreas.get(rec));
+                totalExpected++;
+            }
+        }
+        assertEquals("Too many rectangles detected ! ", totalExpected, totalPresent);
+    }
+
+    private void assertColumns(List<Rectangle> detected, List<Rectangle> expected) {
+        HashSet<Rectangle> set = new HashSet<Rectangle>();
+        // building strings:
+        String expectedString = "";
+        String detectedString = "";
+        for (Rectangle rec: detected){
+            detectedString += " " + rec.toString();
+        }
+
+        for (Rectangle rec: expected){
+            expectedString += " " + rec.toString();
+        }
+
+        assertEquals("Detected " + detected.size() + " while expected " + expected.size() + " columns. \n Expected rectangles: " + expectedString + "\n Detected rectangles: " + detectedString, expected.size(), detected.size());
+        for (Rectangle rec : expected) {
+            set.add(rec);
+        }
+        for (Rectangle rec : detected) {
+            assertTrue("Detected an unwanted rectangle : " + rec.toString() + "\n Expected rectangles: " + expectedString + "\n Detected rectangles: " + detectedString, set.contains(rec));
+        }
+    }
+
+    public void testSample(BufferedImage img, List<List<Rectangle>> expected) {
+        List<Rectangle> verticalSeparators = new LinkedList<Rectangle>();
+        List<Rectangle> preliminaryAreas = provider.getPageColumns(img.getData(), verticalSeparators);
+        PageLayout layout = provider.fixHorizontalSeparators(preliminaryAreas, verticalSeparators, img.getData());
+        assertAreas(layout.areas, expected);
+    }
+
+    public void testSampleColumns(BufferedImage img, List<Rectangle> expected) {
+        List<Rectangle> preliminaryAreas = provider.getPageColumns(img.getData());
+        assertColumns(preliminaryAreas, expected);
+    }
+
+    /**
+     * creates a list of rectabngles containing all the rectangles from its sublists
+     * @param recs
+     * @return
+     */
+    public List<Rectangle> flattenRectangles(List<List<Rectangle>> recs) {
+        LinkedList<Rectangle> result = new LinkedList<Rectangle>();
+        for (List<Rectangle> area : recs) {
+            for (Rectangle r : area) {
+                result.add(r);
+            }
+        }
+        return result;
+    }
     /* Creation of a set of sample rasters */
+
     /**
      * Create the simplest case of a two column layout
      * @return
@@ -77,6 +160,23 @@ public class PageLayoutTest {
         return image;
     }
 
+    private List<List<Rectangle>> createSampleAreas1() {
+        //return new LinkedList<LinkedList<Rectangle>>() {}
+        return Arrays.asList(
+                Arrays.asList(new Rectangle(0, 0, 50, 200)),
+                Arrays.asList(new Rectangle(50, 0, 50, 200)));
+    }
+
+//    @Test
+//    public void testSampleImage1() {
+//        testSample(createSampleImage1(), createSampleAreas1());
+//    }
+//
+//    @Test
+//    public void testSampleImage1Columns() {
+//        testSampleColumns(createSampleImage1(), flattenRectangles(createSampleAreas1()));
+//    }
+
     private BufferedImage createSampleImage2() {
         BufferedImage image = new BufferedImage(100, 200, BufferedImage.TYPE_INT_RGB);
         Graphics graphics = image.getGraphics();
@@ -94,6 +194,24 @@ public class PageLayoutTest {
         return image;
     }
 
+    private List<List<Rectangle>> createSampleAreas2() {
+        //return new LinkedList<LinkedList<Rectangle>>() {}
+        return Arrays.asList(
+                Arrays.asList(new Rectangle(0, 50, 50, 150)),
+                Arrays.asList(new Rectangle(0, 0, 100, 50)),
+                Arrays.asList(new Rectangle(50, 50, 50, 150)));
+    }
+//
+//    @Test
+//    public void testSampleImage2() {
+//        testSample(createSampleImage2(), createSampleAreas2());
+//    }
+
+//    @Test
+//    public void testSampleImage2Columns() {
+//        testSampleColumns(createSampleImage2(), flattenRectangles(createSampleAreas2()));
+//    }
+
     private BufferedImage createSampleImage3() {
         BufferedImage image = new BufferedImage(100, 200, BufferedImage.TYPE_INT_RGB);
         Graphics graphics = image.getGraphics();
@@ -108,6 +226,25 @@ public class PageLayoutTest {
         graphics.fillRect(10, 151, 81, 40);
 
         return image;
+    }
+
+    private List<List<Rectangle>> createSampleAreas3() {
+        //return new LinkedList<LinkedList<Rectangle>>() {}
+        return Arrays.asList(
+                Arrays.asList(new Rectangle(0, 0, 50, 150)),
+                Arrays.asList(new Rectangle(0, 150, 100, 50)),
+                Arrays.asList(new Rectangle(50, 0, 50, 150)));
+    }
+
+//    @Test
+//    public void testSampleImage3() {
+//
+//        testSample(createSampleImage3(), createSampleAreas3());
+//    }
+
+    @Test
+    public void testSampleImage3Columns() {
+        testSampleColumns(createSampleImage3(), flattenRectangles(createSampleAreas3()));
     }
 
     private BufferedImage createSampleImage4() {
@@ -370,7 +507,7 @@ public class PageLayoutTest {
         Graphics graphics = img.getGraphics();
         graphics.setColor(Color.CYAN);
         for (Rectangle column : columns) {
-            graphics.drawRect(column.x + 1, column.y + 1, column.width - 2, column.height - 2);
+            graphics.drawRect(column.x, column.y, column.width - 1, column.height - 1);
         }
         return img;
     }
@@ -385,7 +522,7 @@ public class PageLayoutTest {
                 graphics.setColor(colours[colourIndex]);
             } else {
                 // no predefiend colour-> generatign a random one
-                
+
                 graphics.setColor(new Color(random.nextInt(255), random.nextInt(255), random.nextInt(255)));
             }
 
@@ -393,7 +530,7 @@ public class PageLayoutTest {
 
 
             for (Rectangle rec : area) {
-                graphics.drawRect(rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2);
+                graphics.drawRect(rec.x, rec.y, rec.width - 1, rec.height - 1);
             }
         }
         return img;
