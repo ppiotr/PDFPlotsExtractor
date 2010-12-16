@@ -182,7 +182,8 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
                 if ((y == raster.getHeight()) || !isAreaEmpty(x, y, raster)) {
                     if ((y - emptyAreaBeginning - 1) > minimalHeight) {
                         emptyAreas.add(emptyAreaBeginning);
-                        emptyAreas.add(y);
+
+                        emptyAreas.add((y == raster.getHeight()) ? y : (y - 1));
                         currentColumnEvaluation += y - emptyAreaBeginning;
                     }
                     emptyAreaBeginning = y + 1;
@@ -593,6 +594,11 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
                     movedBy++;
                 }
 
+                if (cSeparator.y == raster.getHeight() - 1){
+                    // if we are at the very bottom, we are interested in moving the separator one more
+                    // to go outside of the page
+                    ++cSeparator.y;
+                }
                 if (!succededWithMove) {
                     // we are in the first invalid position -> we have to go back by one
                     cSeparator.y -= separatorInc;

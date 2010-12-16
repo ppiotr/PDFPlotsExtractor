@@ -58,12 +58,52 @@ public class PageLayoutTest {
         this.provider = new PageLayoutProvider(0.01, 0.005, 0.3, 0.2);
     }
 
+    private String rectangleString(Rectangle r) {
+        return "new Rectangle(" + r.x + ", " + r.y + ", " + r.width + ", " + r.height + ")";
+    }
+
+    private String columnsString(List<Rectangle> area) {
+        String resultString = "Arrays.asList(";
+        boolean first = true;
+        for (Rectangle rec : area) {
+            if (!first) {
+                resultString += ", ";
+            }
+            first = false;
+            resultString += rectangleString(rec);
+
+        }
+        resultString += ")";
+        return resultString;
+    }
+
+    private String areasString(List<List<Rectangle>> areas) {
+        String resultString = "Arrays.asList(";
+
+        boolean firstLine = true;
+        for (List<Rectangle> area : areas) {
+            if (!firstLine) {
+                resultString += ",";
+            }
+            firstLine = false;
+            resultString += "\n  ";
+            resultString += columnsString(area);
+        }
+        resultString += ")";
+        return resultString;
+    }
+
     /**
      * asserts that requested areas are present
      * @param detectedAreas
      * @param areasToBePresent
      */
     private void assertAreas(List<List<Rectangle>> detectedAreas, List<List<Rectangle>> expectedAreas) {
+        String expectedString = areasString(expectedAreas);
+        String detectedString = areasString(detectedAreas);
+
+        String debugMessage = "detected areas: \n" + detectedString + "\n expected areas: \n" + expectedString;
+
         int totalExpected = 0;
         int totalPresent = 0;
 
@@ -74,35 +114,33 @@ public class PageLayoutTest {
                 totalPresent++;
             }
         }
+
         HashMap<Integer, Integer> areasMapping = new HashMap<Integer, Integer>();
 
         // end of preparing - now clear asserting
         for (Integer areaInd = 0; areaInd < detectedAreas.size(); areaInd++) {
             int correspondingArea = -1;
             for (Rectangle rec : detectedAreas.get(areaInd)) {
-                assertTrue("Detected a rectangle not present in the expected set : " + rec.toString(), invertedAreas.containsKey(rec));
+                assertTrue("Detected a rectangle not present in the expected set : "
+                        + rec.toString() + "\n\n" + debugMessage,
+                        invertedAreas.containsKey(rec));
                 if (correspondingArea == -1) {
                     correspondingArea = invertedAreas.get(rec);
                 }
-                assertEquals("the rectangle is present but appears in a wrong area", (int) correspondingArea, (int) invertedAreas.get(rec));
+                assertEquals("the rectangle is present but appears in a wrong area"
+                        + "\n\n" + debugMessage,
+                        (int) correspondingArea, (int) invertedAreas.get(rec));
                 totalExpected++;
             }
         }
-        assertEquals("Too many rectangles detected ! ", totalExpected, totalPresent);
+        assertEquals("Too many rectangles detected ! \n\n" + debugMessage, totalExpected, totalPresent);
     }
 
     private void assertColumns(List<Rectangle> detected, List<Rectangle> expected) {
         HashSet<Rectangle> set = new HashSet<Rectangle>();
         // building strings:
-        String expectedString = "";
-        String detectedString = "";
-        for (Rectangle rec: detected){
-            detectedString += " " + rec.toString();
-        }
-
-        for (Rectangle rec: expected){
-            expectedString += " " + rec.toString();
-        }
+        String expectedString = columnsString(expected);
+        String detectedString = columnsString(detected);
 
         assertEquals("Detected " + detected.size() + " while expected " + expected.size() + " columns. \n Expected rectangles: " + expectedString + "\n Detected rectangles: " + detectedString, expected.size(), detected.size());
         for (Rectangle rec : expected) {
@@ -167,15 +205,15 @@ public class PageLayoutTest {
                 Arrays.asList(new Rectangle(50, 0, 50, 200)));
     }
 
-//    @Test
-//    public void testSampleImage1() {
-//        testSample(createSampleImage1(), createSampleAreas1());
-//    }
-//
-//    @Test
-//    public void testSampleImage1Columns() {
-//        testSampleColumns(createSampleImage1(), flattenRectangles(createSampleAreas1()));
-//    }
+    @Test
+    public void testSampleImage1() {
+        testSample(createSampleImage1(), createSampleAreas1());
+    }
+
+    @Test
+    public void testSampleImage1Columns() {
+        testSampleColumns(createSampleImage1(), flattenRectangles(createSampleAreas1()));
+    }
 
     private BufferedImage createSampleImage2() {
         BufferedImage image = new BufferedImage(100, 200, BufferedImage.TYPE_INT_RGB);
@@ -201,16 +239,16 @@ public class PageLayoutTest {
                 Arrays.asList(new Rectangle(0, 0, 100, 50)),
                 Arrays.asList(new Rectangle(50, 50, 50, 150)));
     }
-//
-//    @Test
-//    public void testSampleImage2() {
-//        testSample(createSampleImage2(), createSampleAreas2());
-//    }
 
-//    @Test
-//    public void testSampleImage2Columns() {
-//        testSampleColumns(createSampleImage2(), flattenRectangles(createSampleAreas2()));
-//    }
+    @Test
+    public void testSampleImage2() {
+        testSample(createSampleImage2(), createSampleAreas2());
+    }
+
+    @Test
+    public void testSampleImage2Columns() {
+        testSampleColumns(createSampleImage2(), flattenRectangles(createSampleAreas2()));
+    }
 
     private BufferedImage createSampleImage3() {
         BufferedImage image = new BufferedImage(100, 200, BufferedImage.TYPE_INT_RGB);
@@ -236,11 +274,11 @@ public class PageLayoutTest {
                 Arrays.asList(new Rectangle(50, 0, 50, 150)));
     }
 
-//    @Test
-//    public void testSampleImage3() {
-//
-//        testSample(createSampleImage3(), createSampleAreas3());
-//    }
+    @Test
+    public void testSampleImage3() {
+
+        testSample(createSampleImage3(), createSampleAreas3());
+    }
 
     @Test
     public void testSampleImage3Columns() {
@@ -258,11 +296,31 @@ public class PageLayoutTest {
         graphics.setColor(Color.BLACK);
 
         graphics.fillRect(10, 10, 81, 40);
-        graphics.fillRect(10, 51, 40, 100);
-        graphics.fillRect(51, 51, 40, 100);
-        graphics.fillRect(10, 152, 81, 40);
+        graphics.fillRect(10, 51, 40, 99);
+        graphics.fillRect(51, 51, 40, 99);
+        graphics.fillRect(10, 151, 81, 40);
 
         return image;
+    }
+
+    private List<List<Rectangle>> createSampleAreas4() {
+        //return new LinkedList<LinkedList<Rectangle>>() {}
+        return Arrays.asList(
+                Arrays.asList(new Rectangle(0, 150, 100, 50)),
+                Arrays.asList(new Rectangle(0, 50, 50, 100)),
+                Arrays.asList(new Rectangle(50, 50, 50, 100)),
+                Arrays.asList(new Rectangle(0, 0, 100, 50)));
+    }
+
+    @Test
+    public void testSampleImage4() {
+
+        testSample(createSampleImage4(), createSampleAreas4());
+    }
+
+    @Test
+    public void testSampleImage4Columns() {
+        testSampleColumns(createSampleImage4(), flattenRectangles(createSampleAreas4()));
     }
 
     /**
@@ -284,10 +342,24 @@ public class PageLayoutTest {
         graphics.fillRect(50, 10, 41, 40);
 
         graphics.fillRect(10, 56, 40, 95);
-        graphics.fillRect(51, 51, 40, 100);
-        graphics.fillRect(10, 152, 81, 40);
+        graphics.fillRect(51, 51, 40, 99);
+        graphics.fillRect(10, 151, 81, 40);
 
         return image;
+    }
+
+    private List<List<Rectangle>> createSampleAreas5() {
+        return Arrays.asList(
+                Arrays.asList(new Rectangle(0, 50, 50, 5), new Rectangle(0, 0, 100, 50)),
+                Arrays.asList(new Rectangle(50, 50, 50, 100)),
+                Arrays.asList(new Rectangle(0, 55, 50, 95), new Rectangle(0, 150, 100, 50)));
+    }
+
+    // Starting from here, we do not have simple columns so one of the tests can not be performed
+    @Test
+    public void testSampleImage5() {
+
+        testSample(createSampleImage5(), createSampleAreas5());
     }
 
     private BufferedImage createSampleImage6() {
@@ -300,19 +372,40 @@ public class PageLayoutTest {
         // now the painting -> in order to stimulate data we paint black rectangles
         graphics.setColor(Color.BLACK);
 
-
         graphics.fillRect(10, 10, 40, 45);
         graphics.fillRect(50, 10, 41, 40);
 
-        graphics.fillRect(10, 56, 40, 90);
-        graphics.fillRect(51, 51, 40, 100);
+        graphics.fillRect(10, 56, 40, 89);
+        graphics.fillRect(51, 51, 40, 99);
 
-        graphics.fillRect(10, 147, 40, 45);
-        graphics.fillRect(50, 152, 41, 40);
+        graphics.fillRect(10, 146, 40, 45);
+        graphics.fillRect(50, 151, 41, 40);
 
         return image;
     }
 
+    private List<List<Rectangle>> createSampleAreas6() {
+        return Arrays.asList(
+                Arrays.asList(new Rectangle(0, 55, 50, 90)),
+                Arrays.asList(new Rectangle(0, 50, 50, 5), new Rectangle(0, 0, 100, 50)),
+                Arrays.asList(new Rectangle(50, 50, 50, 100)),
+                Arrays.asList(new Rectangle(0, 145, 50, 5), new Rectangle(0, 150, 100, 50)));
+    }
+
+    @Test
+    public void testSampleImage6() {
+
+        testSample(createSampleImage6(), createSampleAreas6());
+    }
+
+//    private List<List<Rectangle>> createSampleAreas6() {
+//        //return new LinkedList<LinkedList<Rectangle>>() {}
+//        return Arrays.asList(
+//                Arrays.asList(new Rectangle(0, 0, 100, 50), new Rectangle(0, 50, 50, 5)),
+//                Arrays.asList(new Rectangle(0, 50, 55, 90)),
+//                Arrays.asList(new Rectangle(50, 50, 50, 100)),
+//                Arrays.asList(new Rectangle(0, 150, 100, 50), new Rectangle(0, 145,)));
+//    }
     private BufferedImage createSampleImage7() {
         BufferedImage image = new BufferedImage(100, 200, BufferedImage.TYPE_INT_RGB);
         Graphics graphics = image.getGraphics();
@@ -328,12 +421,24 @@ public class PageLayoutTest {
         graphics.fillRect(50, 10, 41, 40);
 
 
-        graphics.fillRect(51, 51, 40, 100);
+        graphics.fillRect(51, 51, 40, 99);
 
-        graphics.fillRect(10, 101, 40, 91);
-        graphics.fillRect(50, 152, 41, 40);
+        graphics.fillRect(10, 101, 40, 90);
+        graphics.fillRect(50, 151, 41, 40);
 
         return image;
+    }
+
+    private List<List<Rectangle>> createSampleAreas7() {
+        return Arrays.asList(
+                Arrays.asList(new Rectangle(0, 50, 50, 50), new Rectangle(0, 0, 100, 50)),
+                Arrays.asList(new Rectangle(50, 50, 50, 100)),
+                Arrays.asList(new Rectangle(0, 100, 50, 50), new Rectangle(0, 150, 100, 50)));
+    }
+
+    @Test
+    public void testSampleImage7() {
+        testSample(createSampleImage7(), createSampleAreas7());
     }
 
     private BufferedImage createSampleImage8() {
@@ -347,10 +452,22 @@ public class PageLayoutTest {
         graphics.setColor(Color.BLACK);
         graphics.fillRect(10, 10, 40, 182);
         graphics.fillRect(50, 10, 41, 40);
-        graphics.fillRect(51, 51, 40, 100);
-        graphics.fillRect(50, 152, 41, 40);
+        graphics.fillRect(51, 51, 40, 99);
+        graphics.fillRect(50, 151, 41, 40);
 
         return image;
+    }
+
+    private List<List<Rectangle>> createSampleAreas8() {
+        return Arrays.asList(
+                Arrays.asList(new Rectangle(0, 0, 100, 50), new Rectangle(0, 150, 100, 50), new Rectangle(0, 50, 50, 100)),
+                Arrays.asList(new Rectangle(50, 50, 50, 100)));
+    }
+
+    @Test
+    public void testSampleImage8() {
+
+        testSample(createSampleImage8(), createSampleAreas8());
     }
 
     private BufferedImage createSampleImage9() {
@@ -366,12 +483,25 @@ public class PageLayoutTest {
         graphics.fillRect(10, 10, 41, 40);
         graphics.fillRect(51, 10, 40, 45);
 
-        graphics.fillRect(10, 51, 40, 100);
-        graphics.fillRect(51, 56, 40, 95);
+        graphics.fillRect(10, 51, 40, 99);
+        graphics.fillRect(51, 56, 40, 94);
 
-        graphics.fillRect(10, 152, 81, 40);
+        graphics.fillRect(10, 151, 81, 40);
 
         return image;
+    }
+
+    private List<List<Rectangle>> createSampleAreas9() {
+        return Arrays.asList(
+                Arrays.asList(new Rectangle(0, 50, 50, 100)),
+                Arrays.asList(new Rectangle(50, 50, 50, 5), new Rectangle(0, 0, 100, 50)),
+                Arrays.asList(new Rectangle(50, 55, 50, 95)),
+                Arrays.asList(new Rectangle(0, 150, 100, 50)));
+    }
+
+    @Test
+    public void testSampleImage9() {
+        testSample(createSampleImage9(), createSampleAreas9());
     }
 
     private BufferedImage createSampleImage10() {
@@ -385,10 +515,22 @@ public class PageLayoutTest {
         graphics.setColor(Color.BLACK);
 
         graphics.fillRect(10, 10, 41, 40);
-        graphics.fillRect(10, 51, 40, 100);
-        graphics.fillRect(10, 152, 81, 40);
-        graphics.fillRect(51, 10, 40, 141);
+        graphics.fillRect(10, 51, 40, 99);
+        graphics.fillRect(10, 151, 81, 40);
+        graphics.fillRect(51, 10, 40, 140);
         return image;
+    }
+
+    private List<List<Rectangle>> createSampleAreas10() {
+        return Arrays.asList(
+                Arrays.asList(new Rectangle(0, 50, 50, 100)),
+                Arrays.asList(new Rectangle(50, 50, 50, 100), new Rectangle(0, 0, 100, 50)),
+                Arrays.asList(new Rectangle(0, 150, 100, 50)));
+    }
+
+    @Test
+    public void testSampleImage10() {
+        testSample(createSampleImage10(), createSampleAreas10());
     }
 
     private BufferedImage createSampleImage11() {
@@ -400,16 +542,24 @@ public class PageLayoutTest {
 
         // now the painting -> in order to stimulate data we paint black rectangles
         graphics.setColor(Color.BLACK);
-
         graphics.fillRect(10, 10, 81, 40);
-
-        graphics.fillRect(10, 51, 40, 100);
-        graphics.fillRect(51, 51, 40, 141);
-
-        graphics.fillRect(10, 152, 41, 40);
-
+        graphics.fillRect(10, 51, 40, 99);
+        graphics.fillRect(51, 51, 40, 140);
+        graphics.fillRect(10, 151, 41, 40);
 
         return image;
+    }
+
+    private List<List<Rectangle>> createSampleAreas11() {
+        return Arrays.asList(
+                Arrays.asList(new Rectangle(0, 50, 50, 100)),
+                Arrays.asList(new Rectangle(0, 0, 100, 50)),
+                Arrays.asList(new Rectangle(50, 50, 50, 100), new Rectangle(0, 150, 100, 50)));
+    }
+
+    @Test
+    public void testSampleImage11() {
+        testSample(createSampleImage11(), createSampleAreas11());
     }
     // now cases with having two columns above each other
 
@@ -427,13 +577,28 @@ public class PageLayoutTest {
         graphics.fillRect(10, 10, 40, 85);
         graphics.fillRect(51, 10, 39, 85);
 
-        graphics.fillRect(10, 96, 80, 10);
+        graphics.fillRect(10, 96, 80, 9);
 
-        graphics.fillRect(10, 107, 40, 85);
-        graphics.fillRect(51, 107, 39, 85);
+        graphics.fillRect(10, 106, 40, 85);
+        graphics.fillRect(51, 106, 39, 85);
 
 
         return image;
+    }
+
+    private List<List<Rectangle>> createSampleAreas12() {
+        return Arrays.asList(
+                Arrays.asList(new Rectangle(0, 0, 50, 95)),
+                Arrays.asList(new Rectangle(0, 105, 50, 95)),
+                Arrays.asList(new Rectangle(50, 0, 50, 95)),
+                Arrays.asList(new Rectangle(0, 95, 100, 10)),
+                Arrays.asList(new Rectangle(50, 105, 50, 95)));
+    }
+
+    @Test
+    public void testSampleImage12() {
+
+        testSample(createSampleImage12(), createSampleAreas12());
     }
 
     private BufferedImage createSampleImage13() {
@@ -448,60 +613,52 @@ public class PageLayoutTest {
         graphics.setColor(Color.BLACK);
         graphics.fillRect(10, 10, 40, 85);
         graphics.fillRect(51, 10, 39, 85);
-        graphics.fillRect(10, 96, 80, 11);
-        graphics.fillRect(10, 107, 40, 85);
-        graphics.fillRect(51, 107, 39, 85);
+        graphics.fillRect(10, 96, 80, 10);
+        graphics.fillRect(10, 106, 40, 85);
+        graphics.fillRect(51, 106, 39, 85);
 
         return image;
+    }
+
+    private List<List<Rectangle>> createSampleAreas13() {
+        return Arrays.asList(
+                Arrays.asList(new Rectangle(0, 0, 50, 95)),
+                Arrays.asList(new Rectangle(50, 0, 50, 95)),
+                Arrays.asList(new Rectangle(50, 106, 50, 94), new Rectangle(0, 106, 50, 94), new Rectangle(0, 95, 100, 11)));
+    }
+
+    @Test
+    public void testSampleImage13() {
+        testSample(createSampleImage13(), createSampleAreas13());
     }
 
     /** Simple three columns */
-    private BufferedImage createSampleImage14() {
-
-        BufferedImage image = new BufferedImage(100, 200, BufferedImage.TYPE_INT_RGB);
-        Graphics graphics = image.getGraphics();
-        // first creating a white background
-        graphics.setColor(Color.white);
-        graphics.fillRect(0, 0, 100, 200);
-
-        // now the painting -> in order to stimulate data we paint black rectangles
-        graphics.setColor(Color.BLACK);
-        graphics.fillRect(10, 10, 40, 85);
-        graphics.fillRect(51, 10, 39, 85);
-        graphics.fillRect(10, 96, 80, 11);
-        graphics.fillRect(10, 107, 40, 85);
-        graphics.fillRect(51, 107, 39, 85);
-
-        return image;
-    }
 
     @After
     public void tearDown() {
     }
 
-    @Test
-    public void writeSampleRastersToFile() {
-        try {
-            Images.writeImageToFile(createSampleImage1(), "/home/piotr/pdf/sample1.png");
-            Images.writeImageToFile(createSampleImage2(), "/home/piotr/pdf/sample2.png");
-            Images.writeImageToFile(createSampleImage3(), "/home/piotr/pdf/sample3.png");
-            Images.writeImageToFile(createSampleImage4(), "/home/piotr/pdf/sample4.png");
-            Images.writeImageToFile(createSampleImage5(), "/home/piotr/pdf/sample5.png");
-            Images.writeImageToFile(createSampleImage6(), "/home/piotr/pdf/sample6.png");
-            Images.writeImageToFile(createSampleImage7(), "/home/piotr/pdf/sample7.png");
-            Images.writeImageToFile(createSampleImage8(), "/home/piotr/pdf/sample8.png");
-            Images.writeImageToFile(createSampleImage9(), "/home/piotr/pdf/sample9.png");
-            Images.writeImageToFile(createSampleImage10(), "/home/piotr/pdf/sample10.png");
-            Images.writeImageToFile(createSampleImage11(), "/home/piotr/pdf/sample11.png");
-
-            Images.writeImageToFile(createSampleImage12(), "/home/piotr/pdf/sample12.png");
-            Images.writeImageToFile(createSampleImage13(), "/home/piotr/pdf/sample13.png");
-
-
-        } catch (IOException ex) {
-            Logger.getLogger(PageLayoutTest.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
+//    @Test
+//    public void writeSampleRastersToFile() {
+//        try {
+//            Images.writeImageToFile(createSampleImage1(), "/home/piotr/pdf/sample1.png");
+//            Images.writeImageToFile(createSampleImage2(), "/home/piotr/pdf/sample2.png");
+//            Images.writeImageToFile(createSampleImage3(), "/home/piotr/pdf/sample3.png");
+//            Images.writeImageToFile(createSampleImage4(), "/home/piotr/pdf/sample4.png");
+//            Images.writeImageToFile(createSampleImage5(), "/home/piotr/pdf/sample5.png");
+//            Images.writeImageToFile(createSampleImage6(), "/home/piotr/pdf/sample6.png");
+//            Images.writeImageToFile(createSampleImage7(), "/home/piotr/pdf/sample7.png");
+//            Images.writeImageToFile(createSampleImage8(), "/home/piotr/pdf/sample8.png");
+//            Images.writeImageToFile(createSampleImage9(), "/home/piotr/pdf/sample9.png");
+//            Images.writeImageToFile(createSampleImage10(), "/home/piotr/pdf/sample10.png");
+//            Images.writeImageToFile(createSampleImage11(), "/home/piotr/pdf/sample11.png");
+//
+//            Images.writeImageToFile(createSampleImage12(), "/home/piotr/pdf/sample12.png");
+//            Images.writeImageToFile(createSampleImage13(), "/home/piotr/pdf/sample13.png");
+//        } catch (IOException ex) {
+//            Logger.getLogger(PageLayoutTest.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//    }
 
     private BufferedImage annotateImageWithColumns(BufferedImage img, List<Rectangle> columns) {
         Graphics graphics = img.getGraphics();
@@ -552,53 +709,54 @@ public class PageLayoutTest {
         return annotateImageWithAreas(img, layout.areas);
     }
 
-    /**
-     * Test of the detection of columns - the method detecting vertical separator
-     * not caring about the
-     */
-    @Test
-    public void testPreliminaryColumnDetection() {
-        try {
-            Images.writeImageToFile(detectAndAnnotate(createSampleImage1()), "/home/piotr/pdf/sample1_pdetected.png");
-            Images.writeImageToFile(detectAndAnnotate(createSampleImage2()), "/home/piotr/pdf/sample2_pdetected.png");
-            Images.writeImageToFile(detectAndAnnotate(createSampleImage3()), "/home/piotr/pdf/sample3_pdetected.png");
-            Images.writeImageToFile(detectAndAnnotate(createSampleImage4()), "/home/piotr/pdf/sample4_pdetected.png");
-            Images.writeImageToFile(detectAndAnnotate(createSampleImage5()), "/home/piotr/pdf/sample5_pdetected.png");
-            Images.writeImageToFile(detectAndAnnotate(createSampleImage6()), "/home/piotr/pdf/sample6_pdetected.png");
-            Images.writeImageToFile(detectAndAnnotate(createSampleImage7()), "/home/piotr/pdf/sample7_pdetected.png");
-            Images.writeImageToFile(detectAndAnnotate(createSampleImage8()), "/home/piotr/pdf/sample8_pdetected.png");
-            Images.writeImageToFile(detectAndAnnotate(createSampleImage9()), "/home/piotr/pdf/sample9_pdetected.png");
-            Images.writeImageToFile(detectAndAnnotate(createSampleImage10()), "/home/piotr/pdf/sample10_pdetected.png");
-            Images.writeImageToFile(detectAndAnnotate(createSampleImage11()), "/home/piotr/pdf/sample11_pdetected.png");
-            Images.writeImageToFile(detectAndAnnotate(createSampleImage12()), "/home/piotr/pdf/sample12_pdetected.png");
-            Images.writeImageToFile(detectAndAnnotate(createSampleImage13()), "/home/piotr/pdf/sample13_pdetected.png");
-            //List<Rectangle> getPageColumns(Raster raster)
-        } catch (IOException ex) {
-            Logger.getLogger(PageLayoutTest.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    @Test
-    public void testAdvancedColumnDetection() {
-        try {
-            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage1()), "/home/piotr/pdf/sample1_pdetecteda.png");
-            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage2()), "/home/piotr/pdf/sample2_pdetecteda.png");
-            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage3()), "/home/piotr/pdf/sample3_pdetecteda.png");
-            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage4()), "/home/piotr/pdf/sample4_pdetecteda.png");
-            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage5()), "/home/piotr/pdf/sample5_pdetecteda.png");
-            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage6()), "/home/piotr/pdf/sample6_pdetecteda.png");
-            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage7()), "/home/piotr/pdf/sample7_pdetecteda.png");
-            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage8()), "/home/piotr/pdf/sample8_pdetecteda.png");
-            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage9()), "/home/piotr/pdf/sample9_pdetecteda.png");
-            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage10()), "/home/piotr/pdf/sample10_pdetecteda.png");
-            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage11()), "/home/piotr/pdf/sample11_pdetecteda.png");
-            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage12()), "/home/piotr/pdf/sample12_pdetecteda.png");
-            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage13()), "/home/piotr/pdf/sample13_pdetecteda.png");
-            //List<Rectangle> getPageColumns(Raster raster)
-        } catch (IOException ex) {
-            Logger.getLogger(PageLayoutTest.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
+//    /**
+//     * Test of the detection of columns - the method detecting vertical separator
+//     * not caring about the
+//     */
+//    @Test
+//    public void testPreliminaryColumnDetection() {
+//        try {
+//            Images.writeImageToFile(detectAndAnnotate(createSampleImage1()), "/home/piotr/pdf/sample1_pdetected.png");
+//            Images.writeImageToFile(detectAndAnnotate(createSampleImage2()), "/home/piotr/pdf/sample2_pdetected.png");
+//            Images.writeImageToFile(detectAndAnnotate(createSampleImage3()), "/home/piotr/pdf/sample3_pdetected.png");
+//            Images.writeImageToFile(detectAndAnnotate(createSampleImage4()), "/home/piotr/pdf/sample4_pdetected.png");
+//            Images.writeImageToFile(detectAndAnnotate(createSampleImage5()), "/home/piotr/pdf/sample5_pdetected.png");
+//            Images.writeImageToFile(detectAndAnnotate(createSampleImage6()), "/home/piotr/pdf/sample6_pdetected.png");
+//            Images.writeImageToFile(detectAndAnnotate(createSampleImage7()), "/home/piotr/pdf/sample7_pdetected.png");
+//            Images.writeImageToFile(detectAndAnnotate(createSampleImage8()), "/home/piotr/pdf/sample8_pdetected.png");
+//            Images.writeImageToFile(detectAndAnnotate(createSampleImage9()), "/home/piotr/pdf/sample9_pdetected.png");
+//            Images.writeImageToFile(detectAndAnnotate(createSampleImage10()), "/home/piotr/pdf/sample10_pdetected.png");
+//            Images.writeImageToFile(detectAndAnnotate(createSampleImage11()), "/home/piotr/pdf/sample11_pdetected.png");
+//            Images.writeImageToFile(detectAndAnnotate(createSampleImage12()), "/home/piotr/pdf/sample12_pdetected.png");
+//            Images.writeImageToFile(detectAndAnnotate(createSampleImage13()), "/home/piotr/pdf/sample13_pdetected.png");
+//            //List<Rectangle> getPageColumns(Raster raster)
+//
+//        } catch (IOException ex) {
+//            Logger.getLogger(PageLayoutTest.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//    }
+//
+//    @Test
+//    public void testAdvancedColumnDetection() {
+//        try {
+//            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage1()), "/home/piotr/pdf/sample1_pdetecteda.png");
+//            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage2()), "/home/piotr/pdf/sample2_pdetecteda.png");
+//            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage3()), "/home/piotr/pdf/sample3_pdetecteda.png");
+//            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage4()), "/home/piotr/pdf/sample4_pdetecteda.png");
+//            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage5()), "/home/piotr/pdf/sample5_pdetecteda.png");
+//            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage6()), "/home/piotr/pdf/sample6_pdetecteda.png");
+//            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage7()), "/home/piotr/pdf/sample7_pdetecteda.png");
+//            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage8()), "/home/piotr/pdf/sample8_pdetecteda.png");
+//            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage9()), "/home/piotr/pdf/sample9_pdetecteda.png");
+//            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage10()), "/home/piotr/pdf/sample10_pdetecteda.png");
+//            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage11()), "/home/piotr/pdf/sample11_pdetecteda.png");
+//            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage12()), "/home/piotr/pdf/sample12_pdetecteda.png");
+//            Images.writeImageToFile(detectAdvancedAndAnnotate(createSampleImage13()), "/home/piotr/pdf/sample13_pdetecteda.png");
+//            //List<Rectangle> getPageColumns(Raster raster)
+//        } catch (IOException ex) {
+//            Logger.getLogger(PageLayoutTest.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//    }
 
     ////// testing the function for updating current horizontal separators
     @Test
