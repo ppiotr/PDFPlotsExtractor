@@ -5,6 +5,7 @@
 package invenio.pdf.features;
 
 import invenio.common.ExtractorGeometryTools;
+import invenio.common.Pair;
 import invenio.pdf.core.FeatureNotPresentException;
 import invenio.pdf.core.IPDFDocumentFeatureProvider;
 import invenio.pdf.core.Operation;
@@ -70,17 +71,17 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
             throw new FeatureNotPresentException(GraphicalAreas.featureName);
         }
 
-        Map<Rectangle, List<Operation>> shrinkedRegions =
+        Map<Rectangle, Pair<List<Operation>, Integer>> shrinkedRegions =
                 ExtractorGeometryTools.shrinkRectangleMap(graphicalAreas.areas,
                 margins[0], margins[1]);
+        Map<Rectangle, Pair<List<Operation>, Integer>> plotRegions = shrinkedRegions;
+
+//        Map<Rectangle, Pair<List<Operation>, Integer>> graphicalPlotRegions =
+//                PlotHeuristics.removeFalsePlots(shrinkedRegions);
 
 
-        Map<Rectangle, List<Operation>> graphicalPlotRegions =
-                PlotHeuristics.removeFalsePlots(shrinkedRegions);
-
-
-        Map<Rectangle, List<Operation>> plotRegions =
-                PlotHeuristics.includeTextParts(graphicalPlotRegions, manager);
+//        Map<Rectangle, Pair<List<Operation>, Integer>> plotRegions =
+//                PlotHeuristics.includeTextParts(graphicalPlotRegions, manager);
 
         // we are done with plot images -> creating plot structures for every
         // selected region
@@ -88,7 +89,7 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
         for (Rectangle area : plotRegions.keySet()) {
             Plot plot = new Plot();
             plot.setBoundary(area);
-            plot.addOperations(plotRegions.get(area));
+            plot.addOperations(plotRegions.get(area).first);
             plot.setPageNumber(manager.getPageNumber());
             plot.setCaption(getPlotCaption(plot, manager));
             plot.setPageManager(manager);

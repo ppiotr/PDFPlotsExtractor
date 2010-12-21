@@ -5,6 +5,7 @@
 
 package invenio.pdf.features;
 
+import invenio.common.Pair;
 import invenio.pdf.core.IPDFPageFeature;
 import invenio.pdf.core.Operation;
 import java.awt.Rectangle;
@@ -17,5 +18,5 @@ import java.util.Map;
  */
 public class GraphicalAreas implements IPDFPageFeature {
     public static final String featureName = "GraphicalAreas";
-    public Map<Rectangle, List<Operation>> areas;
+    public Map<Rectangle, Pair<List<Operation>, Integer>> areas; //rectangle -> (lsit of PDF operations, number of the area)
 }

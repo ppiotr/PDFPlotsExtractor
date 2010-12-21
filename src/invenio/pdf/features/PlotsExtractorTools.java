@@ -16,7 +16,9 @@ public class PlotsExtractorTools {
         // annotate image with plot information
         graphics.setTransform(AffineTransform.getRotateInstance(0));
         graphics.setPaintMode();
+
         graphics.setColor(Color.blue);
+        
         for (Plot plot : plots) {
             Rectangle boundary = plot.getBoundary();
             graphics.drawRect((int) boundary.getX(), (int) boundary.getY(),
@@ -29,15 +31,25 @@ public class PlotsExtractorTools {
                     (int) bd.getWidth(), (int) bd.getHeight());
         }
         // drawing column rectangles
-        graphics.setColor(Color.pink);
 
-        if (layout.columns.isEmpty()){
+        Color[] columnColors = new Color[]{Color.magenta, Color.pink, Color.red, Color.blue, Color.gray, Color.orange};
+        int colorIndex = 0;
+        if (layout.areas.isEmpty()) {
             System.out.println("Page without a layout ! ");
         }
 
-        for (Rectangle bd : layout.columns) {
-            graphics.drawRect(bd.x, bd.y, bd.width, bd.height);
-            graphics.drawRect(bd.x + 1, bd.y + 1, bd.width - 2, bd.height - 2);
+        for (List<Rectangle> area : layout.areas) {
+            if (colorIndex == columnColors.length) {
+                graphics.setColor(Color.black);
+            } else {
+                graphics.setColor(columnColors[colorIndex]);
+                colorIndex++;
+            }
+
+            for (Rectangle bd : area) {
+                graphics.drawRect(bd.x, bd.y, bd.width-1, bd.height-1);
+                graphics.drawRect(bd.x + 1, bd.y + 1, bd.width - 3, bd.height - 3);
+            }
         }
         return;
     }

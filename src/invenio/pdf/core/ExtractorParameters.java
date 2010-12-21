@@ -13,7 +13,7 @@ public class ExtractorParameters extends Properties {
 
     private static ExtractorParameters properties = null;
 
-    private ExtractorParameters(){
+    private ExtractorParameters() {
         // we do not want to create instances manually
     }
 
@@ -115,12 +115,11 @@ public class ExtractorParameters extends Properties {
     }
 
     ///// Parameters connected with detection of the page layout
-
     /**
      * Returns the minimal fraction of the page width that will not be broken into
      * @return
      */
-    public double getMinimalMarginWidth(){
+    public double getMinimalMarginWidth() {
         return 0.3;
     }
 
@@ -133,16 +132,16 @@ public class ExtractorParameters extends Properties {
      * 
      * @return
      */
-    public double getHorizontalEmptinessRadius(){
-        return 0.005;
+    public double getHorizontalEmptinessRadius() {
+        return 0.01;
     }
 
-   /**
+    /**
      * Used to determine the minimal empty surrounding of a horizontal separator
      *
      * @return
      */
-    public double getVerticalEmptinessRadius(){
+    public double getVerticalEmptinessRadius() {
         return 0.005;
     }
 
@@ -152,11 +151,11 @@ public class ExtractorParameters extends Properties {
      *
      * @return
      */
-    public double getMaximalNonBreakingFraction(){
+    public double getMaximalNonBreakingFraction() {
         return 0.005;
     }
 
-    public int getColorEmptinessThreshold(){
+    public int getColorEmptinessThreshold() {
         return 10;
     }
 
@@ -164,7 +163,7 @@ public class ExtractorParameters extends Properties {
      * Returns the color that can be considered an empty space inside an image
      * @return
      */
-    public int[] getEmptyPixelColor(){
+    public int[] getEmptyPixelColor() {
         int[] res = {255, 255, 255};
         return res;
     }
@@ -175,8 +174,7 @@ public class ExtractorParameters extends Properties {
      *
      * @return
      */
-    public double getMinimalVerticalSeparatorHeight(){
+    public double getMinimalVerticalSeparatorHeight() {
         return 0.4;
     }
-
 }

@@ -121,7 +121,7 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
 
         for (int dx = 0; dx < width; dx++) {
             for (int dy = 0; dy < er; dy++) {
-                if (x + dx >= 0 && x + dx < raster.getWidth() && y + dy >= 0
+                if (x + dx >= 0 && x + dx < raster.getWidth() && y + dy - minOffset >= 0
                         && y + dy - minOffset < raster.getHeight()) {
                     currentPixel = raster.getPixel(x + dx, y + dy - minOffset, currentPixel);
 
@@ -753,12 +753,15 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
     @Override
     public <T> IPDFPageFeature calculateFeature(PDFPageManager<T> pageManager)
             throws FeatureNotPresentException, Exception {
-        PageLayout layout = new PageLayout();
+
+        if (pageManager.getPageNumber() == 17){
+            System.out.println("ble");
+        }
         Raster raster = pageManager.getRenderedPage().getData();
-        layout.columns = getPageColumns(raster);
-
+        LinkedList<Rectangle> verticalSeparators = new LinkedList<Rectangle>();
+        List<Rectangle> preliminaryColumns= getPageColumns(raster, verticalSeparators);
+        PageLayout layout = fixHorizontalSeparators(preliminaryColumns, verticalSeparators, raster);
         return layout;
-
     }
 
     @Override
