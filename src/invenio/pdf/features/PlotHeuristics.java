@@ -206,13 +206,14 @@ public class PlotHeuristics {
             if (textOp instanceof TextOperation) {
                 // determining, which columns is thgaze operation intersecting
 
-                HashSet<Integer> intersecting = layout.getIntersectingAreas(((TextOperation) textOp).getBoundary());
+                int intersecting = layout.getSingleBestIntersectingArea(((TextOperation) textOp).getBoundary());
+                if (intersecting >= 0) {
+                    Rectangle boundary = ExtractorGeometryTools.extendRectangle(
+                            ((TextOperation) textOp).getBoundary(),
+                            hPlotTextMargin, vPlotTextMargin);
 
-                Rectangle boundary = ExtractorGeometryTools.extendRectangle(
-                        ((TextOperation) textOp).getBoundary(),
-                        hPlotTextMargin, vPlotTextMargin);
-                for (Integer intArea : intersecting) { // considering for every intersecting area
-                    clusterManagers.get(intArea).addRectangle(
+
+                    clusterManagers.get(intersecting).addRectangle(
                             boundary, textOp);
                 }
             }

@@ -17,6 +17,7 @@ import java.awt.Rectangle;
 import java.lang.Integer;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -48,28 +49,20 @@ public class GraphicalAreasProvider implements IPDFPageFeatureProvider {
                     horizontalMargin, verticalMargin));
         }
 
-// old code not taking into account the division into areas
-//        SpatialClusterManager<Operation> clusterManager =
-//                new SpatialClusterManager<Operation>(
-//                ExtractorGeometryTools.extendRectangle(manager.getPageBoundary(),
-//                horizontalMargin * 2, verticalMargin * 2),
-//                horizontalMargin, verticalMargin);
-
         for (Operation op : operations) {
             if (op instanceof DisplayedOperation) {
-//                if (clusterManager != null) {
                 DisplayedOperation dOp = (DisplayedOperation) op;
                 Rectangle srcRec = dOp.getBoundary();
 
-                Set<Integer> intersectingAreas = pageLayout.getIntersectingAreas(srcRec);
-                // we want to consider only the areas that are intersecting
-
-                for (Integer areaNum : intersectingAreas) {
+                int bestIntersectingArea = pageLayout.getSingleBestIntersectingArea(srcRec);
+                if (bestIntersectingArea >= 0) {
                     Rectangle rec = new Rectangle((int) srcRec.getX(), (int) srcRec.getY(),
                             (int) srcRec.getWidth(), (int) srcRec.getHeight());
 
-                    clusterManagers.get(areaNum).addRectangle(rec, op);
+                    clusterManagers.get(bestIntersectingArea).addRectangle(rec, op);
+
                 }
+
 
             } // else: the operation is either completely incorret( from outside a page) or some horrible error happened
         }

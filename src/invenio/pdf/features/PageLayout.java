@@ -1,11 +1,17 @@
+
 /*
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
 package invenio.pdf.features;
 
+//~--- non-JDK imports --------------------------------------------------------
 import invenio.pdf.core.IPDFPageFeature;
+
+//~--- JDK imports ------------------------------------------------------------
+
 import java.awt.Rectangle;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -26,6 +32,7 @@ public class PageLayout implements IPDFPageFeature {
      */
     public HashSet<Integer> getIntersectingAreas(Rectangle srcRec) {
         HashSet<Integer> results = new HashSet<Integer>();
+
         for (Integer areaNum = 0; areaNum < areas.size(); areaNum++) {
             for (Rectangle areaPart : areas.get(areaNum)) {
                 if (areaPart.intersects(srcRec)) {
@@ -33,9 +40,7 @@ public class PageLayout implements IPDFPageFeature {
                 }
             }
         }
-        if (results.isEmpty()){
-            System.out.println("Strange enough !");
-        }
+
         return results;
     }
 
@@ -43,7 +48,29 @@ public class PageLayout implements IPDFPageFeature {
      * Returns the area that fits the most
      * @return
      */
-    public Integer getSingleBestIntersectingArea(){
+    public int getSingleBestIntersectingArea(Rectangle srcRec) {
+        int maximalArea = -1;
+        int maximalIntersection = 0; // maximal intersection area
 
+        Set<Integer> intersecting = getIntersectingAreas(srcRec);
+
+        for (int areaNum : intersecting) {
+            // for every intersecting area, calculate the intersection area and
+            // compare to the previous maximum
+            int currentIntersection = 0;
+            for (Rectangle areaPart : this.areas.get(areaNum)) {
+                Rectangle is = srcRec.intersection(areaPart);
+                int added = is.width * is.height;
+                currentIntersection += (added > 0) ? added : -added;
+            }
+
+            if (currentIntersection > maximalIntersection) {
+                // we want to update the area intersecting the most
+                maximalArea = areaNum;
+                maximalIntersection = currentIntersection;
+            }
+        }
+
+        return maximalArea;
     }
 }

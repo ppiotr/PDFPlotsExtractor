@@ -74,14 +74,14 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
         Map<Rectangle, Pair<List<Operation>, Integer>> shrinkedRegions =
                 ExtractorGeometryTools.shrinkRectangleMap(graphicalAreas.areas,
                 margins[0], margins[1]);
-        Map<Rectangle, Pair<List<Operation>, Integer>> plotRegions = shrinkedRegions;
+//        Map<Rectangle, Pair<List<Operation>, Integer>> plotRegions = shrinkedRegions;
 
-//        Map<Rectangle, Pair<List<Operation>, Integer>> graphicalPlotRegions =
-//                PlotHeuristics.removeFalsePlots(shrinkedRegions);
+        Map<Rectangle, Pair<List<Operation>, Integer>> graphicalPlotRegions =
+                PlotHeuristics.removeFalsePlots(shrinkedRegions);
 
 
-//        Map<Rectangle, Pair<List<Operation>, Integer>> plotRegions =
-//                PlotHeuristics.includeTextParts(graphicalPlotRegions, manager);
+        Map<Rectangle, Pair<List<Operation>, Integer>> plotRegions =
+                PlotHeuristics.includeTextParts(graphicalPlotRegions, manager);
 
         // we are done with plot images -> creating plot structures for every
         // selected region

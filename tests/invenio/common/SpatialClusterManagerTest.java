@@ -216,22 +216,4 @@ public class SpatialClusterManagerTest {
             }
         }
     }
-
-    @Test
-    public void someTest() throws Exception {
-        SpatialClusterManager<Integer> manager = new SpatialClusterManager<Integer>(new Rectangle(-182, -182, 976, 820), 91, 7);
-        manager.addRectangle(new Rectangle(357, 607, 3, 5), 0);
-        manager.addRectangle(new Rectangle(140, 378, 2, 11), 1);
-        manager.addRectangle(new Rectangle(220, 695, 24, 8), 2);
-        manager.addRectangle(new Rectangle(285, 502, 182, 10), 3);
-        manager.addRectangle(new Rectangle(72, 395, 329, 11), 4);
-        manager.addRectangle(new Rectangle(352, 681, 9, 5), 5);
-        manager.addRectangle(new Rectangle(384, 488, 6, 7), 6);
-        manager.addRectangle(new Rectangle(72, 536, 384, 11), 7);
-        manager.addRectangle(new Rectangle(467, 450, 9, 5), 8);
-        manager.addRectangle(new Rectangle(471, 541, 6, 5), 9);
-        manager.addRectangle(new Rectangle(134, 377, 3, 5), 10);
-        manager.addRectangle(new Rectangle(353, 485, 27, 8), 11);
-        manager.addRectangle(new Rectangle(338, 519, 200, 8), 12);
-    }
 }
