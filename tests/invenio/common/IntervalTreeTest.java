@@ -4,6 +4,7 @@
  */
 package invenio.common;
 
+import java.io.File;
 import java.util.Stack;
 import java.util.HashMap;
 import java.util.Map;
@@ -236,7 +237,7 @@ public class IntervalTreeTest {
         }
 
         try {
-            Images.writeImageToFile(instance.renderTree(), "c:\\intervalTrees\\test_long_chain_balanced.png");
+            Images.writeImageToFile(instance.renderTree(), new File("c:\\intervalTrees\\test_long_chain_balanced.png"));
         } catch (IOException ex) {
             Logger.getLogger(IntervalTree.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -404,7 +405,7 @@ public class IntervalTreeTest {
 
         for (Integer i : intervals.keySet()) {
             try {
-                Images.writeImageToFile(instance.renderTree(), "c:\\intervalTrees\\before_removal_of_" + i + "_" + intervals.get(i)[0] + "_" + intervals.get(i)[1] + ".png");
+                Images.writeImageToFile(instance.renderTree(), new File("c:\\intervalTrees\\before_removal_of_" + i + "_" + intervals.get(i)[0] + "_" + intervals.get(i)[1] + ".png"));
             } catch (IOException ex) {
                 Logger.getLogger(IntervalTree.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -516,7 +517,7 @@ public class IntervalTreeTest {
             }
 
             try {
-                Images.writeImageToFile(tree.renderTree(), "c:\\intervalTrees\\test_" + testIdentifier + "_step_" + stepNumber + ".png");
+                Images.writeImageToFile(tree.renderTree(), new File("c:\\intervalTrees\\test_" + testIdentifier + "_step_" + stepNumber + ".png"));
             } catch (IOException ex) {
                 System.out.println("epic failure");
             }
@@ -530,7 +531,7 @@ public class IntervalTreeTest {
         IntervalTree<Integer> tree = new IntervalTree<Integer>(min, max);
         int step_number = 1;
         try {
-            Images.writeImageToFile(tree.renderTree(), "c:\\intervalTrees\\test_" + testIdentifier + "_step_0.png");
+            Images.writeImageToFile(tree.renderTree(), new File("c:\\intervalTrees\\test_" + testIdentifier + "_step_0.png"));
         } catch (IOException ex) {
             System.out.println("epic failure");
         }
@@ -539,7 +540,7 @@ public class IntervalTreeTest {
             tree.addInterval(interval[0], interval[1], interval[2]);
 
             try {
-                Images.writeImageToFile(tree.renderTree(), "c:\\intervalTrees\\test_" + testIdentifier + "_step_" + step_number + ".png");
+                Images.writeImageToFile(tree.renderTree(), new File("c:\\intervalTrees\\test_" + testIdentifier + "_step_" + step_number + ".png"));
             } catch (IOException ex) {
                 System.out.println("epic failure");
             }
@@ -551,7 +552,7 @@ public class IntervalTreeTest {
         for (int[] interval : removals) {
             tree.removeInterval(interval[0], interval[1], interval[2]);
             try {
-                Images.writeImageToFile(tree.renderTree(), "c:\\intervalTrees\\test_" + testIdentifier + "_step_" + step_number + ".png");
+                Images.writeImageToFile(tree.renderTree(), new File("c:\\intervalTrees\\test_" + testIdentifier + "_step_" + step_number + ".png"));
             } catch (IOException ex) {
                 System.out.println("epic failure");
             }

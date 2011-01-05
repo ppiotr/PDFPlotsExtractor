@@ -6,6 +6,7 @@ package invenio.pdf.features;
 
 import invenio.common.ExtractorGeometryTools;
 import invenio.common.Pair;
+import invenio.pdf.core.ExtractorLogger;
 import invenio.pdf.core.FeatureNotPresentException;
 import invenio.pdf.core.IPDFDocumentFeatureProvider;
 import invenio.pdf.core.Operation;
@@ -134,7 +135,7 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
 
     private static boolean isPlotCaption(String candidate) {
         String prepared = candidate.toLowerCase().trim();
-        System.out.println("Processing a potential caption : " + candidate);
+        ExtractorLogger.logMessage(2, "Processing a potential caption : " + candidate);
         return prepared.startsWith("fig")
                 || prepared.startsWith("plot")
                 || prepared.startsWith("image")

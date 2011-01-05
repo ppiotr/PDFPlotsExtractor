@@ -7,6 +7,7 @@ package invenio.pdf.features;
 import invenio.common.ExtractorGeometryTools;
 import invenio.common.Pair;
 import invenio.common.SpatialClusterManager;
+import invenio.pdf.core.ExtractorLogger;
 import invenio.pdf.core.FeatureNotPresentException;
 import invenio.pdf.core.IPDFPageFeature;
 import invenio.pdf.core.IPDFPageFeatureProvider;
@@ -69,7 +70,7 @@ public class TextAreasProvider implements IPDFPageFeatureProvider {
             result.areas.put(ExtractorGeometryTools.shrinkRectangle(bd, margins[0], margins[1]),
                     new Pair<String, List<Operation>>(getTextAreaString(operations), operations));
             
-            System.out.println("Text area found: " + getTextAreaString(operations));
+            ExtractorLogger.logMessage(5, "Text area found: " + getTextAreaString(operations));
         }
         return result;
     }

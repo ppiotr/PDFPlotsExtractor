@@ -7,6 +7,7 @@ package invenio.pdf.features;
 import invenio.pdf.core.Operation;
 import invenio.pdf.core.PDFPageManager;
 import java.awt.Rectangle;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -31,7 +32,7 @@ public class Plot {
     private List<Operation> operations; // a list of all the PDF operations creating this plot
     private int pageNumber;
     private String id; // Plot identifier iside the document
-    private HashMap<String, String> fileNames;
+    private HashMap<String, File> files;
     private PDFPageManager pageManager;
     
     private static int identifierFactory = 0;
@@ -45,7 +46,7 @@ public class Plot {
         this.boundary = new Rectangle(0, 0, 0, 0);
         this.pageBoundary = new Rectangle(0, 0, 0, 0);
         this.operations = new LinkedList<Operation>();
-        this.fileNames = new HashMap<String, String>();
+        this.files = new HashMap<String, File>();
     }
 
     /**
@@ -123,12 +124,12 @@ public class Plot {
         this.operations.addAll(operations);
     }
 
-    public String getFileName(String type) {
-        return this.fileNames.get(type);
+    public File getFile(String type) {
+        return this.files.get(type);
     }
 
-    public void addFileName(String type, String name) {
-        this.fileNames.put(type, name);
+    public void addFile(String type, File f) {
+        this.files.put(type, f);
     }
 
     public String getId() {

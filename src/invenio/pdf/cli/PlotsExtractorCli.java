@@ -6,6 +6,7 @@ package invenio.pdf.cli;
 
 import de.intarsys.pdf.parser.COSLoadException;
 import invenio.common.Images;
+import invenio.pdf.core.ExtractorLogger;
 import invenio.pdf.core.FeatureNotPresentException;
 import invenio.pdf.core.PDFDocumentManager;
 import invenio.pdf.core.PDFPageManager;
@@ -32,7 +33,18 @@ import java.util.logging.Logger;
  */
 public class PlotsExtractorCli {
 
-    private static void processDocument(String inputFile, String outputDirectory) throws IOException, FeatureNotPresentException, Exception {
+    /**
+     * Processes one PDF document of a given file name
+     * 
+     * @param inputFile
+     * @param outputDirectory 
+     * @throws IOException
+     * @throws FeatureNotPresentException
+     * @throws Exception
+     */
+    private static void processDocument(File inputFile, File outputDirectory)
+            throws IOException, FeatureNotPresentException, Exception {
+
         PDFDocumentManager document = PDFDocumentTools.readPDFDocument(inputFile);
         PlotsWriter.writePlots(document, outputDirectory);
 
@@ -41,13 +53,13 @@ public class PlotsExtractorCli {
         for (int i = 0; i < document.getPagesNumber(); ++i) {
             PDFPageManager pageMgr = document.getPage(i);
             BufferedImage img = pageMgr.getRenderedPage();
-            Images.writeImageToFile(img, "/home/piotr/pdf/raw_output" + i + ".png");
+            Images.writeImageToFile(img, new File(outputDirectory.getPath(), "raw_output" + i + ".png"));
 
             PlotsExtractorTools.annotateImage((Graphics2D) img.getGraphics(),
                     plots.plots.get(i),
                     (TextAreas) pageMgr.getPageFeature(TextAreas.featureName),
                     (PageLayout) pageMgr.getPageFeature(PageLayout.featureName));
-            Images.writeImageToFile(img, "/home/piotr/pdf/output" + i + ".png");
+            Images.writeImageToFile(img, new File(outputDirectory.getPath(), "output" + i + ".png"));
         }
     }
 
@@ -59,20 +71,32 @@ public class PlotsExtractorCli {
         PDFPageManager.registerFeatureProvider(new PageLayoutProvider());
 
         PDFDocumentManager.registerFeatureProvider(new PlotsProvider());
-
-        if (args.length != 1) {
+        File outputFolder;
+        if (args.length < 1 || args.length > 2) {
             usage();
             return;
         }
-        String inputFileName = args[0];
-        File input = new File(inputFileName);
+
+        File input = new File(args[0]);
+
+        if (args.length >= 2) {
+            outputFolder = new File(args[1]);
+        } else {
+            outputFolder = input;
+        }
+
+        if (!outputFolder.exists()) {
+            outputFolder.mkdir();
+        }
+
         if (input.isDirectory()) {
             File[] files = input.listFiles();
             for (File file : files) {
                 if (file.getPath().toLowerCase().endsWith(".pdf")) {
                     try {
                         //PlotsExtractorTools.processDocument(file.getPath(), file.getPath() + ".extracted");
-                        processDocument(file.getPath(), file.getPath() + ".extracted");
+                        ExtractorLogger.logMessage(1, "Processing " + file.getPath());
+                        processDocument(file, getOutputDirectory(outputFolder, file));
                     } catch (Exception ex) {
                         Logger.getLogger(PlotsExtractorCli.class.getName()).log(Level.SEVERE, null, ex);
                     }
@@ -81,16 +105,24 @@ public class PlotsExtractorCli {
         } else {
             try {
                 //PlotsExtractorTools.processDocument(inputFileName, inputFileName + ".extracted");
-                processDocument(inputFileName, inputFileName + ".extracted");
+                processDocument(input, getOutputDirectory(outputFolder, input));
             } catch (Exception ex) {
                 Logger.getLogger(PlotsExtractorCli.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }
 
+    public static File getOutputDirectory(File outputDirectory, File inputFile) {
+        File result = new File(outputDirectory.getPath(), inputFile.getName() + ".extracted");
+        if (!result.exists()) {
+            result.mkdir();
+        }
+        return result;
+    }
+
     public static void usage() {
         System.out.println("Invalid number of arguments");
         System.out.println("Usage:");
-        System.out.println("   PDFExtractor [pdffile|folder]");
+        System.out.println("   PDFExtractor pdffile|folder [output_folder]");
     }
 }

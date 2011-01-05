@@ -3,6 +3,7 @@
  */
 package invenio.common;
 
+import invenio.pdf.core.ExtractorLogger;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -67,7 +68,7 @@ public class SpatialClusterManager<StoredObjectType> {
                 int[] dy = intervalsY.get(i);
 
                 if (dx == null || dy == null) {
-                    System.out.println("Please increase the document scale ! some operations are rendered into no points !");
+                    ExtractorLogger.logMessage(1, "ERROR: Please increase the document scale ! some operations are rendered into no points !");
                 } else {
                     partialResults.put(i, new Rectangle(
                             dx[0], dy[0], dx[1] - dx[0], dy[1] - dy[0]));
@@ -109,7 +110,7 @@ public class SpatialClusterManager<StoredObjectType> {
 
             // we have the parent whose boundary is the boundary of the group
             if (partialResults.get(currentNum) == null){
-                System.out.println("something wrong happened ! ");
+                ExtractorLogger.logMessage(0, "FATAL: Error when clustering graphical areas ");
             }
             result.get(partialResults.get(currentNum)).add(
                     this.mappingsToObjects.get(internalIdent));

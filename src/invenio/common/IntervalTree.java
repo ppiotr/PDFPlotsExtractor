@@ -4,6 +4,7 @@
  */
 package invenio.common;
 
+import invenio.pdf.core.ExtractorLogger;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
@@ -340,11 +341,6 @@ public class IntervalTree<IntervalObjectType> {
         if (b != e) {
             this.addInterval(this.root, b, e, data, avoidRotations);
             int[] val = new int[]{b, e};
-            if (val == null) {
-                System.out.println("Epic failure ! ");
-            }
-
-
             this.intervalsStored.put(data, val);
         }
     }
@@ -503,8 +499,6 @@ public class IntervalTree<IntervalObjectType> {
         for (IntervalObjectType objectData : intervals.keySet()) {
             // connecting intervals having the same key
             TreeMap<Integer, int[]> ints = intervals.get(objectData);
-            Boolean dbgIsAdded = false;
-
             do {
                 Integer firstBeginning = ints.firstKey();
                 int[] currentInt = ints.get(firstBeginning);
@@ -514,22 +508,8 @@ public class IntervalTree<IntervalObjectType> {
                     Integer currentBeginning = ints.firstKey();
                     currentInt[1] = ints.get(currentBeginning)[1];
                     ints.remove(currentBeginning);
-                }
-                if (dbgIsAdded) {
-                    Random r = new Random();
-                    int caseIdentifier = r.nextInt(1000);
-
-                    System.out.println("" + caseIdentifier + " we have a fragmented interval ! rotated node " + rotationRoot.number + " the fragmented interval id is " + objectData);
-
-
-                    try {
-                        Images.writeImageToFile(this.renderTree(), "c:\\intervalTrees\\fragmented_interval_" + caseIdentifier + ".png");
-                    } catch (IOException ex) {
-                        System.out.println("Epic failure !");
-                    }
-                }
+                }            
                 this.addInterval(rotationRoot, currentInt[0], currentInt[1], objectData, true);
-                dbgIsAdded = true;
             } while (!ints.isEmpty());
         }
     }
@@ -977,7 +957,7 @@ public class IntervalTree<IntervalObjectType> {
     }
 
     /**
-     * An internal funciton adding all the intercals intersecting with the current subtree
+     * An internal funciton adding all the intervals intersecting with the current subtree
      * @param operationRoot
      * @param partialResults
      * @param b
@@ -990,7 +970,7 @@ public class IntervalTree<IntervalObjectType> {
                 partialResults.put(obj, false);
             }
             if (this.intervalsStored.get(obj) == null) {
-                System.out.println("Epic failure !");
+                ExtractorLogger.logMessage(0, "FATAL: Failed to add an interval to the interval tree");
             }
         }
 
@@ -1033,15 +1013,15 @@ public class IntervalTree<IntervalObjectType> {
         Map<IntervalObjectType, int[]> result = new HashMap<IntervalObjectType, int[]>();
         for (IntervalObjectType obj : partialResult.keySet()) {
             result.put(obj, this.intervalsStored.get(obj));
-            if (this.intervalsStored.get(obj) == null) {
-                try {
-                    // something went wrong - maybe an interval has been removed from the structure but not completely from the tree ?
-                    Images.writeImageToFile(this.renderTree(), "c:\\intervalTrees\\wrongStoredIntervals.png");
-                } catch (IOException ex) {
-                    Logger.getLogger(IntervalTree.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                System.out.print("WRONG INTERVAL!");
-            }
+//            if (this.intervalsStored.get(obj) == null) {
+//                try {
+//                    // something went wrong - maybe an interval has been removed from the structure but not completely from the tree ?
+//                    Images.writeImageToFile(this.renderTree(), "c:\\intervalTrees\\wrongStoredIntervals.png");
+//                } catch (IOException ex) {
+//                    Logger.getLogger(IntervalTree.class.getName()).log(Level.SEVERE, null, ex);
+//                }
+//                System.out.print("WRONG INTERVAL!");
+//            }
         }
         return result;
     }

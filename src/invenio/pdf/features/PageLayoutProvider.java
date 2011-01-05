@@ -16,13 +16,10 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 /**
  *
@@ -754,9 +751,6 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
     public <T> IPDFPageFeature calculateFeature(PDFPageManager<T> pageManager)
             throws FeatureNotPresentException, Exception {
 
-        if (pageManager.getPageNumber() == 17){
-            System.out.println("ble");
-        }
         Raster raster = pageManager.getRenderedPage().getData();
         LinkedList<Rectangle> verticalSeparators = new LinkedList<Rectangle>();
         List<Rectangle> preliminaryColumns= getPageColumns(raster, verticalSeparators);

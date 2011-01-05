@@ -19,6 +19,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DirectColorModel;
 import java.awt.image.IndexColorModel;
 import java.awt.image.WritableRaster;
+import java.io.File;
 import java.util.List;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
@@ -125,7 +126,8 @@ public class PdfPageComposite extends Composite {
         PlotsExtractorTools.annotateImage((Graphics2D) pageImage.getGraphics(), plots, tAreas, pdfPageLayout);
         // saving a copy of the rendered image
 
-        Images.writeImageToFile(pageImage, "/home/piotr/pdf/output_" + opManager.getPageNumber() + ".png");
+        //TODO: This is obsolete ... but so is the entire GUI
+        Images.writeImageToFile(pageImage, new File("/home/piotr/pdf/output_" + opManager.getPageNumber() + ".png"));
 
 
         ScrolledComposite canvasComposite = new ScrolledComposite(this,

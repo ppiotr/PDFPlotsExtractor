@@ -19,26 +19,26 @@ import javax.imageio.stream.ImageOutputStream;
  */
 public class Images {
 
-    public static String writeImageToFile(BufferedImage image, String filename)
+    /**
+     * Save a given BufferedImage instance into a file
+     *
+     * @param image
+     *            The object describing the image to be saved
+     * @param filename
+     *            Name of the file, where results should be saved. If this
+     *            parameter designs a directory, a new file with the unique
+     *            name is created
+     * @return The name of the file, where image has been saved
+     */
+    public static String writeImageToFile(BufferedImage image, File outputFile)
             throws IOException {
-        /**
-         * Save a given BufferedImage instance into a file
-         *
-         * @param image
-         *            The object describing the image to be saved
-         * @param filename
-         *            Name of the file, where results should be saved. If this
-         *            parameter designs a directory, a new file with the unique
-         *            name is created
-         * @return The name of the file, where image has been saved
-         */
+
         ImageWriter writer = null;
         Iterator<ImageWriter> iter = ImageIO.getImageWritersByFormatName("png");
         if (iter.hasNext()) {
             writer = iter.next();
         }
 
-        File outputFile = new File(filename);
         if (outputFile.isDirectory()) {
             outputFile = File.createTempFile("plot", ".png", outputFile);
         }

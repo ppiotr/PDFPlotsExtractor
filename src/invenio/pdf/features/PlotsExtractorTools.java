@@ -1,5 +1,6 @@
 package invenio.pdf.features;
 
+import invenio.pdf.core.ExtractorLogger;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
@@ -35,7 +36,7 @@ public class PlotsExtractorTools {
         Color[] columnColors = new Color[]{Color.magenta, Color.pink, Color.red, Color.blue, Color.gray, Color.orange};
         int colorIndex = 0;
         if (layout.areas.isEmpty()) {
-            System.out.println("Page without a layout ! ");
+            ExtractorLogger.logMessage(0, "ERROR: no page layout detected");
         }
 
         for (List<Rectangle> area : layout.areas) {

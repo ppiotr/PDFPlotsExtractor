@@ -14,6 +14,7 @@ import invenio.pdf.features.Plot;
 import invenio.pdf.features.Plots;
 import invenio.pdf.features.PlotsProvider;
 import invenio.pdf.features.TextAreasProvider;
+import java.io.File;
 import java.io.IOException;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
@@ -77,10 +78,10 @@ public class ExtractorInterface {
         return pageTab;
     }
 
-    protected void openDocument(String filename) throws IOException, COSLoadException, FeatureNotPresentException, Exception {
-        PDFDocumentManager manager = PDFDocumentTools.readPDFDocument(filename);
+    protected void openDocument(File f) throws IOException, COSLoadException, FeatureNotPresentException, Exception {
+        PDFDocumentManager manager = PDFDocumentTools.readPDFDocument(f);
 
-        this.openFileName = filename;
+        this.openFileName = f.getPath();
         this.updateOpenFileLabel();
         Plots plots = (Plots) manager.getDocumentFeature(Plots.featureName);
         for (int page = 0; page < manager.getPagesNumber(); page++) {
@@ -121,7 +122,7 @@ public class ExtractorInterface {
         //exInterface.openDocument("/home/piotr/pdf/1007.0043-12.pdf");
 //        exInterface.openDocument("/home/piotr/pdf/riemann.pdf");
         //exInterface.openDocument("c:\\pdf\\tests\\problematic_page.pdf");
-                exInterface.openDocument("./sampledata/lhc.pdf");
+                exInterface.openDocument(new File("./sampledata/lhc.pdf"));
 
 
         //exInterface.openDocument("c:\\pdf\\tests\\two_plots_one_page.pdf");

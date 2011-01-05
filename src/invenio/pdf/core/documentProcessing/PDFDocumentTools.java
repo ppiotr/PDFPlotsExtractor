@@ -24,6 +24,7 @@ import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -54,9 +55,10 @@ public class PDFDocumentTools {
      * @return PDFDocumentManager instance
      * @throws IOException
      */
-    public static PDFDocumentManager readPDFDocument(String fileName)
+    public static PDFDocumentManager readPDFDocument(File inputFile)
             throws IOException {
-        FileLocator locator = new FileLocator(fileName);
+
+        FileLocator locator = new FileLocator(inputFile.getPath());
         PDDocument doc;
         try {
             doc = PDDocument.createFromLocator(locator);
@@ -64,7 +66,7 @@ public class PDFDocumentTools {
             throw new IOException("Wrong PDF file");
         }
 
-        PDFDocumentManager documentManager = getOperationsFromDocument(doc, fileName);
+        PDFDocumentManager documentManager = getOperationsFromDocument(doc, inputFile.getPath());
         //doc.close();
         documentManager.setPDDocument(doc);
 

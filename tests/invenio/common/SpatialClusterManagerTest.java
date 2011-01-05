@@ -4,6 +4,7 @@
  */
 package invenio.common;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
@@ -190,10 +191,11 @@ public class SpatialClusterManagerTest {
                 Rectangle newRectangle = getRandomRectangle(boundary);
                 recordedRectangles.add(newRectangle);
                 instance.addRectangle(newRectangle, i);
+                
                 if (!IntervalTreeTest.isTreeSane(instance.xIntervalTree)) {
                     try {
                         //                       Images.writeImageToFile(instance.xIntervalTree.renderTree(), "c:\\intervalTrees\\failing_x_tree.png");
-                        Images.writeImageToFile(instance.xIntervalTree.renderTree(), "/home/piotr/intervalTrees/failing_x_tree.png");
+                        Images.writeImageToFile(instance.xIntervalTree.renderTree(), new File("/home/piotr/intervalTrees/failing_x_tree.png"));
 
                     } catch (IOException ex) {
                         Logger.getLogger(SpatialClusterManagerTest.class.getName()).log(Level.SEVERE, null, ex);
@@ -203,14 +205,13 @@ public class SpatialClusterManagerTest {
                 if (!IntervalTreeTest.isTreeSane(instance.yIntervalTree)) {
                     try {
 //                        Images.writeImageToFile(instance.yIntervalTree.renderTree(), "c:\\intervalTrees\\failing_y_tree.png");
-                        Images.writeImageToFile(instance.yIntervalTree.renderTree(), "/home/piotr/intervalTrees/failing_y_tree.png");
+                        Images.writeImageToFile(instance.yIntervalTree.renderTree(), new File("/home/piotr/intervalTrees/failing_y_tree.png"));
 
                     } catch (IOException ex) {
                         Logger.getLogger(SpatialClusterManagerTest.class.getName()).log(Level.SEVERE, null, ex);
                     }
                     System.out.println("Epic failure y;");
                 }
-
                 IntervalTreeTest.checkTreeSainty(instance.xIntervalTree);
                 IntervalTreeTest.checkTreeSainty(instance.yIntervalTree);
             }

@@ -428,7 +428,7 @@ public class OldExtractor {
         }
 
         for (PlotDescription desc : descriptions) {
-            Images.writeImageToFile(desc.getImage(), directoryName);
+            Images.writeImageToFile(desc.getImage(), new File(directoryName));
         }
     }
 

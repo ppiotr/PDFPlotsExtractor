@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Set;
 
 import de.intarsys.pdf.content.CSOperation;
+import invenio.pdf.core.ExtractorLogger;
 import invenio.pdf.core.GraphicalOperation;
 import invenio.pdf.core.PDFPageManager;
 import invenio.pdf.core.TextOperation;
@@ -166,7 +167,7 @@ class PDFPageOperationsManager {
                 if (bd != null) {
                     int[] substrInd = this.getOperationTextIndices(op);
                     if (substrInd == null || this.getPageText() == null){
-                        System.out.println("epic failure");
+                        ExtractorLogger.logMessage(0, "FATAL: failed to extract the page text");
                     }
                     String operationString = this.getPageText().substring(
                             substrInd[0], substrInd[1]);

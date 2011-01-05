@@ -65,7 +65,6 @@ public class RasterCalculateDistancesFromNonemptyPoints {
                 }
             }
         }
-        System.out.println("initially added " + initiallyAdded + " pixels");
 
         while (!bfsQueue.isEmpty()) {
             Pair<Integer, Integer> point = bfsQueue.removeFirst();

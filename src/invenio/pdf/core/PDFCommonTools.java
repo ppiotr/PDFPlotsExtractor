@@ -31,7 +31,6 @@ public class PDFCommonTools {
         Rectangle boundary = manager.getPageBoundary();
         int hMargin = (int) (boundary.getWidth() * hPercentage);
         int vMargin = (int) (boundary.getHeight() * vPercentage);
-      //  System.out.println("Margins: horizontal=" + hMargin + " vertical=" + vMargin);
         return new int[]{hMargin, vMargin};
     }
 
@@ -49,7 +48,6 @@ public class PDFCommonTools {
         Rectangle boundary = manager.getPageBoundary();
         int hMargin = (int) (boundary.getWidth() * hPercentage);
         int vMargin = (int) (boundary.getHeight() * vPercentage);
-       // System.out.println("Text margins: horizontal=" + hMargin + " vertical=" + vMargin);
         return new int[]{hMargin, vMargin};
     }
 }
