@@ -70,7 +70,7 @@ public class ExtractorParameters extends Properties {
      * @return
      */
     public double getVerticalTextMargin() {
-        return 0.00065;
+        return 0.005;
         //return 0.007;
     }
 
@@ -100,7 +100,7 @@ public class ExtractorParameters extends Properties {
      * @return
      */
     public double getHorizontalTextMargin() {
-        return 0.005;
+        return 0.05;
         //return 0.05; // this value is much bigger that the vertical margin
         // as it is unlikely that the text block will be lying next
         // to another text block (they are rather located below each other)
