@@ -71,6 +71,15 @@ public class PlotHeuristics {
     }
 
     /**
+     * Remove false plots based on their sizes. Images having too small
+     * dimensions can not be considered plots
+     * @return
+     */
+    public static Map<Rectangle, Pair<List<Operation>, Integer>> removeBasedOnSize(Map<Rectangle, Pair<List<Operation>, Integer>> input) {
+        return input;
+    }
+
+    /**
      * Remove irrelevant plots based on the number of graphical operations present inside.
      * This for example allows us to exclude tables and frames containing text.
      *
@@ -86,6 +95,16 @@ public class PlotHeuristics {
 
     public static Map<Rectangle, Pair<List<Operation>, Integer>> removeFalsePlots(Map<Rectangle, Pair<List<Operation>, Integer>> areas) {
         // remove graphics with too small/too big aspect ratios
+        return removeBasedOnAspectRatio(areas);
+    }
+
+    /**
+     * Filter out graphical regions taht should not be extended into plots by
+     * the inclusion of small surrounding text parts
+     * @param areas
+     * @return
+     */
+    static Map<Rectangle, Pair<List<Operation>, Integer>> removeIncorrectGraphicalRegions(Map<Rectangle, Pair<List<Operation>, Integer>> areas) {
         return removeBasedOnAspectRatio(areas);
     }
 

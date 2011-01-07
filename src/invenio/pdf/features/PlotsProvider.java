@@ -14,6 +14,7 @@ import invenio.pdf.core.PDFDocumentManager;
 import invenio.pdf.core.PDFPageManager;
 import invenio.pdf.core.PDFCommonTools;
 import java.awt.Rectangle;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -72,25 +73,24 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
             throw new FeatureNotPresentException(GraphicalAreas.featureName);
         }
 
-        Map<Rectangle, Pair<List<Operation>, Integer>> shrinkedRegions =
-                ExtractorGeometryTools.shrinkRectangleMap(graphicalAreas.areas,
-                margins[0], margins[1]);
-//        Map<Rectangle, Pair<List<Operation>, Integer>> plotRegions = shrinkedRegions;
-
-        Map<Rectangle, Pair<List<Operation>, Integer>> graphicalPlotRegions =
-                PlotHeuristics.removeFalsePlots(shrinkedRegions);
+        Map<Rectangle, Pair<List<Operation>, Integer>> areas;
 
 
-        Map<Rectangle, Pair<List<Operation>, Integer>> plotRegions =
-                PlotHeuristics.includeTextParts(graphicalPlotRegions, manager);
+        areas = graphicalAreas.areas;
+
+        areas = ExtractorGeometryTools.shrinkRectangleMap(areas, margins[0], margins[1]);
+        areas = PlotHeuristics.removeIncorrectGraphicalRegions(areas);
+        areas = PlotHeuristics.includeTextParts(areas, manager);
+        areas = PlotHeuristics.removeFalsePlots(areas);
+
 
         // we are done with plot images -> creating plot structures for every
         // selected region
 
-        for (Rectangle area : plotRegions.keySet()) {
+        for (Rectangle area : areas.keySet()) {
             Plot plot = new Plot();
             plot.setBoundary(area);
-            plot.addOperations(plotRegions.get(area).first);
+            plot.addOperations(areas.get(area).first);
             plot.setPageNumber(manager.getPageNumber());
             plot.setCaption(getPlotCaption(plot, manager));
             plot.setPageManager(manager);
@@ -102,17 +102,43 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
     }
 
     private static String getPlotCaption(Plot plot, PDFPageManager pageManager)
-	throws FeatureNotPresentException, Exception {
+            throws FeatureNotPresentException, Exception {
 
         TextAreas textAreas =
                 (TextAreas) pageManager.getPageFeature(TextAreas.featureName);
 
+        PageLayout pageLayout =
+                (PageLayout) pageManager.getPageFeature(PageLayout.featureName);
         // finding the first text area below the plot
         Rectangle currentArea = null;
 
         double plotEnding = plot.getBoundary().getMaxY();
+        int plotArea = pageLayout.getSingleBestIntersectingArea(plot.getBoundary());
+
+        // now filtering all the text areas. We want to consider only correct captions
+        // layout area number -> rectangle -> string
+        HashMap<Integer, HashMap<Rectangle, String>> possibleCaptions = new HashMap<Integer, HashMap<Rectangle, String>>();
 
         for (Rectangle textRegion : textAreas.areas.keySet()) {
+            if (isPlotCaption(textAreas.areas.get(textRegion).first)) {
+                int bestArea = pageLayout.getSingleBestIntersectingArea(textRegion);
+
+                if (!possibleCaptions.containsKey(bestArea)) {
+                    possibleCaptions.put(bestArea, new HashMap<Rectangle, String>());
+                }
+
+                possibleCaptions.get(bestArea).put(textRegion,
+                        textAreas.areas.get(textRegion).first);
+            }
+        }
+        // until now should be precalculated for every page
+
+        HashMap<Rectangle, String> captions = possibleCaptions.get(plotArea);
+        if (captions == null) {
+            return "";
+        }
+
+        for (Rectangle textRegion : captions.keySet()) {
             if (currentArea == null
                     || (currentArea.getMinY() > textRegion.getMinY()
                     && textRegion.getMinY() > plotEnding)) {
@@ -123,13 +149,7 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
         if (currentArea == null) {
             return "";
         } else {
-            // we have to determine if the area is really a plot caption !
-            String candidate = textAreas.areas.get(currentArea).first;
-            if (isPlotCaption(candidate)) {
-                return candidate;
-            } else {
-                return "";
-            }
+            return captions.get(currentArea);
         }
     }
 
