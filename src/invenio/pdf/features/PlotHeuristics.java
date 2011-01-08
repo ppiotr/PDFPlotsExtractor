@@ -1,6 +1,5 @@
 package invenio.pdf.features;
 
-import de.intarsys.tools.geometry.GeometryTools;
 import invenio.pdf.core.ExtractorParameters;
 import invenio.common.ExtractorGeometryTools;
 import invenio.common.Pair;
@@ -10,7 +9,6 @@ import invenio.pdf.core.PDFPageManager;
 import invenio.pdf.core.TextOperation;
 import java.awt.Rectangle;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -125,7 +123,7 @@ public class PlotHeuristics {
     }
 
     /**
-     * Takes a list of areas and includes all the text areas overlaping with them.
+     * Takes a list of areas and includes all the text areas overlapping with them.
      * Possibly joins input areas
      * @param areas
      * @param manager

@@ -39,7 +39,7 @@ public class PDFDocumentManager {
     }
 
     public String getSourceFileName() {
-        throw new UnsupportedOperationException("Not yet implemented");
+        return this.fileName;
     }
 
     /**

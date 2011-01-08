@@ -36,6 +36,7 @@ public class Plot {
     private PDFPageManager pageManager;
     
     private static int identifierFactory = 0;
+    private Rectangle captionBoundary;
 
     /**
      * A default constructor - creates a plot descriptor holding empty information
@@ -157,5 +158,14 @@ public class Plot {
         identifierFactory++;
         return "plot" + identifierFactory;
     }
+
+    public void setCaptionBoundary(Rectangle bd) {
+        this.captionBoundary = bd;
+    }
+
+    public Rectangle getCaptionBoundary(){
+        return this.captionBoundary;
+    }
+
 
 }

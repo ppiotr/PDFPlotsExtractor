@@ -164,30 +164,16 @@ public class PDFDocumentTools {
             PDFPageManager currentPageManager = getOperationsFromPage(page);
             currentPageManager.setPageNumber(pageNum);
             documentManager.addPage(currentPageManager);
+            currentPageManager.setDocumentManager(documentManager);
             page = page.getNextPage();
             pageNum++;
-
-            // debug... writing the page text... trying to figure out the encoding things
-            try {
-                //Map<String, Charset> sets = Charset.availableCharsets();
-                FileOutputStream os = new FileOutputStream("/home/piotr/pagedump_" + pageNum + ".txt");
-                OutputStreamWriter str = new OutputStreamWriter(os, Charset.forName("UTF8"));
-                str.write(currentPageManager.getPageText());
-                str.close();
-                os.close();
-//                  BufferedWriter writer = new BufferedWriter(new FileWriter("/home/piotr/pagedump_" + pageNum + ".txt"));
-//                writer.write(currentPageManager.getPageText().toCharArray()); // cc is a char[] that stores the characters
-//                writer.close();
-            } catch (Exception e) {
-                System.out.println(e.getMessage());
-            }
         }
 
         return documentManager;
     }
 
     /**
-     * Renders a page ommiting all the graphical and textual operations except
+     * Renders a page omitting all the graphical and textual operations except
      * given ones
      */
     public static void renderToCanvas(PDFPageManager pageManager, Graphics2D canvas, double scale) {

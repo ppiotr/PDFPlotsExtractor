@@ -67,4 +67,15 @@ public class Images {
         writer.dispose();
         return outputFile.getPath();
     }
+
+    /** Copy the buffered image, we are currently dealing with into a new one,
+     * which can be modifed without affecting the original one
+     * @param src
+     * @return
+     */
+    public static BufferedImage copyBufferedImage(BufferedImage img) {
+        BufferedImage result = new BufferedImage(img.getWidth(), img.getHeight(), img.getType());
+        result.getGraphics().drawImage(img, 0, 0, null);
+        return result;
+    }
 }

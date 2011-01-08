@@ -92,7 +92,9 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
             plot.setBoundary(area);
             plot.addOperations(areas.get(area).first);
             plot.setPageNumber(manager.getPageNumber());
-            plot.setCaption(getPlotCaption(plot, manager));
+            Pair<String, Rectangle> caption = getPlotCaption(plot, manager);
+            plot.setCaption(caption.first);
+            plot.setCaptionBoundary(caption.second);
             plot.setPageManager(manager);
             plot.setId(getPlotIdFromCaption(plot.getCaption()));
             plots.add(plot);
@@ -101,7 +103,7 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
         return plots;
     }
 
-    private static String getPlotCaption(Plot plot, PDFPageManager pageManager)
+    private static Pair<String, Rectangle> getPlotCaption(Plot plot, PDFPageManager pageManager)
             throws FeatureNotPresentException, Exception {
 
         TextAreas textAreas =
@@ -135,7 +137,7 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
 
         HashMap<Rectangle, String> captions = possibleCaptions.get(plotArea);
         if (captions == null) {
-            return "";
+            return new Pair<String, Rectangle>("", null);
         }
 
         for (Rectangle textRegion : captions.keySet()) {
@@ -147,9 +149,9 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
         }
 
         if (currentArea == null) {
-            return "";
+            return new Pair<String, Rectangle>("", null);
         } else {
-            return captions.get(currentArea);
+            return new Pair<String, Rectangle>(captions.get(currentArea), currentArea);
         }
     }
 

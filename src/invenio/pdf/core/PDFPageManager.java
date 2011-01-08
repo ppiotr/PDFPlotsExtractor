@@ -32,6 +32,8 @@ public class PDFPageManager<InternalPageType> {
     private int pageNumber;
     private String pageText;
     private InternalPageType internalPage; // internal representation of the page
+    private PDFDocumentManager documentManager;
+    private String rawImageFileName = "";
 
     // at some point we might need a mapping operation -> index
     public PDFPageManager() {
@@ -129,7 +131,7 @@ public class PDFPageManager<InternalPageType> {
      * Sets the text representation of the page
      * @param t
      */
-    public void setPageText(String t){
+    public void setPageText(String t) {
         this.pageText = t;
     }
 
@@ -137,9 +139,10 @@ public class PDFPageManager<InternalPageType> {
      * Returns the text representation of the page
      * @return
      */
-    public String getPageText(){
+    public String getPageText() {
         return this.pageText;
     }
+
     public int getPageNumber() {
         return this.pageNumber;
     }
@@ -169,11 +172,31 @@ public class PDFPageManager<InternalPageType> {
         this.internalPage = page;
     }
 
-    public InternalPageType getInternalPage(){
+    public InternalPageType getInternalPage() {
         return this.internalPage;
     }
 
     public Set<Operation> getTransOperations() {
         return this.transformationOperations;
+    }
+
+    public PDFDocumentManager getDocumentManager() {
+        return this.documentManager;
+    }
+
+    public void setDocumentManager(PDFDocumentManager manager) {
+        this.documentManager = manager;
+    }
+
+    /** sets the file name of the image of raw, unannotated page
+     * 
+     * @param n the file name
+     */
+    public void setRawFileName(String n) {
+        this.rawImageFileName = n;
+    }
+
+    public String getRawFileName(){
+        return this.rawImageFileName;
     }
 }

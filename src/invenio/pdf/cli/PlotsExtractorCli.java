@@ -46,21 +46,31 @@ public class PlotsExtractorCli {
             throws IOException, FeatureNotPresentException, Exception {
 
         PDFDocumentManager document = PDFDocumentTools.readPDFDocument(inputFile);
-        PlotsWriter.writePlots(document, outputDirectory);
 
         // writing annotated pages of the document
         Plots plots = (Plots) document.getDocumentFeature(Plots.featureName);
         for (int i = 0; i < document.getPagesNumber(); ++i) {
             PDFPageManager pageMgr = document.getPage(i);
             BufferedImage img = pageMgr.getRenderedPage();
-            Images.writeImageToFile(img, new File(outputDirectory.getPath(), "raw_output" + i + ".png"));
 
-            PlotsExtractorTools.annotateImage((Graphics2D) img.getGraphics(),
+
+            BufferedImage img2 = new BufferedImage(img.getWidth(), img.getHeight(), img.getType());
+            img2.getGraphics().drawImage(img, 0, 0, null);
+
+            PlotsExtractorTools.annotateImage((Graphics2D) img2.getGraphics(),
                     plots.plots.get(i),
                     (TextAreas) pageMgr.getPageFeature(TextAreas.featureName),
                     (PageLayout) pageMgr.getPageFeature(PageLayout.featureName));
-            Images.writeImageToFile(img, new File(outputDirectory.getPath(), "output" + i + ".png"));
+
+            Images.writeImageToFile(img2, new File(outputDirectory.getPath(), "output" + i + ".png"));
+
+
+            File rawFile = new File(outputDirectory.getPath(), "raw_output" + i + ".png");
+            Images.writeImageToFile(img, rawFile);
+            pageMgr.setRawFileName(rawFile.getAbsolutePath());
         }
+
+        PlotsWriter.writePlots(document, outputDirectory);
     }
 
     public static void main(String[] args) throws IOException, COSLoadException {
@@ -82,7 +92,12 @@ public class PlotsExtractorCli {
         if (args.length >= 2) {
             outputFolder = new File(args[1]);
         } else {
-            outputFolder = input;
+            if (input.isDirectory()) {
+                outputFolder = input;
+            } else {
+                outputFolder = input.getParentFile();
+            }
+
         }
 
         if (!outputFolder.exists()) {

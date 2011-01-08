@@ -10,9 +10,12 @@ import invenio.pdf.core.ExtractorParameters;
 import invenio.pdf.core.FeatureNotPresentException;
 import invenio.pdf.core.PDFDocumentManager;
 import invenio.pdf.core.documentProcessing.PDFDocumentTools;
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -22,11 +25,21 @@ import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import org.apache.batik.svggen.SVGGraphics2DIOException;
 import org.w3c.dom.DOMImplementation;
 import org.apache.batik.dom.GenericDOMImplementation;
 import org.apache.batik.svggen.SVGGraphics2D;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  * A class allowing to write plots together with meta-data into files
@@ -44,7 +57,7 @@ public class PlotsWriter {
         }
     }
 
-    public static void writePlot(Plot plot, File outputDirectory) throws FileNotFoundException, IOException {
+    public static void writePlot(Plot plot, File outputDirectory) throws FileNotFoundException, Exception {
         // first assure, the output directory exists
 
         if (!outputDirectory.exists()) {
@@ -55,23 +68,131 @@ public class PlotsWriter {
         writePlotMetadata(plot);
         writePlotPng(plot);
         writePlotSvg(plot);
+        writePlotAnnotatedPage(plot);
+        writePlotCaptionImage(plot);
     }
 
-    public static void writePlotMetadata(Plot plot) throws FileNotFoundException, IOException {
+    private static void appendElementWithTextNode(Document doc, Element parent, String name, String value) {
+        Element newElement = doc.createElement(name);
+        newElement.appendChild(doc.createTextNode(value));
+        parent.appendChild(newElement);
+    }
+
+    private static void appendRectangle(Document doc, Element parent, String name, Rectangle rec) {
+        Element el = doc.createElement(name);
+        parent.appendChild(el);
+        if (rec == null){
+            return;
+        }
+        appendElementWithTextNode(doc, el, "x", "" + rec.x);
+        appendElementWithTextNode(doc, el, "y", "" + rec.y);
+        appendElementWithTextNode(doc, el, "width", "" + rec.width);
+        appendElementWithTextNode(doc, el, "height", "" + rec.height);
+    }
+
+    public static void writePlotMetadata(Plot plot) throws FileNotFoundException, Exception {
         FileOutputStream outputStream = new FileOutputStream(plot.getFile("metadata"));
         PrintStream ps = new PrintStream(outputStream);
-        ps.println("identifier= " + plot.getId());
-        ps.println("caption=" + plot.getCaption());
-        ps.println("filePng=" + plot.getFile("png").getPath());
-        ps.println("fileSvg=" + plot.getFile("svg").getPath());
-        ps.close();
+
+//        ps.println("caption=" + plot.getCaption());
+//        ps.println("filePng=" + plot.getFile("png").getPath());
+//        ps.println("fileSvg=" + plot.getFile("svg").getPath());
+//        ps.close();
+//        
+
+        DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
+        Document document = documentBuilder.newDocument();
+
+        Element rootElement = document.createElement("plot");
+        document.appendChild(rootElement);
+
+        // plot identifier
+        appendElementWithTextNode(document, rootElement, "identifier", plot.getId());
+
+        //        ps.println("identifier= " + plot.getId());
+
+        // plot  image files
+        appendElementWithTextNode(document, rootElement, "png", plot.getFile("png").getAbsolutePath());
+        appendElementWithTextNode(document, rootElement, "svg", plot.getFile("svg").getAbsolutePath());
+
+        // location of the source
+
+        Element locationElement = document.createElement("location");
+        rootElement.appendChild(locationElement);
+        // main document file
+        appendElementWithTextNode(document, locationElement, "pdf", plot.getPageManager().getDocumentManager().getSourceFileName());
+        // document scale
+        appendElementWithTextNode(document, locationElement, "scale", "" + ExtractorParameters.getExtractorParameters().getPageScale());
+        // current page resulution
+        Rectangle pb = plot.getPageManager().getPageBoundary();
+        Element pageResolution = document.createElement("pageResolution");
+        locationElement.appendChild(pageResolution);
+        appendElementWithTextNode(document, pageResolution, "width", "" + pb.width);
+        appendElementWithTextNode(document, pageResolution, "height", "" + pb.height);
+
+        // main document page (indexed from 0)
+        appendElementWithTextNode(document, locationElement, "pageNumber", "" + plot.getPageManager().getPageNumber());
+
+        // coordinates in the main document
+        appendRectangle(document, locationElement, "pageCoordinates", plot.getBoundary());
+
+
+
+
+        Element captionEl = document.createElement("caption");
+        rootElement.appendChild(captionEl);
+        // caption coordinates
+        appendRectangle(document, captionEl, "coordinates", plot.getCaptionBoundary());
+        // caption text
+        appendElementWithTextNode(document, captionEl, "captionText", "" + plot.getCaption());
+        // caption image
+        appendElementWithTextNode(document, rootElement, "captionImage", plot.getFile("captionImage").getAbsolutePath());
+        // debug image
+        appendElementWithTextNode(document, rootElement, "annotatedImage", plot.getFile("annotatedImage").getAbsolutePath());
+
+        // saving the output into a file
+
+        TransformerFactory transformerFactory = TransformerFactory.newInstance();
+        Transformer transformer = transformerFactory.newTransformer();
+        DOMSource source = new DOMSource(document);
+
+        StreamResult result = new StreamResult(outputStream);
+        transformer.transform(source, result);
+
         outputStream.close();
+    }
+
+    /** Prepare and write the image of an annotated plot
+     *
+     */
+    public static void writePlotAnnotatedPage(Plot plot) throws Exception {
+        BufferedImage pageImg = Images.copyBufferedImage(plot.getPageManager().getRenderedPage());
+        Graphics2D gr = (Graphics2D) pageImg.getGraphics();
+        gr.setTransform(AffineTransform.getTranslateInstance(0, 0));
+        gr.setColor(Color.blue);
+        Rectangle bd = plot.getBoundary();
+        gr.drawRect(bd.x, bd.y, bd.width, bd.height);
+        gr.setColor(Color.green);
+        bd = plot.getCaptionBoundary();
+        if (bd != null){
+            gr.drawRect(bd.x, bd.y, bd.width, bd.height);
+        }
+        Images.writeImageToFile(pageImg, plot.getFile("annotatedImage"));
     }
 
     public static void writePlotPng(Plot plot) throws IOException {
         Rectangle b = plot.getBoundary();
 
         Images.writeImageToFile(plot.getPageManager().getRenderedPage().getSubimage(b.x, b.y, b.width, b.height), plot.getFile("png"));
+    }
+
+    public static void writePlotCaptionImage(Plot plot) throws IOException {
+        Rectangle b = plot.getCaptionBoundary();
+        if (b == null){
+            return;
+        }
+        Images.writeImageToFile(plot.getPageManager().getRenderedPage().getSubimage(b.x, b.y, b.width, b.height), plot.getFile("captionImage"));
     }
 
     public static void writePlotSvg(Plot plot) throws UnsupportedEncodingException, SVGGraphics2DIOException, FileNotFoundException, IOException {
@@ -117,8 +238,11 @@ public class PlotsWriter {
                 + plot.getPageManager().getPageNumber()
                 + " number of operations: " + plot.getOperations().size());
 
-        plot.addFile("metadata", new File(outputDirectory.getPath(), plot.getId() + "metadata.txt"));
+        plot.addFile("metadata", new File(outputDirectory.getPath(), plot.getId() + "_metadata.xml"));
         plot.addFile("png", new File(outputDirectory.getPath(), plot.getId() + ".png"));
         plot.addFile("svg", new File(outputDirectory.getPath(), plot.getId() + ".svg"));
+        plot.addFile("annotatedImage", new File(outputDirectory.getPath(), plot.getId() + "_annotated.png"));
+        plot.addFile("captionImage", new File(outputDirectory.getPath(), plot.getId() + "caption.png"));
+        
     }
 }
