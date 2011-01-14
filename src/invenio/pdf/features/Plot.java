@@ -62,7 +62,7 @@ public class Plot {
      * returns the number of the page on which the plot is located
      * @return
      */
-    public int setPageNumber() {
+    public int getPageNumber() {
         return this.pageNumber;
     }
 

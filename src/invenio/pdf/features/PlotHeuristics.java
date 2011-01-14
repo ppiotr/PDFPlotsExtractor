@@ -212,7 +212,9 @@ public class PlotHeuristics {
             areaIdentifiers.put(representant, rec);
 
             clusterManagers.get(pageArea).addRectangle(
-                    ExtractorGeometryTools.extendRectangle(rec, hPlotTextMargin, vPlotTextMargin),
+                    ExtractorGeometryTools.cropRectangle(
+                    ExtractorGeometryTools.extendRectangle(
+                    rec, hPlotTextMargin, vPlotTextMargin), manager.getPageBoundary()),
                     representant);
         }
 
@@ -225,9 +227,10 @@ public class PlotHeuristics {
 
                 int intersecting = layout.getSingleBestIntersectingArea(((TextOperation) textOp).getBoundary());
                 if (intersecting >= 0) {
-                    Rectangle boundary = ExtractorGeometryTools.extendRectangle(
+                    Rectangle boundary = ExtractorGeometryTools.cropRectangle(
+                            ExtractorGeometryTools.extendRectangle(
                             ((TextOperation) textOp).getBoundary(),
-                            hPlotTextMargin, vPlotTextMargin);
+                            hPlotTextMargin, vPlotTextMargin), manager.getPageBoundary());
 
 
                     clusterManagers.get(intersecting).addRectangle(

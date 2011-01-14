@@ -66,4 +66,33 @@ public class ExtractorGeometryTools {
         }
         return result;
     }
+
+    /**
+     * Cropping in one dimension
+     *
+     * @param pos the value to be cropped 
+     * @param bp boundary beginning value
+     * @param bl boundary extent
+     * @return
+     */
+    private static int cropPoint(int pos, int bp, int bl) {
+        return (pos < bp) ? bp : ((pos > bp + bl) ? bp + bl : pos);
+    }
+
+    /** Cropp the rectangle rec so that it is equal to the intersection of
+     * rec and bd
+     *
+     * @param rec The rectangle to crop
+     * @param bd The boundary limit rectangle
+     * @return
+     */
+    public static Rectangle cropRectangle(Rectangle rec,
+            Rectangle bd) {
+
+        int x = cropPoint(rec.x, bd.x, bd.width);
+        int y = cropPoint(rec.y, bd.y, bd.height);
+        int maxx = cropPoint(rec.x + rec.width, bd.x, bd.width);
+        int maxy = cropPoint(rec.y + rec.height, bd.y, bd.height);
+        return new Rectangle(x, y, maxx - x, maxy - y);
+    }
 }

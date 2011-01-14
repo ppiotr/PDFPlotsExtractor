@@ -47,17 +47,17 @@ import org.w3c.dom.Element;
  */
 public class PlotsWriter {
 
-    public static void writePlots(PDFDocumentManager document, File outputDirectory)
+    public static void writePlots(PDFDocumentManager document, File outputDirectory, boolean saveAttachments)
             throws FeatureNotPresentException, Exception {
         Plots plots = (Plots) document.getDocumentFeature(Plots.featureName);
         for (List<Plot> pagePlots : plots.plots) {
             for (Plot plot : pagePlots) {
-                writePlot(plot, outputDirectory);
+                writePlot(plot, outputDirectory, saveAttachments);
             }
         }
     }
 
-    public static void writePlot(Plot plot, File outputDirectory) throws FileNotFoundException, Exception {
+    public static void writePlot(Plot plot, File outputDirectory, boolean saveAttachments) throws FileNotFoundException, Exception {
         // first assure, the output directory exists
 
         if (!outputDirectory.exists()) {
@@ -65,11 +65,14 @@ public class PlotsWriter {
         }
 
         setFileNames(plot, outputDirectory);
+
         writePlotMetadata(plot);
-        writePlotPng(plot);
-        writePlotSvg(plot);
-        writePlotAnnotatedPage(plot);
-        writePlotCaptionImage(plot);
+        if (saveAttachments) {
+            writePlotPng(plot);
+            writePlotSvg(plot);
+            writePlotAnnotatedPage(plot);
+            writePlotCaptionImage(plot);
+        }
     }
 
     private static void appendElementWithTextNode(Document doc, Element parent, String name, String value) {
@@ -81,7 +84,7 @@ public class PlotsWriter {
     private static void appendRectangle(Document doc, Element parent, String name, Rectangle rec) {
         Element el = doc.createElement(name);
         parent.appendChild(el);
-        if (rec == null){
+        if (rec == null) {
             return;
         }
         appendElementWithTextNode(doc, el, "x", "" + rec.x);
@@ -103,11 +106,14 @@ public class PlotsWriter {
         DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
         Document document = documentBuilder.newDocument();
+        Element plotsCollectionElement = document.createElement("plots");
+        document.appendChild(plotsCollectionElement);
 
         Element rootElement = document.createElement("plot");
-        document.appendChild(rootElement);
+        plotsCollectionElement.appendChild(rootElement);
 
         // plot identifier
+
         appendElementWithTextNode(document, rootElement, "identifier", plot.getId());
 
         //        ps.println("identifier= " + plot.getId());
@@ -126,11 +132,13 @@ public class PlotsWriter {
         appendElementWithTextNode(document, locationElement, "scale", "" + ExtractorParameters.getExtractorParameters().getPageScale());
         // current page resulution
         Rectangle pb = plot.getPageManager().getPageBoundary();
-        Element pageResolution = document.createElement("pageResolution");
-        locationElement.appendChild(pageResolution);
-        appendElementWithTextNode(document, pageResolution, "width", "" + pb.width);
-        appendElementWithTextNode(document, pageResolution, "height", "" + pb.height);
+        if (pb != null) {
+            Element pageResolution = document.createElement("pageResolution");
 
+            locationElement.appendChild(pageResolution);
+            appendElementWithTextNode(document, pageResolution, "width", "" + pb.width);
+            appendElementWithTextNode(document, pageResolution, "height", "" + pb.height);
+        }
         // main document page (indexed from 0)
         appendElementWithTextNode(document, locationElement, "pageNumber", "" + plot.getPageManager().getPageNumber());
 
@@ -175,7 +183,7 @@ public class PlotsWriter {
         gr.drawRect(bd.x, bd.y, bd.width, bd.height);
         gr.setColor(Color.green);
         bd = plot.getCaptionBoundary();
-        if (bd != null){
+        if (bd != null) {
             gr.drawRect(bd.x, bd.y, bd.width, bd.height);
         }
         Images.writeImageToFile(pageImg, plot.getFile("annotatedImage"));
@@ -183,16 +191,19 @@ public class PlotsWriter {
 
     public static void writePlotPng(Plot plot) throws IOException {
         Rectangle b = plot.getBoundary();
-
-        Images.writeImageToFile(plot.getPageManager().getRenderedPage().getSubimage(b.x, b.y, b.width, b.height), plot.getFile("png"));
+        if (plot.getPageManager().getRenderedPage() != null) {
+            Images.writeImageToFile(plot.getPageManager().getRenderedPage().getSubimage(b.x, b.y, b.width, b.height), plot.getFile("png"));
+        }
     }
 
     public static void writePlotCaptionImage(Plot plot) throws IOException {
         Rectangle b = plot.getCaptionBoundary();
-        if (b == null){
-            return;
+        if (plot.getPageManager().getRenderedPage() != null) {
+            if (b == null) {
+                return;
+            }
+            Images.writeImageToFile(plot.getPageManager().getRenderedPage().getSubimage(b.x, b.y, b.width, b.height), plot.getFile("captionImage"));
         }
-        Images.writeImageToFile(plot.getPageManager().getRenderedPage().getSubimage(b.x, b.y, b.width, b.height), plot.getFile("captionImage"));
     }
 
     public static void writePlotSvg(Plot plot) throws UnsupportedEncodingException, SVGGraphics2DIOException, FileNotFoundException, IOException {
@@ -243,6 +254,6 @@ public class PlotsWriter {
         plot.addFile("svg", new File(outputDirectory.getPath(), plot.getId() + ".svg"));
         plot.addFile("annotatedImage", new File(outputDirectory.getPath(), plot.getId() + "_annotated.png"));
         plot.addFile("captionImage", new File(outputDirectory.getPath(), plot.getId() + "caption.png"));
-        
+
     }
 }

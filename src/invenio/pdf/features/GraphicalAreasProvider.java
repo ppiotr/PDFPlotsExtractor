@@ -14,10 +14,8 @@ import invenio.pdf.core.Operation;
 import invenio.pdf.core.PDFPageManager;
 import invenio.pdf.core.PDFCommonTools;
 import java.awt.Rectangle;
-import java.lang.Integer;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,7 +57,9 @@ public class GraphicalAreasProvider implements IPDFPageFeatureProvider {
                     Rectangle rec = new Rectangle((int) srcRec.getX(), (int) srcRec.getY(),
                             (int) srcRec.getWidth(), (int) srcRec.getHeight());
 
-                    clusterManagers.get(bestIntersectingArea).addRectangle(rec, op);
+                    clusterManagers.get(bestIntersectingArea).addRectangle(
+                            ExtractorGeometryTools.cropRectangle(
+                            rec, manager.getPageBoundary()), op);
 
                 }
 

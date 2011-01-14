@@ -70,7 +70,7 @@ public class PlotsExtractorCli {
             pageMgr.setRawFileName(rawFile.getAbsolutePath());
         }
 
-        PlotsWriter.writePlots(document, outputDirectory);
+        PlotsWriter.writePlots(document, outputDirectory, true);
     }
 
     public static void main(String[] args) throws IOException, COSLoadException {

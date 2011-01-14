@@ -67,7 +67,10 @@ public class TextAreasProvider implements IPDFPageFeatureProvider {
             System.out.flush();
             int areaNum = pageLayout.getSingleBestIntersectingArea(textOp.getBoundary());
             if (areaNum >= 0) {
-                clusterManagers.get(areaNum).addRectangle(textOp.getBoundary(), textOp);
+                clusterManagers.get(areaNum).addRectangle(
+                        ExtractorGeometryTools.cropRectangle(
+                        textOp.getBoundary(), pageManager.getPageBoundary()),
+                        textOp);
             }
         }
 

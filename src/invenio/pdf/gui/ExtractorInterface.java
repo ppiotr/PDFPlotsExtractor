@@ -10,6 +10,7 @@ import invenio.pdf.core.PDFDocumentManager;
 import invenio.pdf.core.PDFPageManager;
 import invenio.pdf.core.documentProcessing.PDFDocumentTools;
 import invenio.pdf.features.GraphicalAreasProvider;
+import invenio.pdf.features.PageLayoutProvider;
 import invenio.pdf.features.Plot;
 import invenio.pdf.features.Plots;
 import invenio.pdf.features.PlotsProvider;
@@ -112,27 +113,12 @@ public class ExtractorInterface {
 
         PDFPageManager.registerFeatureProvider(new GraphicalAreasProvider());
         PDFPageManager.registerFeatureProvider(new TextAreasProvider());
+        PDFPageManager.registerFeatureProvider(new PageLayoutProvider());
         PDFDocumentManager.registerFeatureProvider(new PlotsProvider());
 
         ExtractorInterface exInterface = new ExtractorInterface();
 
-        //exInterface.openDocument("c:\\pdf\\tests\\proper_raster_image_one_page.pdf");
-        //exInterface.openDocument("c:\\pdf\\1007.0043.pdf");
-        //exInterface.openDocument("c:\\pdf\\tests\\modified7_1007.0043.pdf");
-        //exInterface.openDocument("/home/piotr/pdf/1007.0043-12.pdf");
-//        exInterface.openDocument("/home/piotr/pdf/riemann.pdf");
-        //exInterface.openDocument("c:\\pdf\\tests\\problematic_page.pdf");
-                exInterface.openDocument(new File("./sampledata/lhc.pdf"));
-
-
-        //exInterface.openDocument("c:\\pdf\\tests\\two_plots_one_page.pdf");
-        //exInterface.openDocument("c:\\pdf\\tests\\no_plots.pdf");
-        //exInterface.openDocument("c:\\pdf\\tests\\some_math.pdf");
-
-        //exInterface.openDocument("c:\\pdf\\tests\\overlaping_one_page.pdf");
-
-        //exInterface.openDocument("c:\\pdf\\tibor_1.pdf");
-        //exInterface.openDocument("c:\\pdf\\1007.0043.pdf");
+        exInterface.openDocument(new File("./sampledata/two_columns.pdf"));
 
         exInterface.run();
     }
