@@ -60,6 +60,7 @@ public class SpatialClusterManager<StoredObjectType> {
                 new HashMap<Integer, Rectangle>();
         Map<Integer, int[]> intervalsX = this.xIntervalTree.getAllIntervals();
         Map<Integer, int[]> intervalsY = this.yIntervalTree.getAllIntervals();
+
         // producing the cartesian products
         for (Integer i : intervalsX.keySet()) {
             if (!this.mappingsToParents.containsKey(i)) {

@@ -99,8 +99,13 @@ public class PlotsExtractorTools {
         Element coordElement = (Element) captionElement.getElementsByTagName("coordinates").item(0);
         Element textElement = (Element) captionElement.getElementsByTagName("captionText").item(0);
 
-        plot.setCaptionBoundary(readRectangleFromXmlNode(coordElement));
-        plot.setCaption(textElement.getFirstChild().getNodeValue().trim());
+        try{
+            plot.setCaptionBoundary(readRectangleFromXmlNode(coordElement));
+            plot.setCaption(textElement.getFirstChild().getNodeValue().trim());
+        } catch(Exception e){
+            plot.setCaptionBoundary(new Rectangle(0,0,0,0));
+            plot.setCaption("");
+        }
     }
 
     private static Plot readPlotFromXmlElement(Element plotElement) {

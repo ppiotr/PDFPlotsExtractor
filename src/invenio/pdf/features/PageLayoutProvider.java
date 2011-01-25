@@ -264,6 +264,7 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
         boolean onSeparator = false;
         int curPoint = separatorPoints.get(0);
         int curPointIndex = 0;
+        
         Rectangle curRectangle = new Rectangle(curX, 0, 0, 0);
         // this is used to generate newcomming rectangles
 
@@ -502,18 +503,6 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
             updateHorizontalSeparators(hSeparators, lowerSeparator, position, -1);
             updateHorizontalSeparators(hSeparators, upperSeparator, -1, position);
 
-
-//            upperRectangles.put(lowerSeparator, position);
-//            lowerRectangles.put(upperSeparator, position);
-
-            // check if the separator is not intersecting another one
-
-//            upperSeparator.hashCode();
-
-            // adding separators - only for the iteration purposes
-
-//            horizontalSeparators.add(upperSeparator);
-//            horizontalSeparators.add(lowerSeparator);
 
         }
 
