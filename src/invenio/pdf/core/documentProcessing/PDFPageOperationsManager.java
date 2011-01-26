@@ -12,6 +12,7 @@ import invenio.pdf.core.TransformationOperation;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -31,7 +32,7 @@ class PDFPageOperationsManager {
     private HashMap<CSOperation, Rectangle> operationBoundaries; // Boundries of areas affected by PS operations
     private HashSet<CSOperation> textOperations; // operations drawing the text
     private List<CSOperation> operations; // operations drawing the text
-    private HashMap<CSOperation, List<String>> renderingMethods; // Methods
+ //   private HashMap<CSOperation, List<String>> renderingMethods; // Methods
     // called in order to execute an operation
     private Rectangle pageBoundary;
     private Map<CSOperation, int[]> operationTextPositions;
@@ -47,7 +48,7 @@ class PDFPageOperationsManager {
         this.currentOperation = null;
         this.operationBoundaries = new HashMap<CSOperation, Rectangle>();
         this.textOperations = new HashSet<CSOperation>();
-        this.renderingMethods = new HashMap<CSOperation, List<String>>();
+   //     this.renderingMethods = new HashMap<CSOperation, List<String>>();
         this.operations = new ArrayList<CSOperation>();
         this.pageBoundary = pgBound;
         this.operationTextPositions = new HashMap<CSOperation, int[]>();
@@ -82,18 +83,19 @@ class PDFPageOperationsManager {
     }
 
     public void addRenderingMethod(CSOperation op, String method) {
-        List<String> methods = this.renderingMethods.get(op);
-        if (methods == null) {
-            this.renderingMethods.put(op, new ArrayList<String>());
-        }
-        this.renderingMethods.get(op).add(method);
+//        List<String> methods = this.renderingMethods.get(op);
+//        if (methods == null) {
+//            this.renderingMethods.put(op, new ArrayList<String>());
+//        }
+//        this.renderingMethods.get(op).add(method);
     }
 
     public List<String> getRenderingMethods(CSOperation op) {
         /**
          * Returns methods used to render a particular operation
          */
-        return this.renderingMethods.get(op);
+        //return this.renderingMethods.get(op);\
+        return new LinkedList<String>();
     }
 
     public void setCurrentOperation(CSOperation op) {

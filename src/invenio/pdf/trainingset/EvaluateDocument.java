@@ -456,7 +456,7 @@ public class EvaluateDocument {
             System.out.println("   skipped:" + pe.first.first + "  incorrectly detected:" + pe.first.second);
         }
 
-        System.out.println("Final documetn statistics: skipped=" + skipped + " incorrectly detected=" + incorrectly + " total sum of distances=" + total + "number of pairs="+totalNum);
+        System.out.println("Final document statistics: skipped=" + skipped + " incorrectly detected=" + incorrectly + " total sum of distances=" + total + "number of pairs="+totalNum);
         System.out.println("" + (total/ totalNum));
         double evaluation = 0.3 * ( ((double)skipped) / numCorrectPlots)+ 0.2 * ( ((double) incorrectly )/ numDetectedPlots ) + 0.5 * (total/ totalNum);
         System.out.println(" total evaluation:" + evaluation);

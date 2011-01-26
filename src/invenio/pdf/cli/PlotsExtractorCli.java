@@ -8,6 +8,8 @@ import de.intarsys.pdf.parser.COSLoadException;
 import invenio.common.Images;
 import invenio.pdf.core.ExtractorLogger;
 import invenio.pdf.core.FeatureNotPresentException;
+import invenio.pdf.core.GraphicalOperation;
+import invenio.pdf.core.Operation;
 import invenio.pdf.core.PDFDocumentManager;
 import invenio.pdf.core.PDFPageManager;
 import invenio.pdf.core.documentProcessing.PDFDocumentTools;
@@ -23,7 +25,10 @@ import invenio.pdf.features.TextAreasProvider;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -50,7 +55,7 @@ public class PlotsExtractorCli {
         // writing annotated pages of the document
         Plots plots = (Plots) document.getDocumentFeature(Plots.featureName);
         for (int i = 0; i < document.getPagesNumber(); ++i) {
-            PDFPageManager pageMgr = document.getPage(i);
+            PDFPageManager<Operation> pageMgr = document.getPage(i);
             BufferedImage img = pageMgr.getRenderedPage();
 
 
@@ -60,7 +65,7 @@ public class PlotsExtractorCli {
             PlotsExtractorTools.annotateImage((Graphics2D) img2.getGraphics(),
                     plots.plots.get(i),
                     (TextAreas) pageMgr.getPageFeature(TextAreas.featureName),
-                    (PageLayout) pageMgr.getPageFeature(PageLayout.featureName));
+                    (PageLayout) pageMgr.getPageFeature(PageLayout.featureName), null);
 
             Images.writeImageToFile(img2, new File(outputDirectory.getPath(), "output" + i + ".png"));
 
@@ -68,6 +73,42 @@ public class PlotsExtractorCli {
             File rawFile = new File(outputDirectory.getPath(), "raw_output" + i + ".png");
             Images.writeImageToFile(img, rawFile);
             pageMgr.setRawFileName(rawFile.getAbsolutePath());
+
+            // saving annotated graphical operations -> checking their boundaries
+            
+            BufferedImage img3 = new BufferedImage(img.getWidth(), img.getHeight(), img.getType());
+            img3.getGraphics().drawImage(img, 0, 0, null);
+            File pageOperationsDumpFile = new File(outputDirectory.getPath(), "page_dump_" + i + ".txt");
+            FileOutputStream operationsDumpFile = new FileOutputStream(pageOperationsDumpFile);
+            PrintStream ps = new PrintStream(operationsDumpFile);
+
+            LinkedList<Operation> graphicalOperations = new LinkedList();
+            int lineNumber = 1;
+            for (Operation op: pageMgr.getOperations()){
+                
+                ps.print(lineNumber);
+                ps.print(" ");
+                ps.print(op.getOriginalOperation().toString());
+                ++lineNumber;
+                if (op instanceof GraphicalOperation){
+                    GraphicalOperation go = (GraphicalOperation) op;
+                    if (pageMgr.getPageNumber() == 3 && go.getBoundary().x < 300 && go.getBoundary().y < 505){
+                        //System.out.println("our operation");
+                        ps.print("    <---------------");
+                    }
+                    graphicalOperations.add(op);
+                }
+                ps.println("");
+            }
+
+            operationsDumpFile.close();
+            
+            PlotsExtractorTools.annotateImage((Graphics2D) img3.getGraphics(),
+                    null,
+                    null,
+                    null, graphicalOperations);
+            File graphicalAnnotatedFile = new File(outputDirectory.getPath(), "graphical_output" + i + ".png");
+            Images.writeImageToFile(img3, graphicalAnnotatedFile);
         }
 
         PlotsWriter.writePlots(document, outputDirectory, true);

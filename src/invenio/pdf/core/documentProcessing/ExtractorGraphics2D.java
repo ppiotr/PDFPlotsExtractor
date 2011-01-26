@@ -26,6 +26,7 @@ import java.text.AttributedCharacterIterator;
 import java.util.Map;
 
 import java.awt.geom.Rectangle2D;
+
 /**
  * The purpose of this class is to emulate a standard Java Graphics2D.
  * When the renderer passes direct graphical operations necessary to render
@@ -54,7 +55,10 @@ class ExtractorGraphics2D extends Graphics2D {
     }
 
     protected void processOperatorBoundary(Rectangle2D bounds) {
-              AffineTransform currentTransform = this.originalGraphics.getTransform();
+        if (bounds.getX() < 300 && bounds.getY() < 505 && this.operationsManager.getCurrentOperation() != null && this.operationsManager.getCurrentOperation().getOperator() != null && this.operationsManager.getCurrentOperation().getOperator().toString() == "f"){
+            System.out.println("supa");
+        }
+        AffineTransform currentTransform = this.originalGraphics.getTransform();
         double origin[] = {bounds.getMinX(), bounds.getMinY(),
             bounds.getMinX(), bounds.getMaxY(),
             bounds.getMaxX(), bounds.getMaxY(),
@@ -101,16 +105,16 @@ class ExtractorGraphics2D extends Graphics2D {
     }
 
     @Override
-    public void draw(Shape arg0) {        
+    public void draw(Shape arg0) {
         this.processOperatorBoundary(arg0.getBounds2D());
-        this.operationsManager.addRenderingMethod("draw");
+        //       this.operationsManager.addRenderingMethod("draw");
         this.originalGraphics.draw(arg0);
     }
 
     @Override
     public void drawGlyphVector(GlyphVector arg0, float arg1, float arg2) {
         this.originalGraphics.drawGlyphVector(arg0, arg1, arg2);
-        this.operationsManager.addRenderingMethod("drawGlyphVector");
+        //      this.operationsManager.addRenderingMethod("drawGlyphVector");
 
     }
 
@@ -120,8 +124,8 @@ class ExtractorGraphics2D extends Graphics2D {
         int width = arg0.getWidth(null);
         int height = arg0.getHeight(null);
         double originals[] = {0.0, 0.0, 0.0, (double) height,
-                            (double) width, (double) height,
-                            (double) width, 0.0};
+            (double) width, (double) height,
+            (double) width, 0.0};
         double transformed[] = new double[8];
         arg1.transform(originals, 0, transformed, 0, 4);
 
@@ -136,38 +140,38 @@ class ExtractorGraphics2D extends Graphics2D {
 
     @Override
     public void drawRenderableImage(RenderableImage arg0, AffineTransform arg1) {
-     //   System.out.println("drawRenderableImage(RenderableImage arg0, AffineTransform arg1);");
+        //   System.out.println("drawRenderableImage(RenderableImage arg0, AffineTransform arg1);");
         this.originalGraphics.drawRenderableImage(arg0, arg1);
     }
 
     @Override
     public void drawRenderedImage(RenderedImage arg0, AffineTransform arg1) {
-     //   System.out.println("drawRenderedImage(RenderedImage arg0, AffineTransform arg1);");
+        //   System.out.println("drawRenderedImage(RenderedImage arg0, AffineTransform arg1);");
         this.originalGraphics.drawRenderedImage(arg0, arg1);
     }
 
     @Override
     public void drawString(String arg0, int arg1, int arg2) {
-     //   System.out.println("drawString(String arg0, int arg1, int arg2);");
+        //   System.out.println("drawString(String arg0, int arg1, int arg2);");
         this.originalGraphics.drawString(arg0, arg1, arg2);
     }
 
     @Override
     public void drawString(String arg0, float arg1, float arg2) {
-    //    System.out.println("drawString(String arg0=" + arg0 + " , float arg1, float arg2)");
+        //    System.out.println("drawString(String arg0=" + arg0 + " , float arg1, float arg2)");
         this.originalGraphics.drawString(arg0, arg1, arg2);
     }
 
     @Override
     public void drawString(AttributedCharacterIterator arg0, int arg1, int arg2) {
-    //    System.out.println("drawString(AttributedCharacterIterator arg0, int arg1, int arg2);");
+        //    System.out.println("drawString(AttributedCharacterIterator arg0, int arg1, int arg2);");
         this.originalGraphics.drawString(arg0, arg1, arg2);
     }
 
     @Override
     public void drawString(AttributedCharacterIterator arg0, float arg1,
             float arg2) {
-    //    System.out.println("drawString(AttributedCharacterIterator arg0, float arg1, float arg2)");
+        //    System.out.println("drawString(AttributedCharacterIterator arg0, float arg1, float arg2)");
         this.originalGraphics.drawString(arg0, arg1, arg2);
     }
 
@@ -180,7 +184,7 @@ class ExtractorGraphics2D extends Graphics2D {
         // }
 
         // System.out.println("fill(Shape arg0 = " + arg0.toString() + ") current operation: " + opString);
-        this.operationsManager.addRenderingMethod("fill");
+        //   this.operationsManager.addRenderingMethod("fill");
         this.processOperatorBoundary(arg0.getBounds2D());
         this.originalGraphics.fill(arg0);
     }
@@ -232,7 +236,7 @@ class ExtractorGraphics2D extends Graphics2D {
 
     @Override
     public boolean hit(Rectangle arg0, Shape arg1, boolean arg2) {
-    //    System.out.println("hit(Rectangle arg0=" + arg0.toString() + ", Shape arg1=" + arg1.toString() + ", boolean arg2=" + arg2 + ");");
+        //    System.out.println("hit(Rectangle arg0=" + arg0.toString() + ", Shape arg1=" + arg1.toString() + ", boolean arg2=" + arg2 + ");");
         return this.originalGraphics.hit(arg0, arg1, arg2);
     }
 
@@ -248,7 +252,7 @@ class ExtractorGraphics2D extends Graphics2D {
 
     @Override
     public void scale(double arg0, double arg1) {
-    //    System.out.println("scale(double arg0, double arg1)");
+        //    System.out.println("scale(double arg0, double arg1)");
         this.originalGraphics.scale(arg0, arg1);
     }
 
@@ -279,7 +283,7 @@ class ExtractorGraphics2D extends Graphics2D {
 
     @Override
     public void setStroke(Stroke arg0) {
-        this.operationsManager.addRenderingMethod("setStroke");
+        //   this.operationsManager.addRenderingMethod("setStroke");
         this.originalGraphics.setStroke(arg0);
     }
 
@@ -337,15 +341,15 @@ class ExtractorGraphics2D extends Graphics2D {
     @Override
     public void drawArc(int arg0, int arg1, int arg2, int arg3, int arg4,
             int arg5) {
-      //  System.out.println("drawArc(int arg0, int arg1, int arg2, int arg3, int arg4, int arg5)");
-        this.operationsManager.addRenderingMethod("drawArc");
+        //  System.out.println("drawArc(int arg0, int arg1, int arg2, int arg3, int arg4, int arg5)");
+        //     this.operationsManager.addRenderingMethod("drawArc");
         this.originalGraphics.drawArc(arg0, arg1, arg2, arg3, arg4, arg5);
     }
 
     @Override
     public boolean drawImage(Image arg0, int arg1, int arg2, ImageObserver arg3) {
-     //   System.out.println("drawImage(Image arg0, int arg1, int arg2, ImageObserver arg3)");
-        this.operationsManager.addRenderingMethod("drawImage");
+        //   System.out.println("drawImage(Image arg0, int arg1, int arg2, ImageObserver arg3)");
+        //   this.operationsManager.addRenderingMethod("drawImage");
         this.processOperatorBoundary(new Rectangle2D.Double((double) arg1, (double) arg2, (double) arg0.getWidth(arg3), (double) arg0.getHeight(arg3)));
         return this.originalGraphics.drawImage(arg0, arg1, arg2, arg3);
     }
@@ -353,28 +357,28 @@ class ExtractorGraphics2D extends Graphics2D {
     @Override
     public boolean drawImage(Image arg0, int arg1, int arg2, Color arg3,
             ImageObserver arg4) {
-    //    System.out.println("drawImage(Image arg0, int arg1, int arg2, Color arg3,ImageObserver arg4)");
+        //    System.out.println("drawImage(Image arg0, int arg1, int arg2, Color arg3,ImageObserver arg4)");
         return this.originalGraphics.drawImage(arg0, arg1, arg2, arg3, arg4);
     }
 
     @Override
     public boolean drawImage(Image arg0, int arg1, int arg2, int arg3,
             int arg4, ImageObserver arg5) {
-     //   System.out.println("drawImage(Image arg0, int arg1, int arg2, int arg3, int arg4, ImageObserver arg5);");
+        //   System.out.println("drawImage(Image arg0, int arg1, int arg2, int arg3, int arg4, ImageObserver arg5);");
         return this.originalGraphics.drawImage(arg0, arg1, arg2, arg3, arg4, arg5);
     }
 
     @Override
     public boolean drawImage(Image arg0, int arg1, int arg2, int arg3,
             int arg4, Color arg5, ImageObserver arg6) {
-     //   System.out.println("drawImage(Image arg0, int arg1, int arg2, int arg3, int arg4, Color arg5, ImageObserver arg6);");
+        //   System.out.println("drawImage(Image arg0, int arg1, int arg2, int arg3, int arg4, Color arg5, ImageObserver arg6);");
         return this.originalGraphics.drawImage(arg0, arg1, arg2, arg3, arg4, arg5, arg6);
     }
 
     @Override
     public boolean drawImage(Image arg0, int arg1, int arg2, int arg3,
             int arg4, int arg5, int arg6, int arg7, int arg8, ImageObserver arg9) {
-     //   System.out.println("drawImage(Image arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, ImageObserver arg9)");
+        //   System.out.println("drawImage(Image arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, ImageObserver arg9)");
         return this.originalGraphics.drawImage(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
     }
 
@@ -382,70 +386,70 @@ class ExtractorGraphics2D extends Graphics2D {
     public boolean drawImage(Image arg0, int arg1, int arg2, int arg3,
             int arg4, int arg5, int arg6, int arg7, int arg8, Color arg9,
             ImageObserver arg10) {
-    //    System.out.println("drawImage(Image arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, Color arg9, ImageObserver arg10)");
+        //    System.out.println("drawImage(Image arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, Color arg9, ImageObserver arg10)");
         return this.originalGraphics.drawImage(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
     }
 
     @Override
     public void drawLine(int arg0, int arg1, int arg2, int arg3) {
-    //    System.out.println("drawLine(int arg0, int arg1, int arg2, int arg3)");
+        //    System.out.println("drawLine(int arg0, int arg1, int arg2, int arg3)");
         this.originalGraphics.drawLine(arg0, arg1, arg2, arg3);
     }
 
     @Override
     public void drawOval(int arg0, int arg1, int arg2, int arg3) {
-    //    System.out.println("drawOval(int arg0, int arg1, int arg2, int arg3)");
+        //    System.out.println("drawOval(int arg0, int arg1, int arg2, int arg3)");
         this.originalGraphics.drawOval(arg0, arg1, arg2, arg3);
     }
 
     @Override
     public void drawPolygon(int[] arg0, int[] arg1, int arg2) {
-    //    System.out.println("drawPolygon(int[] arg0, int[] arg1, int arg2)");
+        //    System.out.println("drawPolygon(int[] arg0, int[] arg1, int arg2)");
         this.originalGraphics.drawPolygon(arg0, arg1, arg2);
     }
 
     @Override
     public void drawPolyline(int[] arg0, int[] arg1, int arg2) {
-    //    System.out.println("drawPolyline(int[] arg0, int[] arg1, int arg2)");
+        //    System.out.println("drawPolyline(int[] arg0, int[] arg1, int arg2)");
         this.originalGraphics.drawPolyline(arg0, arg1, arg2);
     }
 
     @Override
     public void drawRoundRect(int arg0, int arg1, int arg2, int arg3, int arg4,
             int arg5) {
-    //    System.out.println("drawRoundRect(int arg0, int arg1, int arg2, int arg3, int arg4, int arg5)");
+        //    System.out.println("drawRoundRect(int arg0, int arg1, int arg2, int arg3, int arg4, int arg5)");
         this.originalGraphics.drawRoundRect(arg0, arg1, arg2, arg3, arg4, arg5);
     }
 
     @Override
     public void fillArc(int arg0, int arg1, int arg2, int arg3, int arg4,
             int arg5) {
-    //    System.out.println("fillArc(int arg0, int arg1, int arg2, int arg3, int arg4, int arg5)");
+        //    System.out.println("fillArc(int arg0, int arg1, int arg2, int arg3, int arg4, int arg5)");
         this.originalGraphics.fillArc(arg0, arg1, arg2, arg3, arg4, arg5);
     }
 
     @Override
     public void fillOval(int arg0, int arg1, int arg2, int arg3) {
-    //    System.out.println("fillOval(int arg0, int arg1, int arg2, int arg3)");
+        //    System.out.println("fillOval(int arg0, int arg1, int arg2, int arg3)");
         this.originalGraphics.fillOval(arg0, arg1, arg2, arg3);
     }
 
     @Override
     public void fillPolygon(int[] arg0, int[] arg1, int arg2) {
-     //   System.out.println("fillPolygon(int[] arg0, int[] arg1, int arg2);");
+        //   System.out.println("fillPolygon(int[] arg0, int[] arg1, int arg2);");
         this.originalGraphics.fillPolygon(arg0, arg1, arg2);
     }
 
     @Override
     public void fillRect(int arg0, int arg1, int arg2, int arg3) {
-     //   System.out.println("fillRect(int arg0, int arg1, int arg2, int arg3)");
+        //   System.out.println("fillRect(int arg0, int arg1, int arg2, int arg3)");
         this.originalGraphics.fillRect(arg0, arg1, arg2, arg3);
     }
 
     @Override
     public void fillRoundRect(int arg0, int arg1, int arg2, int arg3, int arg4,
             int arg5) {
-     //   System.out.println("fillRoundRect(int arg0, int arg1, int arg2, int arg3, int arg4,	int arg5)");
+        //   System.out.println("fillRoundRect(int arg0, int arg1, int arg2, int arg3, int arg4,	int arg5)");
         this.originalGraphics.fillRoundRect(arg0, arg1, arg2, arg3, arg4, arg5);
     }
 
@@ -491,7 +495,7 @@ class ExtractorGraphics2D extends Graphics2D {
 
     @Override
     public void setFont(Font arg0) {
-     //   System.out.println("setFont(Font arg0)");
+        //   System.out.println("setFont(Font arg0)");
         this.originalGraphics.setFont(arg0);
     }
 

@@ -100,6 +100,49 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
         }
         return true;
     }
+    // variables allowing a faster checks if area is empty
+    // (no more reading of the same page pixels again!)
+    private int[] emptinessColumn; // number of empty fields until current x (inclusive)
+    private int emptinessX; // for which X is the data calculated
+    private int[] emptinessCurrentPixel = new int[3];
+    private int emptinessRadius;
+    private int emptinessDiameter;
+
+    /** Initialises the emptiness data - calculate the required emptiness radius
+     */
+    private void emptinessInitialise(Raster r) {
+        emptinessDiameter = (int) (this.horizontalEmptinessRadius * r.getWidth());
+        emptinessRadius = (int) emptinessDiameter / 2;
+    }
+
+    private void emptinessDataReset(Raster r) {
+        emptinessX = -1;
+        emptinessColumn = new int[r.getHeight()];
+        for (int y = 0; y < r.getHeight(); ++y) {
+            emptinessColumn[y] = r.getWidth();
+        }
+    }
+
+    private void emptinessDataMove(Raster r) {
+        // moves the emptiness index by 1
+        emptinessX++;
+        for (int y = 0; y < r.getHeight(); y++) {
+            emptinessCurrentPixel = r.getPixel(emptinessX, y, emptinessCurrentPixel);
+            if (isPixelEmpty(emptinessCurrentPixel)) {
+                emptinessColumn[y]++;
+            } else {
+                emptinessColumn[y] = 0;
+            }
+        }
+    }
+
+    private boolean emptinessIsAreaEmpty(int x, int y, Raster raster) {
+        int checkedX = x + emptinessRadius;
+        while (emptinessX != checkedX) {
+            emptinessDataMove(raster);
+        }
+        return emptinessColumn[y] >= emptinessDiameter;
+    }
 
     /**
      * Determines if a given horizontal line might be considered a
@@ -168,6 +211,9 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
 
         ArrayList<Integer> maximalSeparators = new ArrayList<Integer>();
 
+        emptinessInitialise(raster);
+        emptinessDataReset(raster);
+        
         for (int x = minimalLeft; x < maximalLeft; ++x) { // iterating over the columns
             // calculating signature of a line
             int emptyAreaBeginning = 0;
@@ -176,7 +222,7 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
             currentColumnEvaluation = 0;
 
             for (int y = 0; y <= raster.getHeight(); ++y) {
-                if ((y == raster.getHeight()) || !isAreaEmpty(x, y, raster)) {
+                if ((y == raster.getHeight()) || !emptinessIsAreaEmpty(x, y, raster)) {
                     if ((y - emptyAreaBeginning - 1) > minimalHeight) {
                         emptyAreas.add(emptyAreaBeginning);
 
@@ -264,7 +310,7 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
         boolean onSeparator = false;
         int curPoint = separatorPoints.get(0);
         int curPointIndex = 0;
-        
+
         Rectangle curRectangle = new Rectangle(curX, 0, 0, 0);
         // this is used to generate newcomming rectangles
 
@@ -570,17 +616,17 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
                 }
                 // we have a separator of a limit of the movement -> in order to avoid potential empty space, we
                 // will move the separator as far as possible as long as it is a separator
-                
+
                 while (isValidSeparatorPositionV(cSeparator,
                         adjacentVSeparators.get(hSeparator))
                         && isHorizontalSeparator(cSeparator.x, cSeparator.y + separatorInc,
-                        cSeparator.width, raster) && cSeparator.y + separatorInc < raster.getHeight())  {
+                        cSeparator.width, raster) && cSeparator.y + separatorInc < raster.getHeight()) {
 
                     cSeparator.y += separatorInc;
                     movedBy++;
                 }
 
-                if (cSeparator.y == raster.getHeight() - 1){
+                if (cSeparator.y == raster.getHeight() - 1) {
                     // if we are at the very bottom, we are interested in moving the separator one more
                     // to go outside of the page
                     ++cSeparator.y;
@@ -742,7 +788,7 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
 
         Raster raster = pageManager.getRenderedPage().getData();
         LinkedList<Rectangle> verticalSeparators = new LinkedList<Rectangle>();
-        List<Rectangle> preliminaryColumns= getPageColumns(raster, verticalSeparators);
+        List<Rectangle> preliminaryColumns = getPageColumns(raster, verticalSeparators);
         PageLayout layout = fixHorizontalSeparators(preliminaryColumns, verticalSeparators, raster);
         return layout;
     }

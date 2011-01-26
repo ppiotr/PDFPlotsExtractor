@@ -1,6 +1,8 @@
 package invenio.pdf.features;
 
+import invenio.pdf.core.DisplayedOperation;
 import invenio.pdf.core.ExtractorLogger;
+import invenio.pdf.core.Operation;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
@@ -27,43 +29,60 @@ import org.xml.sax.SAXParseException;
 public class PlotsExtractorTools {
 
     public static void annotateImage(Graphics2D graphics, List<Plot> plots,
-            TextAreas textAreas, PageLayout layout) {
+            TextAreas textAreas, PageLayout layout, List<Operation> operations) {
         // annotate image with plot information
         graphics.setTransform(AffineTransform.getRotateInstance(0));
         graphics.setPaintMode();
 
-        graphics.setColor(Color.blue);
 
-        for (Plot plot : plots) {
-            Rectangle boundary = plot.getBoundary();
-            graphics.drawRect((int) boundary.getX(), (int) boundary.getY(),
-                    (int) boundary.getWidth(), (int) boundary.getHeight());
+
+        if (plots != null) {
+            graphics.setColor(Color.blue);
+            for (Plot plot : plots) {
+                Rectangle boundary = plot.getBoundary();
+                graphics.drawRect((int) boundary.getX(), (int) boundary.getY(),
+                        (int) boundary.getWidth(), (int) boundary.getHeight());
+            }
         }
 
-        graphics.setColor(Color.green);
-        for (Rectangle bd : textAreas.areas.keySet()) {
-            graphics.drawRect((int) bd.getX(), (int) bd.getY(),
-                    (int) bd.getWidth(), (int) bd.getHeight());
+        if (textAreas != null) {
+            graphics.setColor(Color.green);
+            for (Rectangle bd : textAreas.areas.keySet()) {
+                graphics.drawRect((int) bd.getX(), (int) bd.getY(),
+                        (int) bd.getWidth(), (int) bd.getHeight());
+            }
         }
         // drawing column rectangles
-
-        Color[] columnColors = new Color[]{Color.magenta, Color.pink, Color.red, Color.blue, Color.gray, Color.orange};
-        int colorIndex = 0;
-        if (layout.areas.isEmpty()) {
-            ExtractorLogger.logMessage(0, "ERROR: no page layout detected");
-        }
-
-        for (List<Rectangle> area : layout.areas) {
-            if (colorIndex == columnColors.length) {
-                graphics.setColor(Color.black);
-            } else {
-                graphics.setColor(columnColors[colorIndex]);
-                colorIndex++;
+        if (layout != null) {
+            Color[] columnColors = new Color[]{Color.magenta, Color.pink, Color.red, Color.blue, Color.gray, Color.orange};
+            int colorIndex = 0;
+            if (layout.areas.isEmpty()) {
+                ExtractorLogger.logMessage(0, "ERROR: no page layout detected");
             }
 
-            for (Rectangle bd : area) {
-                graphics.drawRect(bd.x, bd.y, bd.width - 1, bd.height - 1);
-                graphics.drawRect(bd.x + 1, bd.y + 1, bd.width - 3, bd.height - 3);
+            for (List<Rectangle> area : layout.areas) {
+                if (colorIndex == columnColors.length) {
+                    graphics.setColor(Color.black);
+                } else {
+                    graphics.setColor(columnColors[colorIndex]);
+                    colorIndex++;
+                }
+
+                for (Rectangle bd : area) {
+                    graphics.drawRect(bd.x, bd.y, bd.width - 1, bd.height - 1);
+                    graphics.drawRect(bd.x + 1, bd.y + 1, bd.width - 3, bd.height - 3);
+                }
+            }
+        }
+        // annotating additional operations
+        graphics.setColor(Color.CYAN);
+        if (operations != null) {
+            for (Operation operation : operations) {
+                if (operation instanceof DisplayedOperation) {
+                    DisplayedOperation op = (DisplayedOperation) operation;
+                    Rectangle bd = op.getBoundary();
+                    graphics.drawRect(bd.x, bd.y, bd.width, bd.height);
+                }
             }
         }
         return;
@@ -95,15 +114,15 @@ public class PlotsExtractorTools {
         plot.setPageNumber(Integer.parseInt(pageNumberNode.getFirstChild().getNodeValue().trim()));
     }
 
-    private static void readPlotCaptionFromXmlElements(Element captionElement, Plot plot){
+    private static void readPlotCaptionFromXmlElements(Element captionElement, Plot plot) {
         Element coordElement = (Element) captionElement.getElementsByTagName("coordinates").item(0);
         Element textElement = (Element) captionElement.getElementsByTagName("captionText").item(0);
 
-        try{
+        try {
             plot.setCaptionBoundary(readRectangleFromXmlNode(coordElement));
             plot.setCaption(textElement.getFirstChild().getNodeValue().trim());
-        } catch(Exception e){
-            plot.setCaptionBoundary(new Rectangle(0,0,0,0));
+        } catch (Exception e) {
+            plot.setCaptionBoundary(new Rectangle(0, 0, 0, 0));
             plot.setCaption("");
         }
     }
@@ -146,7 +165,7 @@ public class PlotsExtractorTools {
         Element rel = (Element) doc.getDocumentElement();
 
         NodeList listOfPlots = rel.getElementsByTagName("plot");
-        
+
         for (int s = 0; s < listOfPlots.getLength(); s++) {
             Node plotNode = listOfPlots.item(s);
             if (plotNode.getNodeType() == Node.ELEMENT_NODE) {

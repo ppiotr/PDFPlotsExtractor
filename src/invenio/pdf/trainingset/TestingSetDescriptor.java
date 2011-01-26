@@ -227,7 +227,6 @@ public class TestingSetDescriptor {
                         + ex.getMessage());
             }
         }
-
     }
 
     public Image annotateImage(Image img, Plot plot) {

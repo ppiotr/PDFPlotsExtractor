@@ -123,7 +123,7 @@ public class PdfPageComposite extends Composite {
 
         TextAreas tAreas = (TextAreas) opManager.getPageFeature(TextAreas.featureName);
         PageLayout pdfPageLayout = (PageLayout) opManager.getPageFeature(PageLayout.featureName);
-        PlotsExtractorTools.annotateImage((Graphics2D) pageImage.getGraphics(), plots, tAreas, pdfPageLayout);
+        PlotsExtractorTools.annotateImage((Graphics2D) pageImage.getGraphics(), plots, tAreas, pdfPageLayout, null);
         // saving a copy of the rendered image
 
         //TODO: This is obsolete ... but so is the entire GUI
