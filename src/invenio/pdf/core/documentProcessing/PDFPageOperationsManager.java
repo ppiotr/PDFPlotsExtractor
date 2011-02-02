@@ -6,6 +6,7 @@ import java.util.Set;
 import de.intarsys.pdf.content.CSOperation;
 import invenio.pdf.core.ExtractorLogger;
 import invenio.pdf.core.GraphicalOperation;
+import invenio.pdf.core.PDFObjects.ContentStreamStateMachine;
 import invenio.pdf.core.PDFPageManager;
 import invenio.pdf.core.TextOperation;
 import invenio.pdf.core.TransformationOperation;
@@ -38,6 +39,10 @@ class PDFPageOperationsManager {
     private Map<CSOperation, int[]> operationTextPositions;
     private String pageText;
 
+
+
+    public ContentStreamStateMachine contentStreamStateMachine;
+
     /**
      * Creates a new instance of the page manager for a page of a given boundary
      * (rectangle starting at 0,0 and having some non-zero width and height)
@@ -53,6 +58,8 @@ class PDFPageOperationsManager {
         this.pageBoundary = pgBound;
         this.operationTextPositions = new HashMap<CSOperation, int[]>();
         this.pageText = "";
+
+        this.contentStreamStateMachine = new ContentStreamStateMachine();
     }
 
     /**
@@ -137,6 +144,8 @@ class PDFPageOperationsManager {
         } else {
             this.setOperationBoundary(this.getCurrentOperation(), rec);
         }
+
+        this.contentStreamStateMachine.extendCurrentBoundary(rec);
     }
 
     public void addTextOperation(CSOperation op) {

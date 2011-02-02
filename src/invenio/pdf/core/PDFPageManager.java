@@ -5,11 +5,13 @@
 package invenio.pdf.core;
 
 import de.intarsys.pdf.pd.PDPage;
+import invenio.pdf.core.PDFObjects.PDFObject;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,6 +36,7 @@ public class PDFPageManager<InternalPageType> {
     private InternalPageType internalPage; // internal representation of the page
     private PDFDocumentManager documentManager;
     private String rawImageFileName = "";
+    private LinkedList<PDFObject> pdfObjects;
 
     // at some point we might need a mapping operation -> index
     public PDFPageManager() {
@@ -198,5 +201,13 @@ public class PDFPageManager<InternalPageType> {
 
     public String getRawFileName(){
         return this.rawImageFileName;
+    }
+
+    public void setPDFObjects(LinkedList<PDFObject> objects) {
+        this.pdfObjects = objects;
+    }
+
+    public LinkedList<PDFObject> getPDFObjects(){
+        return this.pdfObjects;
     }
 }

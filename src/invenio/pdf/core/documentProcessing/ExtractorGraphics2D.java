@@ -55,14 +55,26 @@ class ExtractorGraphics2D extends Graphics2D {
     }
 
     protected void processOperatorBoundary(Rectangle2D bounds) {
+        //TODO: Remove this code
         if (bounds.getX() < 300 && bounds.getY() < 505 && this.operationsManager.getCurrentOperation() != null && this.operationsManager.getCurrentOperation().getOperator() != null && this.operationsManager.getCurrentOperation().getOperator().toString() == "f"){
-            System.out.println("supa");
+            System.out.println("ExtractorGraphics2D::processOperatorBoundary() <- the debug condition satisfied");
         }
+
+
         AffineTransform currentTransform = this.originalGraphics.getTransform();
+        // now clipping bounds
+
+        Rectangle clipBounds = this.originalGraphics.getClipBounds();
+
+        if (clipBounds != null){
+            bounds = bounds.createIntersection(clipBounds.getBounds2D());
+        }
+
         double origin[] = {bounds.getMinX(), bounds.getMinY(),
             bounds.getMinX(), bounds.getMaxY(),
             bounds.getMaxX(), bounds.getMaxY(),
             bounds.getMaxX(), bounds.getMinY()};
+
         double transformedPoints[] = new double[8];
         currentTransform.transform(origin, 0, transformedPoints, 0, 4);
         //currentTransform.
@@ -88,9 +100,14 @@ class ExtractorGraphics2D extends Graphics2D {
                 maxY = transformedPoints[pos];
             }
         }
-        // after a rotation, this might be something different that a rectanglr
+        // after a rotation, this might be something different that a rectangle
         // we have to find the boudary
+
+
+
         Rectangle finalBoundingRectangle = new Rectangle((int) minX, (int) minY, (int) (maxX - minX), (int) (maxY - minY));
+        // now clipping !
+
         this.operationsManager.extendCurrentOperationBoundary(finalBoundingRectangle);
     }
 

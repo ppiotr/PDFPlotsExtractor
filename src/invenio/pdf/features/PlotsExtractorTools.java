@@ -3,6 +3,10 @@ package invenio.pdf.features;
 import invenio.pdf.core.DisplayedOperation;
 import invenio.pdf.core.ExtractorLogger;
 import invenio.pdf.core.Operation;
+import invenio.pdf.core.PDFObjects.PDFClippingPathObject;
+import invenio.pdf.core.PDFObjects.PDFObject;
+import invenio.pdf.core.PDFObjects.PDFPathObject;
+import invenio.pdf.core.PDFObjects.PDFTextObject;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
@@ -29,7 +33,7 @@ import org.xml.sax.SAXParseException;
 public class PlotsExtractorTools {
 
     public static void annotateImage(Graphics2D graphics, List<Plot> plots,
-            TextAreas textAreas, PageLayout layout, List<Operation> operations) {
+            TextAreas textAreas, PageLayout layout, List<Operation> operations, List<PDFObject> pdfObjects) {
         // annotate image with plot information
         graphics.setTransform(AffineTransform.getRotateInstance(0));
         graphics.setPaintMode();
@@ -74,6 +78,7 @@ public class PlotsExtractorTools {
                 }
             }
         }
+
         // annotating additional operations
         graphics.setColor(Color.CYAN);
         if (operations != null) {
@@ -85,6 +90,26 @@ public class PlotsExtractorTools {
                 }
             }
         }
+
+        if (pdfObjects != null) {
+            for (PDFObject object : pdfObjects) {
+                if (object instanceof PDFPathObject) {
+                    graphics.setColor(Color.PINK);
+                }
+                if (object instanceof PDFTextObject) {
+                    graphics.setColor(Color.GREEN);
+                }
+                if (object instanceof PDFClippingPathObject) {
+                    graphics.setColor(Color.BLUE);
+                }
+                Rectangle bd = object.getBoundary();
+                
+                if (bd != null) {
+                    graphics.drawRect(bd.x, bd.y, bd.width, bd.height);
+                }                
+            }
+        }
+
         return;
     }
 

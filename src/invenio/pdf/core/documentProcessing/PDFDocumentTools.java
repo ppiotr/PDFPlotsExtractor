@@ -7,6 +7,7 @@ package invenio.pdf.core.documentProcessing;
 import de.intarsys.cwt.awt.environment.CwtAwtGraphicsContext;
 import de.intarsys.cwt.environment.IGraphicsContext;
 import de.intarsys.pdf.content.CSContent;
+import de.intarsys.pdf.content.CSOperation;
 import de.intarsys.pdf.content.text.CSTextExtractor;
 import de.intarsys.pdf.parser.COSLoadException;
 import de.intarsys.pdf.pd.PDDocument;
@@ -17,6 +18,15 @@ import de.intarsys.pdf.tools.kernel.PDFGeometryTools;
 import de.intarsys.tools.locator.FileLocator;
 import invenio.pdf.core.ExtractorParameters;
 import invenio.pdf.core.PDFDocumentManager;
+import invenio.pdf.core.PDFObjects.ContentStreamStateMachine;
+import invenio.pdf.core.PDFObjects.PDFClippingPathObject;
+import invenio.pdf.core.PDFObjects.PDFExternalObject;
+import invenio.pdf.core.PDFObjects.PDFInlineImageObject;
+import invenio.pdf.core.PDFObjects.PDFObject;
+import invenio.pdf.core.PDFObjects.PDFPageDescriptionObject;
+import invenio.pdf.core.PDFObjects.PDFPathObject;
+import invenio.pdf.core.PDFObjects.PDFShadingObject;
+import invenio.pdf.core.PDFObjects.PDFTextObject;
 import invenio.pdf.core.PDFPageManager;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -29,6 +39,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.apache.fop.pdf.PDFShading;
 
 /**
  * The purpose of this class is to provide interface to a lower level PDF
@@ -142,8 +155,10 @@ public class PDFDocumentTools {
                 result = opManager.transformToPDFPageManager();
                 result.setRenderedPage(image);
                 result.setInternalPage(page);
+                result.setPDFObjects(renderer.getObjects());
             }
             return result;
+
         } finally {
             if (graphics != null) {
                 graphics.dispose();
@@ -203,6 +218,7 @@ public class PDFDocumentTools {
                 CSPlatformRenderer renderer = new CSPlatformRenderer(null, graphics);
                 renderer.process(content, page.getResources());
             }
+
         } finally {
             if (graphics != null) {
                 graphics.dispose();

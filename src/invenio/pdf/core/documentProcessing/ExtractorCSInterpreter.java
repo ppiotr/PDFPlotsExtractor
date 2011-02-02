@@ -5,7 +5,12 @@ import de.intarsys.cwt.environment.IGraphicsContext;
 import de.intarsys.pdf.content.CSException;
 import de.intarsys.pdf.content.CSOperation;
 import de.intarsys.pdf.platform.cwt.rendering.CSPlatformRenderer;
-
+import invenio.pdf.core.PDFObjects.ContentStreamStateMachine;
+import invenio.pdf.core.PDFObjects.PDFObject;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * An implementation of the jPod CSPlatformRenderer - a class responsible for
@@ -43,8 +48,23 @@ class ExtractorCSInterpreter extends CSPlatformRenderer {
     @Override
     protected void process(CSOperation operation) throws CSException {
         this.operationsManager.setCurrentOperation(operation);
+
+        try {
+            this.operationsManager.contentStreamStateMachine.process(operation);
+        } catch (Exception ex) {
+            System.out.println("Something went wrong with parsing the stream of operations. " + ex.getMessage());
+        }
+
         super.process(operation);
+
         this.operationsManager.unsetCurrentOperation();
     }
 
+    /**
+     * Returns a stream of higher level objects
+     * @return
+     */
+    public LinkedList<PDFObject> getObjects(){
+        return this.operationsManager.contentStreamStateMachine.getObjects();
+    }
 }

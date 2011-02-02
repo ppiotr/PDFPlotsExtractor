@@ -5,13 +5,24 @@
 package invenio.pdf.cli;
 
 import de.intarsys.pdf.parser.COSLoadException;
+import de.intarsys.pdf.pd.PDPage;
 import invenio.common.Images;
 import invenio.pdf.core.ExtractorLogger;
 import invenio.pdf.core.FeatureNotPresentException;
 import invenio.pdf.core.GraphicalOperation;
 import invenio.pdf.core.Operation;
 import invenio.pdf.core.PDFDocumentManager;
+import invenio.pdf.core.PDFObjects.PDFClippingPathObject;
+import invenio.pdf.core.PDFObjects.PDFExternalObject;
+import invenio.pdf.core.PDFObjects.PDFInlineImageObject;
+import invenio.pdf.core.PDFObjects.PDFObject;
+import invenio.pdf.core.PDFObjects.PDFPageDescriptionObject;
+import invenio.pdf.core.PDFObjects.PDFPathObject;
+import invenio.pdf.core.PDFObjects.PDFShadingObject;
+import invenio.pdf.core.PDFObjects.PDFTextObject;
 import invenio.pdf.core.PDFPageManager;
+import invenio.pdf.core.TextOperation;
+import invenio.pdf.core.TransformationOperation;
 import invenio.pdf.core.documentProcessing.PDFDocumentTools;
 import invenio.pdf.features.GraphicalAreasProvider;
 import invenio.pdf.features.PageLayout;
@@ -23,6 +34,7 @@ import invenio.pdf.features.PlotsWriter;
 import invenio.pdf.features.TextAreas;
 import invenio.pdf.features.TextAreasProvider;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -55,7 +67,7 @@ public class PlotsExtractorCli {
         // writing annotated pages of the document
         Plots plots = (Plots) document.getDocumentFeature(Plots.featureName);
         for (int i = 0; i < document.getPagesNumber(); ++i) {
-            PDFPageManager<Operation> pageMgr = document.getPage(i);
+            PDFPageManager<PDPage> pageMgr = document.getPage(i);
             BufferedImage img = pageMgr.getRenderedPage();
 
 
@@ -65,17 +77,17 @@ public class PlotsExtractorCli {
             PlotsExtractorTools.annotateImage((Graphics2D) img2.getGraphics(),
                     plots.plots.get(i),
                     (TextAreas) pageMgr.getPageFeature(TextAreas.featureName),
-                    (PageLayout) pageMgr.getPageFeature(PageLayout.featureName), null);
+                    (PageLayout) pageMgr.getPageFeature(PageLayout.featureName),
+                    null, null);
 
             Images.writeImageToFile(img2, new File(outputDirectory.getPath(), "output" + i + ".png"));
-
 
             File rawFile = new File(outputDirectory.getPath(), "raw_output" + i + ".png");
             Images.writeImageToFile(img, rawFile);
             pageMgr.setRawFileName(rawFile.getAbsolutePath());
 
             // saving annotated graphical operations -> checking their boundaries
-            
+
             BufferedImage img3 = new BufferedImage(img.getWidth(), img.getHeight(), img.getType());
             img3.getGraphics().drawImage(img, 0, 0, null);
             File pageOperationsDumpFile = new File(outputDirectory.getPath(), "page_dump_" + i + ".txt");
@@ -84,15 +96,23 @@ public class PlotsExtractorCli {
 
             LinkedList<Operation> graphicalOperations = new LinkedList();
             int lineNumber = 1;
-            for (Operation op: pageMgr.getOperations()){
-                
+            for (Operation op : pageMgr.getOperations()) {
+
                 ps.print(lineNumber);
                 ps.print(" ");
                 ps.print(op.getOriginalOperation().toString());
                 ++lineNumber;
-                if (op instanceof GraphicalOperation){
+                if (op instanceof TransformationOperation) {
+                    ps.print(" transformation");
+                }
+                if (op instanceof TextOperation) {
+                    ps.print(" text");
+                }
+
+                if (op instanceof GraphicalOperation) {
+                    ps.print(" graphical");
                     GraphicalOperation go = (GraphicalOperation) op;
-                    if (pageMgr.getPageNumber() == 3 && go.getBoundary().x < 300 && go.getBoundary().y < 505){
+                    if (pageMgr.getPageNumber() == 3 && go.getBoundary().x < 300 && go.getBoundary().y < 505) {
                         //System.out.println("our operation");
                         ps.print("    <---------------");
                     }
@@ -102,13 +122,55 @@ public class PlotsExtractorCli {
             }
 
             operationsDumpFile.close();
-            
+
             PlotsExtractorTools.annotateImage((Graphics2D) img3.getGraphics(),
                     null,
                     null,
-                    null, graphicalOperations);
+                    null, graphicalOperations, null);
             File graphicalAnnotatedFile = new File(outputDirectory.getPath(), "graphical_output" + i + ".png");
             Images.writeImageToFile(img3, graphicalAnnotatedFile);
+            // annotating with detected PDFObjects
+            BufferedImage img4 = Images.copyBufferedImage(img);
+            PlotsExtractorTools.annotateImage((Graphics2D) img4.getGraphics(),
+                    null,
+                    null,
+                    null, null, pageMgr.getPDFObjects());
+            File pdfObjectsFile = new File(outputDirectory.getPath(), "pdfobjects_output" + i + ".png");
+            Images.writeImageToFile(img4, pdfObjectsFile);
+
+            System.out.println("Statistics about objects stored in the PDF");
+            // now dealing with operations ..
+            for (PDFObject object : pageMgr.getPDFObjects()) {
+                if (object instanceof PDFPathObject) {
+                    System.out.print("PATH            ");
+                }
+                if (object instanceof PDFClippingPathObject) {
+                    System.out.print("CLIPPING        ");
+                }
+                if (object instanceof PDFTextObject) {
+                    System.out.print("TEXT            ");
+                }
+                if (object instanceof PDFPageDescriptionObject) {
+                    System.out.print("PAGE DESCRIPTION");
+                }
+                if (object instanceof PDFExternalObject) {
+                    System.out.print("EXTERNAL        ");
+                }
+                if (object instanceof PDFInlineImageObject) {
+                    System.out.print("INLINE          ");
+                }
+                if (object instanceof PDFShadingObject) {
+                    System.out.print("SHADING         ");
+                }
+
+                System.out.print("(" + object.getOperations().size() + ") ");
+                Rectangle bd = object.getBoundary();
+                if (bd != null) {
+                    System.out.print("(" + bd.x + ", " + bd.y + ", " + bd.width + ", " + bd.height + ")");
+                }
+
+                System.out.println("");
+            }
         }
 
         PlotsWriter.writePlots(document, outputDirectory, true);

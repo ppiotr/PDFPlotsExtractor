@@ -5,7 +5,6 @@
 package invenio.common;
 
 import java.awt.image.BufferedImage;
-import java.awt.image.ColorModel;
 import java.awt.image.ComponentColorModel;
 import java.awt.image.DirectColorModel;
 import java.awt.image.IndexColorModel;
@@ -17,7 +16,6 @@ import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
-import org.apache.batik.ext.awt.image.codec.png.PNGEncodeParam.Palette;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.RGB;
