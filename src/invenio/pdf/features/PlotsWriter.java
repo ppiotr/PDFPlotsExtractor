@@ -5,6 +5,7 @@
 package invenio.pdf.features;
 
 import invenio.common.Images;
+import invenio.common.XmlTools;
 import invenio.pdf.core.ExtractorLogger;
 import invenio.pdf.core.ExtractorParameters;
 import invenio.pdf.core.FeatureNotPresentException;
@@ -25,11 +26,8 @@ import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -75,24 +73,6 @@ public class PlotsWriter {
         }
     }
 
-    private static void appendElementWithTextNode(Document doc, Element parent, String name, String value) {
-        Element newElement = doc.createElement(name);
-        newElement.appendChild(doc.createTextNode(value));
-        parent.appendChild(newElement);
-    }
-
-    private static void appendRectangle(Document doc, Element parent, String name, Rectangle rec) {
-        Element el = doc.createElement(name);
-        parent.appendChild(el);
-        if (rec == null) {
-            return;
-        }
-        appendElementWithTextNode(doc, el, "x", "" + rec.x);
-        appendElementWithTextNode(doc, el, "y", "" + rec.y);
-        appendElementWithTextNode(doc, el, "width", "" + rec.width);
-        appendElementWithTextNode(doc, el, "height", "" + rec.height);
-    }
-
     public static void writePlotMetadata(Plot plot) throws FileNotFoundException, Exception {
         FileOutputStream outputStream = new FileOutputStream(plot.getFile("metadata"));
         PrintStream ps = new PrintStream(outputStream);
@@ -114,36 +94,36 @@ public class PlotsWriter {
 
         // plot identifier
 
-        appendElementWithTextNode(document, rootElement, "identifier", plot.getId());
+        XmlTools.appendElementWithTextNode(document, rootElement, "identifier", plot.getId());
 
         //        ps.println("identifier= " + plot.getId());
 
         // plot  image files
-        appendElementWithTextNode(document, rootElement, "png", plot.getFile("png").getAbsolutePath());
-        appendElementWithTextNode(document, rootElement, "svg", plot.getFile("svg").getAbsolutePath());
+        XmlTools.appendElementWithTextNode(document, rootElement, "png", plot.getFile("png").getAbsolutePath());
+        XmlTools.appendElementWithTextNode(document, rootElement, "svg", plot.getFile("svg").getAbsolutePath());
 
         // location of the source
 
         Element locationElement = document.createElement("location");
         rootElement.appendChild(locationElement);
         // main document file
-        appendElementWithTextNode(document, locationElement, "pdf", plot.getPageManager().getDocumentManager().getSourceFileName());
+        XmlTools.appendElementWithTextNode(document, locationElement, "pdf", plot.getPageManager().getDocumentManager().getSourceFileName());
         // document scale
-        appendElementWithTextNode(document, locationElement, "scale", "" + ExtractorParameters.getExtractorParameters().getPageScale());
+        XmlTools.appendElementWithTextNode(document, locationElement, "scale", "" + ExtractorParameters.getExtractorParameters().getPageScale());
         // current page resulution
         Rectangle pb = plot.getPageManager().getPageBoundary();
         if (pb != null) {
             Element pageResolution = document.createElement("pageResolution");
 
             locationElement.appendChild(pageResolution);
-            appendElementWithTextNode(document, pageResolution, "width", "" + pb.width);
-            appendElementWithTextNode(document, pageResolution, "height", "" + pb.height);
+            XmlTools.appendElementWithTextNode(document, pageResolution, "width", "" + pb.width);
+            XmlTools.appendElementWithTextNode(document, pageResolution, "height", "" + pb.height);
         }
         // main document page (indexed from 0)
-        appendElementWithTextNode(document, locationElement, "pageNumber", "" + plot.getPageManager().getPageNumber());
+        XmlTools.appendElementWithTextNode(document, locationElement, "pageNumber", "" + plot.getPageManager().getPageNumber());
 
         // coordinates in the main document
-        appendRectangle(document, locationElement, "pageCoordinates", plot.getBoundary());
+        XmlTools.appendRectangle(document, locationElement, "pageCoordinates", plot.getBoundary());
 
 
 
@@ -151,17 +131,23 @@ public class PlotsWriter {
         Element captionEl = document.createElement("caption");
         rootElement.appendChild(captionEl);
         // caption coordinates
-        appendRectangle(document, captionEl, "coordinates", plot.getCaptionBoundary());
+        XmlTools.appendRectangle(document, captionEl, "coordinates",
+                plot.getCaptionBoundary());
         // caption text
-        appendElementWithTextNode(document, captionEl, "captionText", "" + plot.getCaption());
+        XmlTools.appendElementWithTextNode(document, captionEl, "captionText",
+                "" + plot.getCaption());
         // caption image
-        appendElementWithTextNode(document, rootElement, "captionImage", plot.getFile("captionImage").getAbsolutePath());
+        XmlTools.appendElementWithTextNode(document, rootElement,
+                "captionImage", plot.getFile("captionImage").getAbsolutePath());
         // debug image
-        appendElementWithTextNode(document, rootElement, "annotatedImage", plot.getFile("annotatedImage").getAbsolutePath());
+        XmlTools.appendElementWithTextNode(document, rootElement,
+                "annotatedImage",
+                plot.getFile("annotatedImage").getAbsolutePath());
 
         // saving the output into a file
 
-        TransformerFactory transformerFactory = TransformerFactory.newInstance();
+        TransformerFactory transformerFactory =
+                TransformerFactory.newInstance();
         Transformer transformer = transformerFactory.newTransformer();
         DOMSource source = new DOMSource(document);
 
@@ -223,11 +209,14 @@ public class PlotsWriter {
         ExtractorParameters params = ExtractorParameters.getExtractorParameters();
 
         Rectangle plotBd = plot.getBoundary();
-        svgGenerator.setClip(0, 0, (int) plotBd.getWidth(), (int) plotBd.getHeight());
+        svgGenerator.setClip(0, 0, (int) plotBd.getWidth(),
+                (int) plotBd.getHeight());
         svgGenerator.setTransform(AffineTransform.getTranslateInstance(-plotBd.getX(), -plotBd.getY()));
-        svgGenerator.setSVGCanvasSize(new Dimension((int) plotBd.getWidth(), (int) plotBd.getHeight()));
+        svgGenerator.setSVGCanvasSize(new Dimension((int) plotBd.getWidth(),
+                (int) plotBd.getHeight()));
 
-        PDFDocumentTools.renderToCanvas(plot.getPageManager(), svgGenerator, params.getPageScale());
+        PDFDocumentTools.renderToCanvas(plot.getPageManager(), svgGenerator,
+                params.getPageScale());
 
         // Finally, stream out SVG to the standard output using
         // UTF-8 encoding.
@@ -249,11 +238,16 @@ public class PlotsWriter {
                 + plot.getPageManager().getPageNumber()
                 + " number of operations: " + plot.getOperations().size());
 
-        plot.addFile("metadata", new File(outputDirectory.getPath(), plot.getId() + "_metadata.xml"));
-        plot.addFile("png", new File(outputDirectory.getPath(), plot.getId() + ".png"));
-        plot.addFile("svg", new File(outputDirectory.getPath(), plot.getId() + ".svg"));
-        plot.addFile("annotatedImage", new File(outputDirectory.getPath(), plot.getId() + "_annotated.png"));
-        plot.addFile("captionImage", new File(outputDirectory.getPath(), plot.getId() + "caption.png"));
+        plot.addFile("metadata", new File(outputDirectory.getPath(),
+                plot.getId() + "_metadata.xml"));
+        plot.addFile("png", new File(outputDirectory.getPath(),
+                plot.getId() + ".png"));
+        plot.addFile("svg", new File(outputDirectory.getPath(),
+                plot.getId() + ".svg"));
+        plot.addFile("annotatedImage", new File(outputDirectory.getPath(),
+                plot.getId() + "_annotated.png"));
+        plot.addFile("captionImage", new File(outputDirectory.getPath(),
+                plot.getId() + "caption.png"));
 
     }
 }

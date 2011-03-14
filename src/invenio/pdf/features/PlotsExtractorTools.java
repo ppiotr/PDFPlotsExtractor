@@ -10,25 +10,18 @@ import invenio.pdf.core.PDFObjects.PDFTextObject;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
-import java.io.IOException;
 import java.util.List;
 
 
-import invenio.pdf.core.PDFPageManager;
 import java.awt.Rectangle;
 import java.io.File;
 import java.util.LinkedList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
 
 public class PlotsExtractorTools {
 
@@ -80,7 +73,8 @@ public class PlotsExtractorTools {
         }
 
         // annotating additional operations
-        graphics.setColor(Color.CYAN);
+        graphics.setColor(Color.CYAN);        graphics.setColor(Color.BLUE);
+
         if (operations != null) {
             for (Operation operation : operations) {
                 if (operation instanceof DisplayedOperation) {

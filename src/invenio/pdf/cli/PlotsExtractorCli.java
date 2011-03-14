@@ -24,6 +24,7 @@ import invenio.pdf.core.PDFPageManager;
 import invenio.pdf.core.TextOperation;
 import invenio.pdf.core.TransformationOperation;
 import invenio.pdf.core.documentProcessing.PDFDocumentTools;
+import invenio.pdf.features.AnnotatedTextWriter;
 import invenio.pdf.features.GraphicalAreasProvider;
 import invenio.pdf.features.PageLayout;
 import invenio.pdf.features.PageLayoutProvider;
@@ -138,6 +139,16 @@ public class PlotsExtractorCli {
             File pdfObjectsFile = new File(outputDirectory.getPath(), "pdfobjects_output" + i + ".png");
             Images.writeImageToFile(img4, pdfObjectsFile);
 
+            BufferedImage img40 = Images.copyBufferedImage(img);
+            PlotsExtractorTools.annotateImage((Graphics2D) img40.getGraphics(),
+                    null,
+                    null,
+                    null, pageMgr.getOperations(), null);
+
+            File pdfOperations = new File(outputDirectory.getPath(), "pdfops_output" + i + ".png");
+            Images.writeImageToFile(img40, pdfOperations);
+
+
             System.out.println("Statistics about objects stored in the PDF");
             // now dealing with operations ..
             for (PDFObject object : pageMgr.getPDFObjects()) {
@@ -174,6 +185,8 @@ public class PlotsExtractorCli {
         }
 
         PlotsWriter.writePlots(document, outputDirectory, true);
+        File annotatedTextFile = new File(outputDirectory.getPath(), "annotatedText.xml");
+        AnnotatedTextWriter.writeStructuredText(annotatedTextFile, document);
     }
 
     public static void main(String[] args) throws IOException, COSLoadException {
