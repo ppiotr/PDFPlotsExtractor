@@ -10,15 +10,19 @@
  *    </fragments>
  * </fulltext>
  */
-
 package invenio.pdf.features;
 
+import invenio.pdf.core.Operation;
 import invenio.pdf.core.PDFDocumentManager;
+import invenio.pdf.core.PDFPageManager;
+import invenio.pdf.core.TextOperation;
+import java.awt.Rectangle;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Set;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -33,16 +37,82 @@ import org.w3c.dom.Element;
 
 public class AnnotatedTextWriter {
 
+    /**
+     * Prepares a string to be passed as JSON
+     * @param in
+     * @return
+     */
+    private static String escapeJSON(String in) {
+        //TODO: Implement !
+        return in;
+    }
+
+    private static String getJSONRectangle(Rectangle rec){
+        String result = "{\n";
+        result += "   x: " + rec.x + ",\n";
+        result += "   y: " + rec.y + ",\n";
+        result += "   width: " + rec.width + ",\n";
+        result += "   height: " + rec.height + "\n";
+        result += "}\n";
+        return result;
+    }
+
+    /**
+     * Writing a JSON representation of the document full-text
+     *
+     * sample text
+     * @param outputFile
+     * @param pdfDoc
+     * @throws FileNotFoundException
+     */
+    public static void writeStructuredTextAsJSON(File outputFile,
+            PDFDocumentManager pdfDoc)
+            throws FileNotFoundException {
+        /** in the future this shoudl probably be replaced by an XSLT
+         * transformation and having data exported in only one format*/
+        PrintStream outputStream = new PrintStream(outputFile);
+        outputStream.print("{");
+
+        for (int pageNum = 0; pageNum < pdfDoc.getPagesNumber(); ++pageNum) {
+            PDFPageManager pageManager = pdfDoc.getPage(pageNum);
+            String pageText = pageManager.getPageText();
+            Set<Operation> operations = (Set<Operation>) pageManager.getTextOperations();
+            outputStream.print("\"" + pageNum + "\" : {");
+            outputStream.print("fullText: \"" + pageText + "\", boxes: [ ");
+
+            boolean notFirst = false;
+            for (Operation operation : operations) {
+                TextOperation op = (TextOperation) operation;
+                if (notFirst){
+                    outputStream.print(", ");
+                } else {
+                    notFirst = true;
+                }
+
+                outputStream.print("{");
+                outputStream.print("  from: " + op.getTextBeginning() + ", ");
+                outputStream.print("  until: " + op.getTextEnding() + ", ");
+                outputStream.print("  boundary: " + getJSONRectangle(op.getBoundary()));
+                // here additional annotations
+
+                outputStream.print("}");
+            }
+            outputStream.print("]");
+            outputStream.print("}");
+        }
+        outputStream.print("}");
+        outputStream.close();
+    }
+
     public static void writeStructuredText(File outputFile, PDFDocumentManager pdfDoc)
             throws FileNotFoundException, ParserConfigurationException, TransformerConfigurationException, TransformerException, IOException {
         FileOutputStream outputStream = new FileOutputStream(outputFile);
         PrintStream ps = new PrintStream(outputStream);
 
         DocumentBuilderFactory documentBuilderFactory =
-                    DocumentBuilderFactory.newInstance();
-        DocumentBuilder documentBuilder = documentBuilderFactory.
-                newDocumentBuilder();
-        
+                DocumentBuilderFactory.newInstance();
+        DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
+
         Document document = documentBuilder.newDocument();
         Element plotsCollectionElement = document.createElement("plots");
         document.appendChild(plotsCollectionElement);

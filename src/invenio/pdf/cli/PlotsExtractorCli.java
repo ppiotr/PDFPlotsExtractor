@@ -63,6 +63,7 @@ public class PlotsExtractorCli {
     private static void processDocument(File inputFile, File outputDirectory)
             throws IOException, FeatureNotPresentException, Exception {
 
+        System.out.println("Processing document: " + inputFile.getAbsolutePath());
         PDFDocumentManager document = PDFDocumentTools.readPDFDocument(inputFile);
 
         // writing annotated pages of the document
@@ -185,8 +186,13 @@ public class PlotsExtractorCli {
         }
 
         PlotsWriter.writePlots(document, outputDirectory, true);
-        File annotatedTextFile = new File(outputDirectory.getPath(), "annotatedText.xml");
-        AnnotatedTextWriter.writeStructuredText(annotatedTextFile, document);
+        File annotatedTextFile = new File(outputDirectory.getPath(), "annotatedText.json");
+        AnnotatedTextWriter.writeStructuredTextAsJSON(annotatedTextFile, document);
+
+        // writing the global metadata of all the plots collectively
+        File completemetadataFile = new File(outputDirectory.getPath(), "completeMetadata.xml");
+
+        PlotsWriter.writePlotsMetadataToFile(plots.getPlots(), completemetadataFile);
     }
 
     public static void main(String[] args) throws IOException, COSLoadException {

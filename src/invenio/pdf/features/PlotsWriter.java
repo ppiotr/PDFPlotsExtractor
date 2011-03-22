@@ -25,6 +25,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.util.LinkedList;
 import java.util.List;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -64,7 +65,7 @@ public class PlotsWriter {
 
         setFileNames(plot, outputDirectory);
 
-        writePlotMetadata(plot);
+        writePlotMetadataToFile(plot);
         if (saveAttachments) {
             writePlotPng(plot);
             writePlotSvg(plot);
@@ -73,15 +74,18 @@ public class PlotsWriter {
         }
     }
 
-    public static void writePlotMetadata(Plot plot) throws FileNotFoundException, Exception {
-        FileOutputStream outputStream = new FileOutputStream(plot.getFile("metadata"));
-        PrintStream ps = new PrintStream(outputStream);
+    public static void writePlotMetadataToFile(Plot plot) throws FileNotFoundException, Exception {
+        LinkedList<Plot> plots = new LinkedList<Plot>();
+        plots.add(plot);
+        writePlotsMetadataToFile(plots, plot.getFile("metadata"));
+    }
 
-//        ps.println("caption=" + plot.getCaption());
-//        ps.println("filePng=" + plot.getFile("png").getPath());
-//        ps.println("fileSvg=" + plot.getFile("svg").getPath());
-//        ps.close();
-//        
+    public static void writePlotsMetadataToFile(List<Plot> plots, File plotMetadataFile)
+            throws FileNotFoundException, Exception {
+
+        FileOutputStream outputStream = new FileOutputStream(plotMetadataFile);
+
+        PrintStream ps = new PrintStream(outputStream);
 
         DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
@@ -89,8 +93,28 @@ public class PlotsWriter {
         Element plotsCollectionElement = document.createElement("plots");
         document.appendChild(plotsCollectionElement);
 
+        for (Plot plot : plots) {
+            writePlotMetadata(document, plotsCollectionElement, plot);
+        }
+        // saving the output into a file
+
+        TransformerFactory transformerFactory =
+                TransformerFactory.newInstance();
+        Transformer transformer = transformerFactory.newTransformer();
+        DOMSource source = new DOMSource(document);
+
+        StreamResult result = new StreamResult(outputStream);
+        transformer.transform(source, result);
+
+        outputStream.close();
+    }
+
+    public static void writePlotMetadata(Document document, Element containerElement, Plot plot)
+            throws FileNotFoundException, Exception {
+
+
         Element rootElement = document.createElement("plot");
-        plotsCollectionElement.appendChild(rootElement);
+        containerElement.appendChild(rootElement);
 
         // plot identifier
 
@@ -143,18 +167,6 @@ public class PlotsWriter {
         XmlTools.appendElementWithTextNode(document, rootElement,
                 "annotatedImage",
                 plot.getFile("annotatedImage").getAbsolutePath());
-
-        // saving the output into a file
-
-        TransformerFactory transformerFactory =
-                TransformerFactory.newInstance();
-        Transformer transformer = transformerFactory.newTransformer();
-        DOMSource source = new DOMSource(document);
-
-        StreamResult result = new StreamResult(outputStream);
-        transformer.transform(source, result);
-
-        outputStream.close();
     }
 
     /** Prepare and write the image of an annotated plot
