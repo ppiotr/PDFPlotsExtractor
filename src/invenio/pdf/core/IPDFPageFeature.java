@@ -5,6 +5,10 @@
 
 package invenio.pdf.core;
 
+import java.io.FileNotFoundException;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 /**
  * Interface that has to be implemented by all classes describing
  * page features.
@@ -17,5 +21,5 @@ package invenio.pdf.core;
  */
 
 public interface IPDFPageFeature  {
-
+    public void saveToXml(Document document, Element rootElement) throws FileNotFoundException, Exception;
 }

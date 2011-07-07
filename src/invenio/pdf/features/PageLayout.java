@@ -15,6 +15,8 @@ import java.awt.Rectangle;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  *
@@ -72,5 +74,10 @@ public class PageLayout implements IPDFPageFeature {
         }
 
         return maximalArea;
+    }
+
+    @Override
+    public void saveToXml(Document document, Element rootElement) {
+        // we do not want to save page layout information yet... maybe in the future
     }
 }

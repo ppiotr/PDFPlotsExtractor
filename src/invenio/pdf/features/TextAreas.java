@@ -12,6 +12,8 @@ import java.awt.Rectangle;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  *
@@ -24,5 +26,11 @@ public class TextAreas implements IPDFPageFeature{
 
     public TextAreas(){
         this.areas = new HashMap<Rectangle, Pair<String, List<Operation>>>();
+    }
+
+    @Override
+    public void saveToXml(Document document, Element rootElement) {
+        throw new UnsupportedOperationException("Not supported yet.... "
+                + "implement using the annmotated text writer");
     }
 }

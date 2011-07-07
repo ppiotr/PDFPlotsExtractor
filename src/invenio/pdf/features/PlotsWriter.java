@@ -22,17 +22,10 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.util.LinkedList;
 import java.util.List;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import org.apache.batik.svggen.SVGGraphics2DIOException;
 import org.w3c.dom.DOMImplementation;
 import org.apache.batik.dom.GenericDOMImplementation;
@@ -47,7 +40,7 @@ import org.w3c.dom.Element;
 public class PlotsWriter {
 
     public static void writePlots(PDFDocumentManager document, File outputDirectory, boolean saveAttachments)
-            throws FeatureNotPresentException, Exception {
+            throws FeatureNotPresentException, Exception{
         Plots plots = (Plots) document.getDocumentFeature(Plots.featureName);
         for (List<Plot> pagePlots : plots.plots) {
             for (Plot plot : pagePlots) {
@@ -80,33 +73,28 @@ public class PlotsWriter {
         writePlotsMetadataToFile(plots, plot.getFile("metadata"));
     }
 
-    public static void writePlotsMetadataToFile(List<Plot> plots, File plotMetadataFile)
-            throws FileNotFoundException, Exception {
+    public static void writePlotsMetadata(Document document, Element containerEl,
+            List<Plot> plots) throws FileNotFoundException, Exception {
 
-        FileOutputStream outputStream = new FileOutputStream(plotMetadataFile);
-
-        PrintStream ps = new PrintStream(outputStream);
-
-        DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-        Document document = documentBuilder.newDocument();
         Element plotsCollectionElement = document.createElement("plots");
-        document.appendChild(plotsCollectionElement);
+        containerEl.appendChild(plotsCollectionElement);
 
         for (Plot plot : plots) {
             writePlotMetadata(document, plotsCollectionElement, plot);
         }
-        // saving the output into a file
+    }
 
-        TransformerFactory transformerFactory =
-                TransformerFactory.newInstance();
-        Transformer transformer = transformerFactory.newTransformer();
-        DOMSource source = new DOMSource(document);
+    public static void writePlotsMetadataToFile(List<Plot> plots, File plotMetadataFile)
+            throws FileNotFoundException, Exception {
 
-        StreamResult result = new StreamResult(outputStream);
-        transformer.transform(source, result);
+        Document document = XmlTools.createXmlDocument();
 
-        outputStream.close();
+        Element rootElement = document.createElement("publication");
+        document.appendChild(rootElement);
+
+        writePlotsMetadata(document, rootElement, plots);
+
+        XmlTools.saveXmlDocument(document, plotMetadataFile);
     }
 
     public static void writePlotMetadata(Document document, Element containerElement, Plot plot)
@@ -141,16 +129,16 @@ public class PlotsWriter {
 
             locationElement.appendChild(pageResolution);
             XmlTools.appendElementWithTextNode(document, pageResolution, "width", "" + pb.width);
-            XmlTools.appendElementWithTextNode(document, pageResolution, "height", "" + pb.height);
+            XmlTools.appendElementWithTextNode(document, pageResolution, "height",
+                    "" + pb.height);
         }
         // main document page (indexed from 0)
-        XmlTools.appendElementWithTextNode(document, locationElement, "pageNumber", "" + plot.getPageManager().getPageNumber());
+        XmlTools.appendElementWithTextNode(document, locationElement, "pageNumber",
+                "" + plot.getPageManager().getPageNumber());
 
         // coordinates in the main document
-        XmlTools.appendRectangle(document, locationElement, "pageCoordinates", plot.getBoundary());
-
-
-
+        XmlTools.appendRectangle(document, locationElement, "pageCoordinates",
+                plot.getBoundary());
 
         Element captionEl = document.createElement("caption");
         rootElement.appendChild(captionEl);

@@ -6,9 +6,12 @@
 package invenio.pdf.features;
 
 import invenio.pdf.core.IPDFDocumentFeature;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  *
@@ -31,5 +34,15 @@ public class Plots implements IPDFDocumentFeature{
             result.addAll(partialList);
         }
         return result;
+    }
+
+    @Override
+    public void saveToXml(Document document, Element rootElement) throws FileNotFoundException, Exception {
+        // first flatten the array
+        LinkedList<Plot> toWrite = new LinkedList<Plot>();
+        for (List<Plot> partial: this.plots){
+            toWrite.addAll(partial);
+        }
+        PlotsWriter.writePlotsMetadata(document, rootElement, toWrite);
     }
 }

@@ -25,6 +25,7 @@ import invenio.pdf.core.TextOperation;
 import invenio.pdf.core.TransformationOperation;
 import invenio.pdf.core.documentProcessing.PDFDocumentTools;
 import invenio.pdf.features.AnnotatedTextWriter;
+import invenio.pdf.features.DocumentWriter;
 import invenio.pdf.features.GraphicalAreasProvider;
 import invenio.pdf.features.PageLayout;
 import invenio.pdf.features.PageLayoutProvider;
@@ -193,6 +194,9 @@ public class PlotsExtractorCli {
         File completemetadataFile = new File(outputDirectory.getPath(), "completeMetadata.xml");
 
         PlotsWriter.writePlotsMetadataToFile(plots.getPlots(), completemetadataFile);
+
+        File extractorOutputFile = new File(outputDirectory.getPath(), "description.xml");
+        DocumentWriter.writeDocumentToFile(document, extractorOutputFile);
     }
 
     public static void main(String[] args) throws IOException, COSLoadException {

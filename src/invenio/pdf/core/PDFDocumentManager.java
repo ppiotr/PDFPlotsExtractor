@@ -8,6 +8,7 @@ import de.intarsys.pdf.pd.PDDocument;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A class whose objects describe one PDF document.
@@ -59,6 +60,10 @@ public class PDFDocumentManager {
         return this.pages.size();
     }
 
+    public List<PDFPageManager> getPages() {
+        return this.pages;
+    }
+
     public void addPage(PDFPageManager p) {
         this.pages.add(p);
     }
@@ -66,7 +71,6 @@ public class PDFDocumentManager {
     public void setPDDocument(PDDocument doc) {
         this.pdDocument = doc;
     }
-    
     private static HashMap<String, IPDFDocumentFeatureProvider> featureProviders =
             new HashMap<String, IPDFDocumentFeatureProvider>();
 
@@ -86,5 +90,10 @@ public class PDFDocumentManager {
             }
         }
         return null;
+    }
+
+    /** return names of all registered features */
+    public Set<String> getFeatureNames() {
+        return this.documentFeatures.keySet();
     }
 }
