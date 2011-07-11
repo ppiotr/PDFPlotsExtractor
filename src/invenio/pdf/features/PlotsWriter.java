@@ -20,16 +20,20 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.util.LinkedList;
 import java.util.List;
 import org.apache.batik.svggen.SVGGraphics2DIOException;
+import org.json.JSONException;
 import org.w3c.dom.DOMImplementation;
 import org.apache.batik.dom.GenericDOMImplementation;
 import org.apache.batik.svggen.SVGGraphics2D;
+import org.json.JSONWriter;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -40,7 +44,7 @@ import org.w3c.dom.Element;
 public class PlotsWriter {
 
     public static void writePlots(PDFDocumentManager document, File outputDirectory, boolean saveAttachments)
-            throws FeatureNotPresentException, Exception{
+            throws FeatureNotPresentException, Exception {
         Plots plots = (Plots) document.getDocumentFeature(Plots.featureName);
         for (List<Plot> pagePlots : plots.plots) {
             for (Plot plot : pagePlots) {
@@ -57,8 +61,9 @@ public class PlotsWriter {
         }
 
         setFileNames(plot, outputDirectory);
-
+        writePlotMetadataToFileJSON(plot);
         writePlotMetadataToFile(plot);
+        
         if (saveAttachments) {
             writePlotPng(plot);
             writePlotSvg(plot);
@@ -66,7 +71,102 @@ public class PlotsWriter {
             writePlotCaptionImage(plot);
         }
     }
+    //// JSON version of writers
 
+    public static void writePlotMetadataToFileJSON(Plot plot) throws FileNotFoundException, Exception {
+        LinkedList<Plot> plots = new LinkedList<Plot>();
+        plots.add(plot);
+        writePlotsMetadataToFileJSON(plots, plot.getFile("metadataJSON"));
+
+    }
+
+    public static void writePlotsMetadataToFileJSON(List<Plot> plots, File plotMetadataFile)
+            throws FileNotFoundException, Exception {
+        StringWriter stringWriter = new StringWriter();
+
+        JSONWriter writer = new JSONWriter(stringWriter).array();
+
+        for (Plot plot : plots) {
+            writePlotMetadataJSON(writer, plot);
+        }
+
+        writer = writer.endArray();
+
+        FileWriter out = new FileWriter(plotMetadataFile.getAbsolutePath());
+        out.write(stringWriter.toString());
+        out.close();
+    }
+
+    public static JSONWriter writePlotMetadataJSON(JSONWriter writer, Plot plot) throws JSONException {
+        JSONWriter w = writer;
+        w = w.object();
+
+        w = w.key("identifier").value(plot.getId());
+
+        w = w.key("sourceDocument").value(plot.getPageManager().
+                getDocumentManager().getSourceFileName());
+        w = w.key("caption").value(plot.getCaption());
+        w = w.key("captionFile").value(plot.getFile("captionImage").getAbsolutePath());
+        // writing the fiels section
+        w = w.key("files");
+        w = w.object();
+        w = w.key("png");
+        w = w.value(plot.getFile("png").getAbsolutePath());
+        w = w.key("svg");
+        w = w.value(plot.getFile("svg").getAbsolutePath());
+        w = w.endObject();
+        // location of the source
+
+        w = w.key("location").object();
+        w = w.key("pageNum").value(plot.getPageManager().getPageNumber());
+
+        Rectangle pb = plot.getPageManager().getPageBoundary();
+        if (pb != null) {
+            w = w.key("pageResolution").object();
+            w = w.key("width").value(pb.width);
+            w = w.key("height").value(pb.height);
+            w = w.endObject();
+        }
+        Rectangle bd = plot.getBoundary();
+        if (bd != null) {
+            w = w.key("boundary").object();
+            w = w.key("x").value(bd.x);
+            w = w.key("y").value(bd.y);
+            w = w.key("width").value(bd.width);
+            w = w.key("height").value(bd.height);
+            w = w.endObject();
+        }
+
+        w = w.key("pageScale").value(ExtractorParameters.getExtractorParameters().getPageScale());
+        w = w.endObject();
+
+        w = w.key("captionLocation").object();
+        w = w.key("pageNum").value(plot.getPageManager().getPageNumber());
+
+        pb = plot.getPageManager().getPageBoundary();
+        if (pb != null) {
+            w = w.key("pageResolution").object();
+            w = w.key("width").value(pb.width);
+            w = w.key("height").value(pb.height);
+            w = w.endObject();
+        }
+        bd = plot.getCaptionBoundary();
+        if (bd != null) {
+            w = w.key("boundary").object();
+            w = w.key("x").value(bd.x);
+            w = w.key("y").value(bd.y);
+            w = w.key("width").value(bd.width);
+            w = w.key("height").value(bd.height);
+            w = w.endObject();
+        }
+        w = w.endObject();
+
+        w.key("annotatedImage").value(plot.getFile("annotatedImage").getAbsolutePath());
+        w = w.endObject();
+        return w;
+    }
+
+    //// XML versions of writers
     public static void writePlotMetadataToFile(Plot plot) throws FileNotFoundException, Exception {
         LinkedList<Plot> plots = new LinkedList<Plot>();
         plots.add(plot);
@@ -240,6 +340,8 @@ public class PlotsWriter {
 
         plot.addFile("metadata", new File(outputDirectory.getPath(),
                 plot.getId() + "_metadata.xml"));
+        plot.addFile("metadataJSON", new File(outputDirectory.getPath(),
+                plot.getId() + "_metadata.json"));
         plot.addFile("png", new File(outputDirectory.getPath(),
                 plot.getId() + ".png"));
         plot.addFile("svg", new File(outputDirectory.getPath(),
