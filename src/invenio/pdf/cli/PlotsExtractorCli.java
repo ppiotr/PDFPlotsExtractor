@@ -197,6 +197,11 @@ public class PlotsExtractorCli {
 
         File extractorOutputFile = new File(outputDirectory.getPath(), "description.xml");
         DocumentWriter.writeDocumentToFile(document, extractorOutputFile);
+
+        File extractorJSONOutputFile = new File(outputDirectory.getPath(), "extracted.json");
+
+        PlotsWriter.writePlotsMetadataToFileJSON(plots.getPlots(), extractorJSONOutputFile);
+        //writeDocumentToFileJSON(document, extractorJSONOutputFile);
     }
 
     public static void main(String[] args) throws IOException, COSLoadException {

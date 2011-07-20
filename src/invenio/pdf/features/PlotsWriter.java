@@ -199,13 +199,10 @@ public class PlotsWriter {
 
     public static void writePlotMetadata(Document document, Element containerElement, Plot plot)
             throws FileNotFoundException, Exception {
-
-
         Element rootElement = document.createElement("plot");
         containerElement.appendChild(rootElement);
 
         // plot identifier
-
         XmlTools.appendElementWithTextNode(document, rootElement, "identifier", plot.getId());
 
         //        ps.println("identifier= " + plot.getId());

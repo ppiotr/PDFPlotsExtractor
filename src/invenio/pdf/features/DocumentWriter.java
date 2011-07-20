@@ -13,6 +13,8 @@ import java.io.IOException;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
+
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -44,6 +46,7 @@ public class DocumentWriter {
         writeDocument(document, rootElement, dManager);
         XmlTools.saveXmlDocument(document, outputFile);
     }
+
 
     public static void writeDocument(Document document, Element rootElement,
             PDFDocumentManager dManager) throws ParserConfigurationException, FeatureNotPresentException, Exception {
