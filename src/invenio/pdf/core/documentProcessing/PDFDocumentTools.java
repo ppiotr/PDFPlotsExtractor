@@ -101,7 +101,8 @@ public class PDFDocumentTools {
             image = new BufferedImage((int) pageBoundary.getWidth(),
                     (int) pageBoundary.getHeight(), BufferedImage.TYPE_INT_RGB);
 
-            Graphics2D g2 = (Graphics2D) image.getGraphics();
+//            Graphics2D g2 = (Graphics2D) image.getGraphics();
+            Graphics2D g2 = (Graphics2D) image.createGraphics();
 
             //Our wrapper around the 2D device allowing to extract informations
             // about the device
