@@ -177,4 +177,17 @@ public class ExtractorParameters extends Properties {
     public double getMinimalVerticalSeparatorHeight() {
         return 0.4;
     }
+    
+    
+    public boolean generateDebugInformation(){
+        return false;
+    }
+
+    public boolean generatePlotProvenance() {
+        return false;
+    }
+    
+    public boolean generateSVG(){
+        return false;
+    }
 }

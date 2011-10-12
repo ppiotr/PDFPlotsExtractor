@@ -56,6 +56,7 @@ public class PlotsWriter {
     public static void writePlot(Plot plot, File outputDirectory, boolean saveAttachments) throws FileNotFoundException, Exception {
         // first assure, the output directory exists
 
+        ExtractorParameters parameters = ExtractorParameters.getExtractorParameters();
         if (!outputDirectory.exists()) {
             outputDirectory.mkdir();
         }
@@ -63,11 +64,15 @@ public class PlotsWriter {
         setFileNames(plot, outputDirectory);
         writePlotMetadataToFileJSON(plot);
         writePlotMetadataToFile(plot);
-        
+
         if (saveAttachments) {
             writePlotPng(plot);
-            writePlotSvg(plot);
-            writePlotAnnotatedPage(plot);
+            if (parameters.generateSVG()) {
+                writePlotSvg(plot);
+            }
+            if (parameters.generatePlotProvenance()) {
+                writePlotAnnotatedPage(plot);
+            }
             writePlotCaptionImage(plot);
         }
     }
