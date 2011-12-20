@@ -7,6 +7,7 @@ package invenio.pdf.cli;
 import de.intarsys.pdf.parser.COSLoadException;
 import de.intarsys.pdf.pd.PDPage;
 import invenio.common.Images;
+import invenio.pdf.core.DisplayedOperation;
 import invenio.pdf.core.ExtractorLogger;
 import invenio.pdf.core.ExtractorParameters;
 import invenio.pdf.core.FeatureNotPresentException;
@@ -39,18 +40,15 @@ import invenio.pdf.features.TextAreasProvider;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.jws.soap.SOAPBinding.ParameterStyle;
 
 /**
  *
@@ -161,6 +159,17 @@ public class PlotsExtractorCli {
                 File pdfOperations = new File(outputDirectory.getPath(), "pdfops_output" + i + ".png");
                 Images.writeImageToFile(img40, pdfOperations);
 
+                /** Searchig for operations intersecting the layout in a very bad manner */
+                PageLayout layout = (PageLayout) pageMgr.getPageFeature(PageLayout.featureName);
+                for (Operation op : pageMgr.getOperations()) {
+                    if (op instanceof DisplayedOperation){
+                        DisplayedOperation dop = (DisplayedOperation) op;
+                        if (layout.getIntersectingAreas(dop.getBoundary()).size() > 1){
+                            System.out.println("operation that intersects too many layout areas !");
+                        }                        
+                    }   
+                }
+
 
                 System.out.println("Statistics about objects stored in the PDF");
                 // now dealing with operations ..
@@ -217,17 +226,18 @@ public class PlotsExtractorCli {
     }
 
     /** Setup paths to the configuration file based on the execution path */
-    private static void setConfigurationFile(){
-       //TODO: Search for the configuration fiel in more locations
-       String fname = PlotsExtractorCli.class.getProtectionDomain().getCodeSource().getLocation().getPath() + "extractor.conf";
-       ExtractorParameters.registerConfigurationFile(fname);
-       
+    private static void setConfigurationFile() {
+        //TODO: Search for the configuration fiel in more locations
+        String fname = PlotsExtractorCli.class.getProtectionDomain().getCodeSource().getLocation().getPath() + "extractor.conf";
+        ExtractorParameters.registerConfigurationFile(fname);
+
     }
+
     public static void main(String[] args) throws IOException, COSLoadException {
         // registering all the necessary PDF document features
 
         setConfigurationFile();
-        
+
         PDFPageManager.registerFeatureProvider(new GraphicalAreasProvider());
         PDFPageManager.registerFeatureProvider(new TextAreasProvider());
         PDFPageManager.registerFeatureProvider(new PageLayoutProvider());
@@ -235,15 +245,15 @@ public class PlotsExtractorCli {
         PDFDocumentManager.registerFeatureProvider(new PlotsProvider());
         File outputFolder;
 
-        
+
         /** Saving extractor parameters to file... to see the format */
         ExtractorParameters par = ExtractorParameters.getExtractorParameters();
         OutputStream ost = new ByteArrayOutputStream(10000);
         par.store(ost, "This is a comments string");
-        
+
         System.out.println(PlotsExtractorCli.class.getProtectionDomain().getCodeSource().getLocation().getPath());
 
-        
+
         System.out.println(ost.toString());
         if (args.length < 1 || args.length > 2) {
             usage();

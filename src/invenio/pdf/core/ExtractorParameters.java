@@ -114,8 +114,8 @@ public class ExtractorParameters extends Properties {
         this.setProperty("empty_pixel_colour_b", "255");
 
         this.setProperty("minimal_vertical_separator_height", "0.4");
-        this.setProperty("generate_debug_information", "false");
-        this.setProperty("generate_plot_provenance", "false");
+        this.setProperty("generate_debug_information", "true");
+        this.setProperty("generate_plot_provenance", "true");
         this.setProperty("generate_svg", "true");
     }
 

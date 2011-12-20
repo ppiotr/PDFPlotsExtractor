@@ -109,7 +109,7 @@ public class PDFDocumentTools {
 
             PDFPageOperationsManager opManager = new PDFPageOperationsManager(pageBoundary);
 
-            ExtractorGraphics2D g2proxy = new ExtractorGraphics2D(g2, opManager);
+            ExtractorGraphics2D g2proxy = new ExtractorGraphics2D(g2, opManager, image);
 
             // now we use our wrapper in order to construct standard mechanisms
             graphics = new CwtAwtGraphicsContext(g2proxy);
