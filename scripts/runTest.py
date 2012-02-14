@@ -12,11 +12,11 @@ import subprocess
 import time
 from datetime import datetime
 import getopt
-from threading import Thread
+from threading import Thread, Semaphore
+from Queue import Queue
 
 def create_directories(path):
     """creates directory and if necessary, all intermediate directories as well"""
-    print "Path: %s" %(path, )
     to_create = []
     c_path = path
     while not os.path.exists(c_path) and c_path.strip() != "":
@@ -26,9 +26,9 @@ def create_directories(path):
         c_path = os.path.split(c_path)[0]
 
     to_create.reverse()
-    print "To create: %s" %(str(to_create),)
     for path in to_create:
         os.mkdir(path)
+    return path
 
 # a general execution module
 
@@ -89,8 +89,8 @@ def execute_track(args, folder = None):
 
     start_time = time.time()
 
-    VmPeak = 0
-    VmSize = 0
+    memPeak = 0
+    memSize = 0
     retcode =  None
     memusage = []
     create_directories(folder)
@@ -124,13 +124,12 @@ def execute_track(args, folder = None):
             execution.terminate()
             results["forced_exit"] = "Stopped. Was working longer than %i seconds" % (CFG_MAX_EXECUTION_TIME, )
 
-        if stats and "VmPeak" in stats and "VmSize" in stats:
-            VmPeakT = int(stats["VmPeak"])
-            VmSize = int(stats["VmSize"])
-            if VmPeakT > VmPeak:
-                VmPeak = VmPeakT # just in case !
+        if stats and "VmRSS" in stats:
+            memSize = int(stats["VmRSS"])
+            if memSize > memPeak:
+                memPeak = memSize # just in case !
 
-            memusage.append("%s %i" % (timestamp, VmSize))
+            memusage.append("%s %i" % (timestamp, memSize))
 
         time.sleep(CFG_SLEEP_INTERVAL)
         retcode = execution.poll()
@@ -144,7 +143,7 @@ def execute_track(args, folder = None):
 #    stdout, stderr = execution.communicate(None)
 
     results["memusage"] = "\n".join(memusage)
-    results["max_memusage"] = "%i" % (VmPeakT, )
+    results["max_memusage"] = "%i" % (memPeak, )
 
 #    results["stdout"] = stdout
 #    results["stderr"] = stderr
@@ -168,7 +167,8 @@ def execute_track(args, folder = None):
     return results
 # executing prticular things
 
-EXTRACTOR_EXECUTABLE = "./run.sh"
+#EXTRACTOR_EXECUTABLE = "./run.sh"
+EXTRACTOR_EXECUTABLE = ["/opt/ppraczyk/jre1.6.0_27/bin/java", "-cp", "PDFPlotsExtractor.jar:libs/*", "-Djava.awt.headless=true", "invenio.pdf.cli.PlotsExtractorCli"]
 
 def get_record_path(test_folder, rec_id):
     return os.path.join(test_folder, rec_id)
@@ -206,7 +206,7 @@ def retrieve_random_document(random_generator, test_folder):
 def extract_file(input_file, output_folder, parameters):
     #here we have the syntax of calling the proper extractor !
     #TODO: include parameters in the command line construction
-    results = execute_track([EXTRACTOR_EXECUTABLE, input_file, output_folder], output_folder)
+    results = execute_track(EXTRACTOR_EXECUTABLE + [input_file, output_folder], output_folder)
     return results
 
 def extract_single_record(rec_id, test_folder):
@@ -221,7 +221,241 @@ def perform_single_test(random_generator, test_folder):
     result = extract_single_record(record_id, test_folder)
     return 0 if ("forced_exit" in result) else 1
 
+internal_data = None #Evil global variable
+def include_in_statistics(parameters, input_id, result):
+    """Helps building statistics incrementally"""
+    global internal_data
+    # 1) Gathering number of executions with non-empty stderr and aggregating error messages (later we might want to aggregate by particular Java exception)
 
+
+    res_dir = create_directories(os.path.join(parameters["output_directory"],
+                                              "summary",
+                                              parameters["test_name"]))
+    stderr_dir = create_directories(os.path.join(res_dir, "stderr"))
+    if internal_data is None:
+        internal_data = {}
+        internal_data["number_of_executions"] = 0
+        internal_data["number_nonempty_stderr"] = 0
+        internal_data["return_codes"] = {}
+        internal_data["execution_times"] = {}
+        internal_data["max_memory_usage"] = {}
+
+    internal_data["number_of_executions"] += 1
+
+    if result["stderr"].strip() != "":
+        internal_data["number_nonempty_stderr"] += 1
+        fd = open(os.path.join(stderr_dir, input_id), "w")
+        fd.write(result["stderr"])
+        fd.close()
+
+
+    # 2) Build histogram of return codes
+    code = result["return_code"]
+    if not code in internal_data["return_codes"]:
+        internal_data["return_codes"][code] = 0
+    internal_data["return_codes"][code] += 1
+
+    # 3) Build histogram of execution times (removing parts below a second)
+
+    time = result["execution_time"].split(".")[0] #part before the first dot
+    if not time in internal_data["execution_times"]:
+        internal_data["execution_times"][time] = 0
+    internal_data["execution_times"][time] += 1
+
+    # 4) Build a histogram of memory usage
+
+    mem_usage = str(int(int(result["max_memusage"]) / 10240)) # we count in tens megabytes
+    if not mem_usage in internal_data["max_memory_usage"]:
+        internal_data["max_memory_usage"][mem_usage] = 0
+    internal_data["max_memory_usage"][mem_usage] += 1
+
+    # 5) For every execution build plot of memory usage versus time
+    #TODO ! this might be interesting if the memory usage of some process is too high
+
+    return internal_data
+
+snapshot_semaphore = Semaphore() #evil global semaphore
+def snapshot_statistics(parameters):
+    global internal_data
+    global snapshot_semaphore
+    snapshot_semaphore.acquire()
+    """Writing statistics generated in previous steps"""
+    res_dir = create_directories(os.path.join(parameters["output_directory"],
+                                              "summary", parameters["test_name"]))
+
+
+    root_app_code = """
+void createStderrPlot(){
+  TH1I* histo = new TH1I("histo","Processes having empty error output", 2, 1, 3);
+  histo->SetFillColor(8);
+  histo->SetBarWidth(0.9);
+  histo->SetBarOffset(0.05);
+  histo->SetMinimum(0);
+  histo->GetXaxis()->SetBinLabel(1, "non-empty stderr");
+  histo->GetXaxis()->SetBinLabel(2, "empty stderr");
+  histo->SetStats(0);
+  histo->SetBinContent(1, data_nonempty);
+  histo->SetBinContent(2, data_empty);
+
+  histo->Draw("bar1 text");
+}
+
+
+
+void createHistogram(int num_values, int keys[], int values[], const char* name, const char* desc, bool startFromZero){
+  // select minimal values
+  int max = keys[0];
+
+  int min = keys[0];
+
+  for (int i=0; i < num_values; i++){
+    int point = keys[i];
+    if (point < min){
+      min = point;
+    }
+    if (point > max){
+      max = point;
+    }
+  }
+
+  if (startFromZero){
+    min = 0;
+  }
+
+  // build the histogram
+  TH1I* histo = new TH1I(name, desc, max - min, min, max + 1);
+
+  histo->SetFillColor(31);
+  histo->SetBarWidth(0.9);
+  histo->SetBarOffset(0.05);
+  histo->SetMinimum(0);
+  histo->SetStats(0);
+  for (int i=0;i<num_values;i++){
+    int key = keys[i];
+    int val = values[i];
+    histo->SetBinContent(key - min, val);
+  }
+
+  histo->Draw("bar1 text");
+}
+
+
+void createExecutionTimeHistogram(){
+  createHistogram(data_executiontimes_num, data_executiontimes_keys, data_executiontimes_values, "histo_execution_times", "Execution times in seconds", true);
+}
+
+void createMemoryUsageHistogram(){
+  createHistogram(data_memoryusage_num, data_memoryusage_keys, data_memoryusage_values, "histo_memory_usage", "Memory usage in tens of megabytes", false);
+}
+
+
+void createExitCodeHistogram(){
+  // build the histogram
+  TH1I* histo = new TH1I("histo_exit_codes", "Exit codes", data_exitcodes_num, 0, data_exitcodes_num+1);
+
+  histo->SetFillColor(8);
+  histo->SetBarWidth(0.9);
+  histo->SetBarOffset(0.05);
+  histo->SetMinimum(0);
+  histo->SetStats(0);
+  // fixing labels
+  for (int i=0; i < data_exitcodes_num; i++){
+    char label[100];
+    sprintf(label, "%i", data_exitcodes_keys[i]);
+    histo->GetXaxis()->SetBinLabel(i + 1, label);
+  }
+
+  for (int i=0; i < data_exitcodes_num; i++){
+    int val = data_exitcodes_values[i];
+    histo->SetBinContent(i + 1, val);
+  }
+
+  histo->Draw("bar1 text");
+}
+
+
+void stats() {
+   TCanvas *c1 = new TCanvas("c1","The FillRandom example",200,10,700,900);
+   c1->SetFillColor(17);
+
+   TPad* pad1 = new TPad("pad1","The pad with execution times", 0.01,0.50,0.49,0.99, 21);
+
+   TPad* pad2 = new TPad("pad2","The pad with empty/nonempty stderr", 0.01,0.01,0.49,0.49, 21);
+
+   TPad* pad3 = new TPad("pad3","The pad with return codes histogram", 0.50, 0.50, 0.99, 0.99, 21);
+
+   TPad* pad4 = new TPad("pad4","The pad with the memory usage histogram", 0.50,0.01,0.99,0.49, 21);
+
+   pad1->Draw();
+   pad2->Draw();
+   pad3->Draw();
+   pad4->Draw();
+
+   pad1->cd();
+   createExecutionTimeHistogram();
+   c1->Update();
+
+   pad2->cd();
+   pad2->GetFrame()->SetFillColor(42);
+   pad2->GetFrame()->SetBorderMode(-1);
+   pad2->GetFrame()->SetBorderSize(5);
+   createStderrPlot();
+   c1->Update();
+
+   pad3->cd();
+
+   createExitCodeHistogram();
+   c1->Update();
+
+   pad4->cd();
+   createMemoryUsageHistogram();
+   c1->Update();
+}
+"""
+    fd = open(os.path.join(res_dir, "stats.C"), "w")
+
+    # Writing stats of stderr
+    fd.write("int data_nonempty = %i;\n" % (internal_data["number_nonempty_stderr"], ))
+    fd.write("int data_empty = %i;\n" % (internal_data["number_of_executions"] - internal_data["number_nonempty_stderr"], ))
+
+    # Writing statistics of exit codes
+    fd.write("/*exit codes histogram: %s\n*/\n" % (str(internal_data["return_codes"]),))
+
+    fd.write("int data_exitcodes_num = %i;\n" % (len(internal_data["return_codes"]), ))
+    keys_list = []
+    vals_list = []
+    for k in internal_data["return_codes"]:
+        keys_list.append(str(k))
+        vals_list.append(str(internal_data["return_codes"][k]))
+    fd.write("int data_exitcodes_keys[] = {%s};\n" % (", ".join(keys_list),))
+    fd.write("int data_exitcodes_values[] = {%s};\n" % (", ".join(vals_list),))
+
+    #Writing statistics of memory usage
+    fd.write("/*memory usage histogram (megabytes): %s\n*/\n" % (str(internal_data["max_memory_usage"]),))
+    fd.write("int data_memoryusage_num = %i;\n" % (len(internal_data["max_memory_usage"]), ))
+    keys_list = []
+    vals_list = []
+    for k in internal_data["max_memory_usage"]:
+        keys_list.append(str(k))
+        vals_list.append(str(internal_data["max_memory_usage"][k]))
+    fd.write("int data_memoryusage_keys[] = {%s};\n" % (", ".join(keys_list),))
+    fd.write("int data_memoryusage_values[] = {%s};\n" % (", ".join(vals_list),))
+
+    #Writing statistics of execution time
+
+    fd.write("/*execution time(seconds): %s\n*/\n" % (str(internal_data["execution_times"]),))
+    fd.write("int data_executiontimes_num = %i;\n" % (len(internal_data["execution_times"]), ))
+    keys_list = []
+    vals_list = []
+    for k in internal_data["execution_times"]:
+        keys_list.append(str(k))
+        vals_list.append(str(internal_data["execution_times"][k]))
+    fd.write("int data_executiontimes_keys[] = {%s};\n" % (", ".join(keys_list),))
+    fd.write("int data_executiontimes_values[] = {%s};\n" % (", ".join(vals_list),))
+
+    fd.write(root_app_code)
+    fd.close()
+    snapshot_semaphore.release()
 
 def usage():
     """prints the usage message of the program"""
@@ -250,8 +484,10 @@ Accepted options
                                  is present), fulltext.pdf files from
                                  all subdirectories are processed.
 
+
   -o dir_name  --output=dir_name Writes output in a specified directory
   -h           --help            Prints this message
+  -n num       --threads=num     Spawns num parallel threads performing calculations
 
 
   -s           --svg             Generate the SVG file
@@ -262,7 +498,6 @@ Accepted options
                                  PDF operations
 
 Examples:
-
    run.py -r 1000 -o some_test_dir
 
    Executes a random test on 1000 records taken from Inspire and write results
@@ -275,10 +510,10 @@ Examples:
 def parse_input(arguments):
     """ Determine starting options"""
     try:
-        res = getopt.getopt(arguments, "r:t:f:d:o:hspaz" ,
+        res = getopt.getopt(arguments, "r:t:f:d:o:n:hspaz" ,
                             ["random=", "test=", "file=", "directory=",
                              "output=", "help", "svg", "pages", "annotate",
-                             "operations"])
+                             "operations", "threads="])
     except:
         return None
 
@@ -289,6 +524,7 @@ def parse_input(arguments):
     options["dump_pages"] = False
     options["annotated_figures"] = False
     options["annotated_operations"] = False
+    options["number_of_threads"] = 1
 
     for option in res[0]:
         if option[0] in ("-r", "--random"):
@@ -306,6 +542,9 @@ def parse_input(arguments):
         if option[0] in ("-o", "--output"):
             options["output_directory"] = option[1]
 
+        if option[0] in ("-n", "--threads"):
+            options["number_of_threads"] = int(option[1])
+
         if option[0] in ("-h", "--help"):
             return None
 
@@ -321,6 +560,7 @@ def parse_input(arguments):
         if option[0] in ("-z", "--operations"):
             options["annotated_operations"] = True
 
+
     return options
 
 
@@ -334,7 +574,7 @@ def get_input_files(options):
         pure_name = os.path.splitext(os.path.split(options["input_file"])[1])[0]
         yield (options["input_file"],
                os.path.join(options["output_directory"], pure_name,
-                            options["test_name"]))
+                            options["test_name"]), options["input_file"])
 
     if "input_directory" in options:
         for entry in os.listdir(options["input_directory"]):
@@ -342,7 +582,7 @@ def get_input_files(options):
             if ext.lower() == ".pdf":
                 yield (os.path.join(options["input_directory"], entry),
                        os.path.join(options["output_directory"], file_name,
-                                    options["test_name"]))
+                                    options["test_name"]), entry)
     if "random" in options:
         #generate random samples in the output directory
         random_generator = random.Random()
@@ -351,8 +591,15 @@ def get_input_files(options):
             recid, path = retrieve_random_document(random_generator,
                                                    options["output_directory"])
             yield (path, os.path.join(options["output_directory"],  str(recid),
-                                      options["test_name"]))
+                                      options["test_name"]), str(recid))
 
+
+def process_function(slots_queue, slot_num, entry_id, fname, fdir, parameters):
+    # because of Global Interpreter Lock, collections are safe
+    res = extract_file(fname, fdir, parameters)
+    include_in_statistics(parameters, entry_id, res)
+    snapshot_statistics(parameters)
+    slots_queue.put(slot_num)
 
 if __name__ == "__main__":
     parameters = parse_input(sys.argv[1:])
@@ -365,7 +612,32 @@ if __name__ == "__main__":
 
     status_file = os.path.join(parameters["output_directory"], "status")
 
+    stat_data = None
+
+    slots_queue = Queue()
+    for i in xrange(0, parameters["number_of_threads"]):
+        slots_queue.put(i)
+
+    threads = [None] * parameters["number_of_threads"]
+    results_list = []
+
     for entry in get_input_files(parameters):
+        slot_num = slots_queue.get()
+        print "Obtained slot %i" % (slot_num, )
+        if not threads[slot_num] is None:
+            threads[slot_num].join()
+
+        # now cleaning slots ...
+
+        # spawning new thread
         print "Processing input file %s writing output to the directory %s" % (entry[0], entry[1])
-        extract_file(entry[0], entry[1], parameters)
+        th = Thread(target = process_function, args = [slots_queue, slot_num, entry[2], entry[0], entry[1], parameters])
+        threads[slot_num] = th
+        th.start()
+        #stat_data = include_in_statistics(parameters, entry[2], res, stat_data)
+
+    for th in threads:
+        if not th is None:
+            th.join()
+
 
