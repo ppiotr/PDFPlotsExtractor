@@ -13,7 +13,7 @@ import java.util.LinkedList;
  * @author ppraczyk
  */
 public class PDFObject {
-
+    
     private LinkedList<CSOperation> operations = new LinkedList<CSOperation>();
     private Rectangle boundary = null;
 
@@ -22,7 +22,7 @@ public class PDFObject {
     }
 
     public void setBoundary(Rectangle b) {
-        this.boundary = b;
+        this.boundary = new Rectangle(b);
     }
 
     public Rectangle getBoundary() {
@@ -31,9 +31,10 @@ public class PDFObject {
 
     public void extendBoundary(Rectangle addition) {
         if (this.boundary == null) {
-            this.boundary = addition;
+            this.boundary = new Rectangle(addition);
         } else {
-            this.boundary.add(addition);
+            //this.boundary.add(addition);
+            this.boundary = this.boundary.union(addition);
         }
     }
 

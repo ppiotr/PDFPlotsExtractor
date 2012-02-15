@@ -12,8 +12,7 @@ import subprocess
 import time
 from datetime import datetime
 import getopt
-from threading import Thread, Semaphore
-from Queue import Queue
+from threading import Thread
 
 def create_directories(path):
     """creates directory and if necessary, all intermediate directories as well"""
@@ -89,8 +88,8 @@ def execute_track(args, folder = None):
 
     start_time = time.time()
 
-    memPeak = 0
-    memSize = 0
+    VmPeak = 0
+    VmSize = 0
     retcode =  None
     memusage = []
     create_directories(folder)
@@ -124,12 +123,13 @@ def execute_track(args, folder = None):
             execution.terminate()
             results["forced_exit"] = "Stopped. Was working longer than %i seconds" % (CFG_MAX_EXECUTION_TIME, )
 
-        if stats and "VmRSS" in stats:
-            memSize = int(stats["VmRSS"])
-            if memSize > memPeak:
-                memPeak = memSize # just in case !
+        if stats and "VmPeak" in stats and "VmSize" in stats:
+            VmPeakT = int(stats["VmPeak"])
+            VmSize = int(stats["VmSize"])
+            if VmPeakT > VmPeak:
+                VmPeak = VmPeakT # just in case !
 
-            memusage.append("%s %i" % (timestamp, memSize))
+            memusage.append("%s %i" % (timestamp, VmSize))
 
         time.sleep(CFG_SLEEP_INTERVAL)
         retcode = execution.poll()
@@ -143,7 +143,7 @@ def execute_track(args, folder = None):
 #    stdout, stderr = execution.communicate(None)
 
     results["memusage"] = "\n".join(memusage)
-    results["max_memusage"] = "%i" % (memPeak, )
+    results["max_memusage"] = "%i" % (VmPeakT, )
 
 #    results["stdout"] = stdout
 #    results["stderr"] = stderr
@@ -167,8 +167,7 @@ def execute_track(args, folder = None):
     return results
 # executing prticular things
 
-#EXTRACTOR_EXECUTABLE = "./run.sh"
-EXTRACTOR_EXECUTABLE = ["/opt/ppraczyk/jre1.6.0_27/bin/java", "-cp", "PDFPlotsExtractor.jar:libs/*", "-Djava.awt.headless=true", "invenio.pdf.cli.PlotsExtractorCli"]
+EXTRACTOR_EXECUTABLE = "./run.sh"
 
 def get_record_path(test_folder, rec_id):
     return os.path.join(test_folder, rec_id)
@@ -206,7 +205,7 @@ def retrieve_random_document(random_generator, test_folder):
 def extract_file(input_file, output_folder, parameters):
     #here we have the syntax of calling the proper extractor !
     #TODO: include parameters in the command line construction
-    results = execute_track(EXTRACTOR_EXECUTABLE + [input_file, output_folder], output_folder)
+    results = execute_track([EXTRACTOR_EXECUTABLE, input_file, output_folder], output_folder)
     return results
 
 def extract_single_record(rec_id, test_folder):
@@ -221,10 +220,9 @@ def perform_single_test(random_generator, test_folder):
     result = extract_single_record(record_id, test_folder)
     return 0 if ("forced_exit" in result) else 1
 
-internal_data = None #Evil global variable
-def include_in_statistics(parameters, input_id, result):
+def include_in_statistics(parameters, input_id, result, internal_data=None):
     """Helps building statistics incrementally"""
-    global internal_data
+
     # 1) Gathering number of executions with non-empty stderr and aggregating error messages (later we might want to aggregate by particular Java exception)
 
 
@@ -264,7 +262,7 @@ def include_in_statistics(parameters, input_id, result):
 
     # 4) Build a histogram of memory usage
 
-    mem_usage = str(int(int(result["max_memusage"]) / 10240)) # we count in tens megabytes
+    mem_usage = str(int(int(result["max_memusage"]) / 1024)) # we count in megabytes
     if not mem_usage in internal_data["max_memory_usage"]:
         internal_data["max_memory_usage"][mem_usage] = 0
     internal_data["max_memory_usage"][mem_usage] += 1
@@ -274,11 +272,7 @@ def include_in_statistics(parameters, input_id, result):
 
     return internal_data
 
-snapshot_semaphore = Semaphore() #evil global semaphore
-def snapshot_statistics(parameters):
-    global internal_data
-    global snapshot_semaphore
-    snapshot_semaphore.acquire()
+def finalise_statistics(parameters, data):
     """Writing statistics generated in previous steps"""
     res_dir = create_directories(os.path.join(parameters["output_directory"],
                                               "summary", parameters["test_name"]))
@@ -291,8 +285,8 @@ void createStderrPlot(){
   histo->SetBarWidth(0.9);
   histo->SetBarOffset(0.05);
   histo->SetMinimum(0);
-  histo->GetXaxis()->SetBinLabel(1, "non-empty stderr");
-  histo->GetXaxis()->SetBinLabel(2, "empty stderr");
+  histo->GetXaxis()->SetBinLabel(1, "empty stderr");
+  histo->GetXaxis()->SetBinLabel(2, "non-empty stderr");
   histo->SetStats(0);
   histo->SetBinContent(1, data_nonempty);
   histo->SetBinContent(2, data_empty);
@@ -302,28 +296,18 @@ void createStderrPlot(){
 
 
 
-void createHistogram(int num_values, int keys[], int values[], const char* name, const char* desc, bool startFromZero){
+void createHistogram(int num_values, int keys[], int values[], const char* name, const char* desc){
   // select minimal values
   int max = keys[0];
-
-  int min = keys[0];
-
   for (int i=0; i < num_values; i++){
     int point = keys[i];
-    if (point < min){
-      min = point;
-    }
     if (point > max){
       max = point;
     }
   }
 
-  if (startFromZero){
-    min = 0;
-  }
-
   // build the histogram
-  TH1I* histo = new TH1I(name, desc, max - min, min, max + 1);
+  TH1I* histo = new TH1I(name, desc, max, 0, max + 1);
 
   histo->SetFillColor(31);
   histo->SetBarWidth(0.9);
@@ -333,7 +317,7 @@ void createHistogram(int num_values, int keys[], int values[], const char* name,
   for (int i=0;i<num_values;i++){
     int key = keys[i];
     int val = values[i];
-    histo->SetBinContent(key - min, val);
+    histo->SetBinContent(key, val);
   }
 
   histo->Draw("bar1 text");
@@ -341,11 +325,11 @@ void createHistogram(int num_values, int keys[], int values[], const char* name,
 
 
 void createExecutionTimeHistogram(){
-  createHistogram(data_executiontimes_num, data_executiontimes_keys, data_executiontimes_values, "histo_execution_times", "Execution times in seconds", true);
+  createHistogram(data_executiontimes_num, data_executiontimes_keys, data_executiontimes_values, "histo_execution_times", "Execution times in seconds");
 }
 
 void createMemoryUsageHistogram(){
-  createHistogram(data_memoryusage_num, data_memoryusage_keys, data_memoryusage_values, "histo_memory_usage", "Memory usage in tens of megabytes", false);
+  createHistogram(data_memoryusage_num, data_memoryusage_keys, data_memoryusage_values, "histo_memory_usage", "Memory usage in megabytes");
 }
 
 
@@ -415,47 +399,47 @@ void stats() {
     fd = open(os.path.join(res_dir, "stats.C"), "w")
 
     # Writing stats of stderr
-    fd.write("int data_nonempty = %i;\n" % (internal_data["number_nonempty_stderr"], ))
-    fd.write("int data_empty = %i;\n" % (internal_data["number_of_executions"] - internal_data["number_nonempty_stderr"], ))
+    fd.write("int data_nonempty = %i;\n" % (data["number_nonempty_stderr"], ))
+    fd.write("int data_empty = %i;\n" % (data["number_of_executions"] - data["number_nonempty_stderr"], ))
 
     # Writing statistics of exit codes
-    fd.write("/*exit codes histogram: %s\n*/\n" % (str(internal_data["return_codes"]),))
+    fd.write("/*exit codes histogram: %s\n*/\n" % (str(data["return_codes"]),))
 
-    fd.write("int data_exitcodes_num = %i;\n" % (len(internal_data["return_codes"]), ))
+    fd.write("int data_exitcodes_num = %i;\n" % (len(data["return_codes"]), ))
     keys_list = []
     vals_list = []
-    for k in internal_data["return_codes"]:
+    for k in data["return_codes"]:
         keys_list.append(str(k))
-        vals_list.append(str(internal_data["return_codes"][k]))
+        vals_list.append(str(data["return_codes"][k]))
     fd.write("int data_exitcodes_keys[] = {%s};\n" % (", ".join(keys_list),))
     fd.write("int data_exitcodes_values[] = {%s};\n" % (", ".join(vals_list),))
 
     #Writing statistics of memory usage
-    fd.write("/*memory usage histogram (megabytes): %s\n*/\n" % (str(internal_data["max_memory_usage"]),))
-    fd.write("int data_memoryusage_num = %i;\n" % (len(internal_data["max_memory_usage"]), ))
+    fd.write("/*memory usage histogram (megabytes): %s\n*/\n" % (str(data["max_memory_usage"]),))
+    fd.write("int data_memoryusage_num = %i;\n" % (len(data["max_memory_usage"]), ))
     keys_list = []
     vals_list = []
-    for k in internal_data["max_memory_usage"]:
+    for k in data["max_memory_usage"]:
         keys_list.append(str(k))
-        vals_list.append(str(internal_data["max_memory_usage"][k]))
+        vals_list.append(str(data["max_memory_usage"][k]))
     fd.write("int data_memoryusage_keys[] = {%s};\n" % (", ".join(keys_list),))
     fd.write("int data_memoryusage_values[] = {%s};\n" % (", ".join(vals_list),))
 
     #Writing statistics of execution time
 
-    fd.write("/*execution time(seconds): %s\n*/\n" % (str(internal_data["execution_times"]),))
-    fd.write("int data_executiontimes_num = %i;\n" % (len(internal_data["execution_times"]), ))
+    fd.write("/*execution time(seconds): %s\n*/\n" % (str(data["execution_times"]),))
+    fd.write("int data_executiontimes_num = %i;\n" % (len(data["execution_times"]), ))
     keys_list = []
     vals_list = []
-    for k in internal_data["execution_times"]:
+    for k in data["execution_times"]:
         keys_list.append(str(k))
-        vals_list.append(str(internal_data["execution_times"][k]))
+        vals_list.append(str(data["execution_times"][k]))
     fd.write("int data_executiontimes_keys[] = {%s};\n" % (", ".join(keys_list),))
     fd.write("int data_executiontimes_values[] = {%s};\n" % (", ".join(vals_list),))
 
     fd.write(root_app_code)
     fd.close()
-    snapshot_semaphore.release()
+
 
 def usage():
     """prints the usage message of the program"""
@@ -484,10 +468,8 @@ Accepted options
                                  is present), fulltext.pdf files from
                                  all subdirectories are processed.
 
-
   -o dir_name  --output=dir_name Writes output in a specified directory
   -h           --help            Prints this message
-  -n num       --threads=num     Spawns num parallel threads performing calculations
 
 
   -s           --svg             Generate the SVG file
@@ -498,6 +480,7 @@ Accepted options
                                  PDF operations
 
 Examples:
+
    run.py -r 1000 -o some_test_dir
 
    Executes a random test on 1000 records taken from Inspire and write results
@@ -510,10 +493,10 @@ Examples:
 def parse_input(arguments):
     """ Determine starting options"""
     try:
-        res = getopt.getopt(arguments, "r:t:f:d:o:n:hspaz" ,
+        res = getopt.getopt(arguments, "r:t:f:d:o:hspaz" ,
                             ["random=", "test=", "file=", "directory=",
                              "output=", "help", "svg", "pages", "annotate",
-                             "operations", "threads="])
+                             "operations"])
     except:
         return None
 
@@ -524,7 +507,6 @@ def parse_input(arguments):
     options["dump_pages"] = False
     options["annotated_figures"] = False
     options["annotated_operations"] = False
-    options["number_of_threads"] = 1
 
     for option in res[0]:
         if option[0] in ("-r", "--random"):
@@ -542,9 +524,6 @@ def parse_input(arguments):
         if option[0] in ("-o", "--output"):
             options["output_directory"] = option[1]
 
-        if option[0] in ("-n", "--threads"):
-            options["number_of_threads"] = int(option[1])
-
         if option[0] in ("-h", "--help"):
             return None
 
@@ -559,7 +538,6 @@ def parse_input(arguments):
 
         if option[0] in ("-z", "--operations"):
             options["annotated_operations"] = True
-
 
     return options
 
@@ -593,14 +571,6 @@ def get_input_files(options):
             yield (path, os.path.join(options["output_directory"],  str(recid),
                                       options["test_name"]), str(recid))
 
-
-def process_function(slots_queue, slot_num, entry_id, fname, fdir, parameters):
-    # because of Global Interpreter Lock, collections are safe
-    res = extract_file(fname, fdir, parameters)
-    include_in_statistics(parameters, entry_id, res)
-    snapshot_statistics(parameters)
-    slots_queue.put(slot_num)
-
 if __name__ == "__main__":
     parameters = parse_input(sys.argv[1:])
     if not parameters:
@@ -614,30 +584,11 @@ if __name__ == "__main__":
 
     stat_data = None
 
-    slots_queue = Queue()
-    for i in xrange(0, parameters["number_of_threads"]):
-        slots_queue.put(i)
-
-    threads = [None] * parameters["number_of_threads"]
-    results_list = []
-
     for entry in get_input_files(parameters):
-        slot_num = slots_queue.get()
-        print "Obtained slot %i" % (slot_num, )
-        if not threads[slot_num] is None:
-            threads[slot_num].join()
-
-        # now cleaning slots ...
-
-        # spawning new thread
         print "Processing input file %s writing output to the directory %s" % (entry[0], entry[1])
-        th = Thread(target = process_function, args = [slots_queue, slot_num, entry[2], entry[0], entry[1], parameters])
-        threads[slot_num] = th
-        th.start()
-        #stat_data = include_in_statistics(parameters, entry[2], res, stat_data)
+        res = extract_file(entry[0], entry[1], parameters)
+        stat_data = include_in_statistics(parameters, entry[2], res, stat_data)
+    finalise_statistics(parameters, stat_data)
 
-    for th in threads:
-        if not th is None:
-            th.join()
 
 

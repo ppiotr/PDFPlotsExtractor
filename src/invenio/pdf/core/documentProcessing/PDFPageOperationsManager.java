@@ -33,14 +33,11 @@ class PDFPageOperationsManager {
     private HashMap<CSOperation, Rectangle> operationBoundaries; // Boundries of areas affected by PS operations
     private HashSet<CSOperation> textOperations; // operations drawing the text
     private List<CSOperation> operations; // operations drawing the text
- //   private HashMap<CSOperation, List<String>> renderingMethods; // Methods
+    //   private HashMap<CSOperation, List<String>> renderingMethods; // Methods
     // called in order to execute an operation
     private Rectangle pageBoundary;
     private Map<CSOperation, int[]> operationTextPositions;
     private String pageText;
-
-
-
     public ContentStreamStateMachine contentStreamStateMachine;
 
     /**
@@ -53,7 +50,7 @@ class PDFPageOperationsManager {
         this.currentOperation = null;
         this.operationBoundaries = new HashMap<CSOperation, Rectangle>();
         this.textOperations = new HashSet<CSOperation>();
-   //     this.renderingMethods = new HashMap<CSOperation, List<String>>();
+        //     this.renderingMethods = new HashMap<CSOperation, List<String>>();
         this.operations = new ArrayList<CSOperation>();
         this.pageBoundary = pgBound;
         this.operationTextPositions = new HashMap<CSOperation, int[]>();
@@ -125,7 +122,10 @@ class PDFPageOperationsManager {
     }
 
     public void setOperationBoundary(CSOperation op, Rectangle rec) {
-        this.operationBoundaries.put(op, rec);
+        this.operationBoundaries.put(op, new Rectangle(rec));
+        if (rec.x == 109 && rec.y == 840 && rec.width == 1015 && rec.height == 610) {
+            System.out.println("Wiedz, ze cos sie dzieje");
+        }
     }
 
     public Rectangle getOperationBoundary(CSOperation op) {
@@ -138,11 +138,18 @@ class PDFPageOperationsManager {
          *  (find a minimal rectangle containing current boundary and the rectangle passed as a parameter)
          */
         Rectangle currentBoundary = this.getOperationBoundary(this.getCurrentOperation());
-
+        
         if (currentBoundary != null) {
-            this.setOperationBoundary(this.getCurrentOperation(), currentBoundary.createUnion(rec.getBounds2D()).getBounds());
+            Rectangle bnd = currentBoundary.createUnion(rec.getBounds2D()).getBounds();
+            if (bnd.x == 109 && bnd.y == 840 && bnd.width == 1015 && bnd.height == 610) {
+                System.out.println("Wiedz, ze cos sie dzieje");
+            }
+            this.setOperationBoundary(this.getCurrentOperation(), bnd);
         } else {
-            this.setOperationBoundary(this.getCurrentOperation(), rec);
+            this.setOperationBoundary(this.getCurrentOperation(), new Rectangle(rec));
+            if (rec.x == 109 && rec.y == 840 && rec.width == 1015 && rec.height == 610) {
+                System.out.println("Wiedz, ze cos sie dzieje");
+            }
         }
 
         this.contentStreamStateMachine.extendCurrentBoundary(rec);
@@ -177,7 +184,7 @@ class PDFPageOperationsManager {
                 Rectangle bd = this.getOperationBoundary(op);
                 if (bd != null) {
                     int[] substrInd = this.getOperationTextIndices(op);
-                    if (substrInd == null || this.getPageText() == null){
+                    if (substrInd == null || this.getPageText() == null) {
                         ExtractorLogger.logMessage(0, "FATAL: failed to extract the page text");
                     }
                     String operationString = this.getPageText().substring(

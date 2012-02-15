@@ -4,6 +4,7 @@ import invenio.pdf.core.ExtractorParameters;
 import invenio.common.ExtractorGeometryTools;
 import invenio.common.Pair;
 import invenio.common.SpatialClusterManager;
+import invenio.pdf.core.GraphicalOperation;
 import invenio.pdf.core.Operation;
 import invenio.pdf.core.PDFPageManager;
 import invenio.pdf.core.TextOperation;
@@ -39,6 +40,59 @@ public class PlotHeuristics {
             Map<Rectangle, List<Operation>> candidates,
             Predicate condition) {
         return sourceAreas;
+    }
+
+    /**    public static Map<Rectangle, Pair<List<Operation>, Integer>> removeBasedOnAspectRatio(
+    Map<Rectangle, Pair<List<Operation>, Integer>> areas) {
+    return areas;
+    }
+     */
+    /** Removes regions based on the ratio between number of graphical and text operations */
+    public static Map<Rectangle, Pair<List<Operation>, Integer>> removeBasedOnTextOperationsProportion(
+            Map<Rectangle, Pair<List<Operation>, Integer>> areas) {
+        Map<Rectangle, Pair<List<Operation>, Integer>> result = new HashMap<Rectangle, Pair<List<Operation>, Integer>>();
+        for (Rectangle curRec : areas.keySet()) {
+            int numText = 0;
+            int numGraph = 0;
+            for (Operation op : areas.get(curRec).first) {
+                if (op instanceof TextOperation) {
+                    numText++;
+                }
+                if (op instanceof GraphicalOperation) {
+                    numGraph++;
+                }
+
+                //TODO: contidions here !! and some real filtering out
+                result.put(curRec, areas.get(curRec));
+            }
+        }
+        return result;
+    }
+
+    /**
+     * An attempt to remove mathematical formulas having only horizontal lines as graphical elements
+     * @param areas
+     * @return 
+     */
+    public static Map<Rectangle, Pair<List<Operation>, Integer>> removeBasedOnHavingOnlyHorizontalLines(
+            Map<Rectangle, Pair<List<Operation>, Integer>> areas) {
+        Map<Rectangle, Pair<List<Operation>, Integer>> result = new HashMap<Rectangle, Pair<List<Operation>, Integer>>();
+        System.out.println("Filtering out areas having only horizontal lines");
+        for (Rectangle curRec : areas.keySet()) {
+            boolean containsNonHorizontal = false;
+            for (Operation op : areas.get(curRec).first) {
+                if (op instanceof GraphicalOperation) {
+                    GraphicalOperation gop = (GraphicalOperation) op;
+                    containsNonHorizontal = containsNonHorizontal || (gop.getBoundary().height > 3);
+                }
+            }
+            if (containsNonHorizontal) {
+                result.put(curRec, areas.get(curRec));
+            } else {
+                System.out.println("Removed a figure candidate that contained only horizontal lines");
+            }
+        }
+        return result;
     }
 
     /**
@@ -91,9 +145,18 @@ public class PlotHeuristics {
         return null;
     }
 
+    /**
+     * 
+     * @param areas A dictionary mapping areas to a pair containing list of operations 
+     * of which the region is built and the integer identifier of the page layout area to which it belongs
+     * @return 
+     */
     public static Map<Rectangle, Pair<List<Operation>, Integer>> removeFalsePlots(Map<Rectangle, Pair<List<Operation>, Integer>> areas) {
         // remove graphics with too small/too big aspect ratios
-        return removeBasedOnAspectRatio(areas);
+        Map<Rectangle, Pair<List<Operation>, Integer>> res = removeBasedOnAspectRatio(areas);
+        res = removeBasedOnTextOperationsProportion(res);
+        res = removeBasedOnHavingOnlyHorizontalLines(res);
+        return res;
     }
 
     /**

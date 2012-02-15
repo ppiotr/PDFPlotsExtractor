@@ -7,7 +7,6 @@ package invenio.pdf.core.documentProcessing;
 import de.intarsys.cwt.awt.environment.CwtAwtGraphicsContext;
 import de.intarsys.cwt.environment.IGraphicsContext;
 import de.intarsys.pdf.content.CSContent;
-import de.intarsys.pdf.content.CSOperation;
 import de.intarsys.pdf.content.text.CSTextExtractor;
 import de.intarsys.pdf.parser.COSLoadException;
 import de.intarsys.pdf.pd.PDDocument;
@@ -18,15 +17,6 @@ import de.intarsys.pdf.tools.kernel.PDFGeometryTools;
 import de.intarsys.tools.locator.FileLocator;
 import invenio.pdf.core.ExtractorParameters;
 import invenio.pdf.core.PDFDocumentManager;
-import invenio.pdf.core.PDFObjects.ContentStreamStateMachine;
-import invenio.pdf.core.PDFObjects.PDFClippingPathObject;
-import invenio.pdf.core.PDFObjects.PDFExternalObject;
-import invenio.pdf.core.PDFObjects.PDFInlineImageObject;
-import invenio.pdf.core.PDFObjects.PDFObject;
-import invenio.pdf.core.PDFObjects.PDFPageDescriptionObject;
-import invenio.pdf.core.PDFObjects.PDFPathObject;
-import invenio.pdf.core.PDFObjects.PDFShadingObject;
-import invenio.pdf.core.PDFObjects.PDFTextObject;
 import invenio.pdf.core.PDFPageManager;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -35,13 +25,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.nio.charset.Charset;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.apache.fop.pdf.PDFShading;
 
 /**
  * The purpose of this class is to provide interface to a lower level PDF
@@ -109,7 +93,7 @@ public class PDFDocumentTools {
 
             PDFPageOperationsManager opManager = new PDFPageOperationsManager(pageBoundary);
 
-            ExtractorGraphics2D g2proxy = new ExtractorGraphics2D(g2, opManager);
+            ExtractorGraphics2D g2proxy = new ExtractorGraphics2D(g2, opManager, image);
 
             // now we use our wrapper in order to construct standard mechanisms
             graphics = new CwtAwtGraphicsContext(g2proxy);

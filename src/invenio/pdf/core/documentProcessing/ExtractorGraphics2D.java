@@ -42,6 +42,8 @@ class ExtractorGraphics2D extends Graphics2D {
 
     private Graphics2D originalGraphics;
     private PDFPageOperationsManager operationsManager; // keeping track of the current operation and of its parameters
+    private BufferedImage originalImage; // the original image from which we get the graphics object
+    private BufferedImage previousImage; // the previous image
 
     /**
      * A standard constructor - requies one more parameter being a
@@ -49,24 +51,99 @@ class ExtractorGraphics2D extends Graphics2D {
      * @param original
      * @param opManager
      */
-    public ExtractorGraphics2D(Graphics2D original, PDFPageOperationsManager opManager) {
+    public ExtractorGraphics2D(Graphics2D original, PDFPageOperationsManager opManager, BufferedImage image) {
         this.originalGraphics = original;
         this.operationsManager = opManager;
+        this.originalImage = image;
+        this.previousImage = null;
     }
 
-    protected void processOperatorBoundary(Rectangle2D bounds) {
-        //TODO: Remove this code
-        if (bounds.getX() < 300 && bounds.getY() < 505 && this.operationsManager.getCurrentOperation() != null && this.operationsManager.getCurrentOperation().getOperator() != null && this.operationsManager.getCurrentOperation().getOperator().toString() == "f"){
-            System.out.println("ExtractorGraphics2D::processOperatorBoundary() <- the debug condition satisfied");
+    protected boolean isLineIdentical(Rectangle2D bounds, int startx,
+            int starty, int dx, int dy) {
+        boolean res = true;
+        int curx = startx;
+        int cury = starty;
+        while (curx >= bounds.getMinX() && curx <= bounds.getMaxX()
+                && cury >= bounds.getMinY() && cury <= bounds.getMaxY()) {
+            if (curx >= 0 && curx < this.originalImage.getWidth()
+                    && cury >= 0 && cury < this.originalImage.getHeight()) {
+                res = res && (this.originalImage.getRGB(curx, cury)
+                        == this.previousImage.getRGB(curx, cury));
+            }
+            curx += dx;
+            cury += dy;
+
+        }
+        return res;
+    }
+
+    protected Rectangle2D shrinkOperationBoundary(Rectangle2D bounds) {
+        /*This method shrinks the boundary to a real area of effect.
+         * image after executing operation is compared with previous image. 
+         * Only part of the boudary that is changed is considered 
+         */
+        Rectangle2D result = new Rectangle2D.Double(bounds.getMinX(),
+                bounds.getMinY(), bounds.getWidth(), bounds.getHeight());
+
+        if (this.previousImage == null) {
+            this.previousImage = new BufferedImage(this.originalImage.getWidth(),
+                    this.originalImage.getHeight(), this.originalImage.getType());
+        } else {
+            // shrink the top of the rectangle
+            while (isLineIdentical(result, (int) result.getMinX(),
+                    (int) result.getMinY(), 1, 0)
+                    && result.getWidth() > 0 && result.getHeight() > 0
+                    && result.getMinX() >= 0 && result.getMinY() >= 0) {
+                result = new Rectangle2D.Double(result.getMinX(),
+                        result.getMinY() + 1, result.getWidth(),
+                        result.getHeight() - 1);
+            }
+            // shrink the bottom
+            while (isLineIdentical(result, (int) result.getMinX(),
+                    (int) result.getMaxY() - 1, 1, 0)
+                    && result.getWidth() > 0 && result.getHeight() > 0
+                    && result.getMinX() >= 0 && result.getMinY() >= 0) {
+                result = new Rectangle2D.Double(result.getMinX(),
+                        result.getMinY(), result.getWidth(),
+                        result.getHeight() - 1);
+            }
+
+            // shrink the left
+            while (isLineIdentical(result, (int) result.getMinX(),
+                    (int) result.getMinY(), 0, 1)
+                    && result.getWidth() > 0 && result.getHeight() > 0
+                    && result.getMinX() >= 0 && result.getMinY() >= 0) {
+                result = new Rectangle2D.Double(result.getMinX() + 1,
+                        result.getMinY(), result.getWidth() - 1,
+                        result.getHeight());
+            }
+
+            // shrink the right
+
+            while (isLineIdentical(result, (int) result.getMaxX() - 1,
+                    (int) result.getMinY(), 0, 1)
+                    && result.getWidth() > 0 && result.getHeight() > 0
+                    && result.getMinX() >= 0 && result.getMinY() >= 0) {
+                result = new Rectangle2D.Double(result.getMinX(),
+                        result.getMinY(), result.getWidth() - 1,
+                        result.getHeight());
+            }
         }
 
+        originalImage.copyData(previousImage.getRaster()); // copy current image to the existing one
+        return result;
+    }
 
+    protected void processOperatorBoundary(Rectangle2D bd) {
+        //TODO: Remove this code
+//        Rectangle2D bounds = this.shrinkOperationBoundary(bd);
+        Rectangle2D bounds = bd;
         AffineTransform currentTransform = this.originalGraphics.getTransform();
         // now clipping bounds
 
         Rectangle clipBounds = this.originalGraphics.getClipBounds();
 
-        if (clipBounds != null){
+        if (clipBounds != null) {
             bounds = bounds.createIntersection(clipBounds.getBounds2D());
         }
 
@@ -103,11 +180,13 @@ class ExtractorGraphics2D extends Graphics2D {
         // after a rotation, this might be something different that a rectangle
         // we have to find the boudary
 
-
-
         Rectangle finalBoundingRectangle = new Rectangle((int) minX, (int) minY, (int) (maxX - minX), (int) (maxY - minY));
         // now clipping !
 
+        if (finalBoundingRectangle.x == 109 && finalBoundingRectangle.y == 840) {
+            System.out.println("ZONK");
+
+        }
         this.operationsManager.extendCurrentOperationBoundary(finalBoundingRectangle);
     }
 
@@ -123,9 +202,9 @@ class ExtractorGraphics2D extends Graphics2D {
 
     @Override
     public void draw(Shape arg0) {
-        this.processOperatorBoundary(arg0.getBounds2D());
         //       this.operationsManager.addRenderingMethod("draw");
         this.originalGraphics.draw(arg0);
+        this.processOperatorBoundary(arg0.getBounds2D());
     }
 
     @Override
@@ -202,8 +281,8 @@ class ExtractorGraphics2D extends Graphics2D {
 
         // System.out.println("fill(Shape arg0 = " + arg0.toString() + ") current operation: " + opString);
         //   this.operationsManager.addRenderingMethod("fill");
-        this.processOperatorBoundary(arg0.getBounds2D());
         this.originalGraphics.fill(arg0);
+        this.processOperatorBoundary(arg0.getBounds2D());
     }
 
     @Override
@@ -366,9 +445,11 @@ class ExtractorGraphics2D extends Graphics2D {
     @Override
     public boolean drawImage(Image arg0, int arg1, int arg2, ImageObserver arg3) {
         //   System.out.println("drawImage(Image arg0, int arg1, int arg2, ImageObserver arg3)");
-        //   this.operationsManager.addRenderingMethod("drawImage");
+        //   this.operationsManager.addRenderingMethofd("drawImage");
+        boolean res = this.originalGraphics.drawImage(arg0, arg1, arg2, arg3);
         this.processOperatorBoundary(new Rectangle2D.Double((double) arg1, (double) arg2, (double) arg0.getWidth(arg3), (double) arg0.getHeight(arg3)));
-        return this.originalGraphics.drawImage(arg0, arg1, arg2, arg3);
+
+        return res;
     }
 
     @Override

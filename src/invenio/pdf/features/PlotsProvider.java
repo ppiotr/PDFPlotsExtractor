@@ -83,7 +83,6 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
         areas = PlotHeuristics.includeTextParts(areas, manager);
         areas = PlotHeuristics.removeFalsePlots(areas);
 
-
         // we are done with plot images -> creating plot structures for every
         // selected region
 

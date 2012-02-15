@@ -5,12 +5,8 @@ import de.intarsys.cwt.environment.IGraphicsContext;
 import de.intarsys.pdf.content.CSException;
 import de.intarsys.pdf.content.CSOperation;
 import de.intarsys.pdf.platform.cwt.rendering.CSPlatformRenderer;
-import invenio.pdf.core.PDFObjects.ContentStreamStateMachine;
 import invenio.pdf.core.PDFObjects.PDFObject;
 import java.util.LinkedList;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * An implementation of the jPod CSPlatformRenderer - a class responsible for
