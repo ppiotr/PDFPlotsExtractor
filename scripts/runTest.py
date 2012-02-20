@@ -569,12 +569,12 @@ def parse_input(arguments):
     os.mkdir(os.path.join(dirname, "underdetected"))
     os.mkdir(os.path.join(dirname, "underdetectedmany")) #underedetected with more than one figure missing
 
-    parameters["review_dir"] = dirname
-    parameters["review_dir_all"] = os.path.join(dirname, "all")
-    parameters["review_dir_overdetected"] = os.path.join(dirname, "overdetected")
-    parameters["review_dir_overdetectedmany"] = os.path.join(dirname, "overdetectedmany")
-    parameters["review_dir_underdetected"] = os.path.join(dirname, "underdetected")
-    parameters["review_dir_underdetectedmany"] = os.path.join(dirname, "underdetectedmany")
+    options["review_dir"] = dirname
+    options["review_dir_all"] = os.path.join(dirname, "all")
+    options["review_dir_overdetected"] = os.path.join(dirname, "overdetected")
+    options["review_dir_overdetectedmany"] = os.path.join(dirname, "overdetectedmany")
+    options["review_dir_underdetected"] = os.path.join(dirname, "underdetected")
+    options["review_dir_underdetectedmany"] = os.path.join(dirname, "underdetectedmany")
 
     return options
 
