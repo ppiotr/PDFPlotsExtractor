@@ -563,11 +563,11 @@ def parse_input(arguments):
     if not os.path.exists(dirname):
         os.mkdir(dirname)
 
-    os.path.mkdir(os.path.join(dirname, "all"))
-    os.path.mkdir(os.path.join(dirname, "overdetected"))
-    os.path.mkdir(os.path.join(dirname, "overdetectedmany")) #overdetected with more than one misdetected figure
-    os.path.mkdir(os.path.join(dirname, "underdetected"))
-    os.path.mkdir(os.path.join(dirname, "underdetectedmany")) #underedetected with more than one figure missing
+    os.mkdir(os.path.join(dirname, "all"))
+    os.mkdir(os.path.join(dirname, "overdetected"))
+    os.mkdir(os.path.join(dirname, "overdetectedmany")) #overdetected with more than one misdetected figure
+    os.mkdir(os.path.join(dirname, "underdetected"))
+    os.mkdir(os.path.join(dirname, "underdetectedmany")) #underedetected with more than one figure missing
 
     parameters["review_dir"] = dirname
     parameters["review_dir_all"] = os.path.join(dirname, "all")
