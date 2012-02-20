@@ -555,6 +555,27 @@ def parse_input(arguments):
                 print "ERROR: The figures description file is incorrect. the contant should consist of a single Python expression constructing a dictionary"
                 return None
             options["descriptions_object"] = obj
+    # preparing the review directory
+    basedirname = os.path.join(options["output_directory"], "review")
+    dirname = os.path.join(options["output_directory"], "review", options["test_name"])
+    if not os.path.exists(basedirname):
+        os.mkdir(basedirname)
+    if not os.path.exists(dirname):
+        os.mkdir(dirname)
+
+    os.path.mkdir(os.path.join(dirname, "all"))
+    os.path.mkdir(os.path.join(dirname, "overdetected"))
+    os.path.mkdir(os.path.join(dirname, "overdetectedmany")) #overdetected with more than one misdetected figure
+    os.path.mkdir(os.path.join(dirname, "underdetected"))
+    os.path.mkdir(os.path.join(dirname, "underdetectedmany")) #underedetected with more than one figure missing
+
+    parameters["review_dir"] = dirname
+    parameters["review_dir_all"] = os.path.join(dirname, "all")
+    parameters["review_dir_overdetected"] = os.path.join(dirname, "overdetected")
+    parameters["review_dir_overdetectedmany"] = os.path.join(dirname, "overdetectedmany")
+    parameters["review_dir_underdetected"] = os.path.join(dirname, "underdetected")
+    parameters["review_dir_underdetectedmany"] = os.path.join(dirname, "underdetectedmany")
+
     return options
 
 
@@ -624,7 +645,7 @@ def verify_results_correctness(options, current_file):
     """Verify that the results of the extraction are compliant
     with the description provided at the input
 
-    @param current_file Describes the currently tested file
+    @param current_file Describes the currently tested files
     @type current_file tuple of strings (input_file_path, output_directory, file_name)
     @returns (if_successful, extracted_number, expected_number)
     """
@@ -648,12 +669,35 @@ def verify_results_correctness(options, current_file):
 
     return (retrieved_number == expected_pagenum, retrieved_number, expected_pagenum)
 
-def prepare_for_review(options, current_file):
+
+
+def prepare_for_review(options, current_file, detected, expected):
     """In the case, an incorrect number of figures has been read, we want to make the manual review process easy,
     we create a directory with the summary of expected and obtained results
     @param current_file tuple describing the currently processed file (path, output_dir, name)
     """
-    pass
+
+    def _prepare_directory_for_review(reviewdir):
+        sourcedir = os.path.join(current_file[1], current_file[2] + ".extracted")
+        os.symlink(sourcedir, os.path.join(reviewdir, os.path.basename(sourcedir)))
+
+    if detected != expected:
+        #log in all
+        prepare_directory_for_review(options["review_dir_all"])
+
+    if detected > expected:
+        #detected too many
+        prepare_directory_for_review(options["review_dir_overdetected"])
+        if detected - expected > 1:
+            # detected way too many
+            prepare_directory_for_review(options["review_dir_overdetectedmany"])
+    if expected > detected:
+        #detected not enough
+        prepare_directory_for_review(options["review_dir_underdetected"])
+        if expected - detected > 1:
+            # missed a lot of figures
+            prepare_directory_for_review(options["review_dir_underdetectedmany"])
+
 
 if __name__ == "__main__":
     parameters = parse_input(sys.argv[1:])
@@ -696,6 +740,7 @@ if __name__ == "__main__":
                 cdetected_figures += expected_num
             else:
                 cdetected_figures += extracted_num
+            prepare_for_review(parameters, entry, extracted_num, expected_num):
 
     finalise_statistics(parameters, stat_data)
 
