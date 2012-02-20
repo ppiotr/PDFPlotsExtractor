@@ -683,20 +683,20 @@ def prepare_for_review(options, current_file, detected, expected):
 
     if detected != expected:
         #log in all
-        prepare_directory_for_review(options["review_dir_all"])
+        _prepare_directory_for_review(options["review_dir_all"])
 
     if detected > expected:
         #detected too many
-        prepare_directory_for_review(options["review_dir_overdetected"])
+        _prepare_directory_for_review(options["review_dir_overdetected"])
         if detected - expected > 1:
             # detected way too many
-            prepare_directory_for_review(options["review_dir_overdetectedmany"])
+            _prepare_directory_for_review(options["review_dir_overdetectedmany"])
     if expected > detected:
         #detected not enough
-        prepare_directory_for_review(options["review_dir_underdetected"])
+        _prepare_directory_for_review(options["review_dir_underdetected"])
         if expected - detected > 1:
             # missed a lot of figures
-            prepare_directory_for_review(options["review_dir_underdetectedmany"])
+            _prepare_directory_for_review(options["review_dir_underdetectedmany"])
 
 
 if __name__ == "__main__":
