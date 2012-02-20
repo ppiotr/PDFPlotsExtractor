@@ -740,7 +740,7 @@ if __name__ == "__main__":
                 cdetected_figures += expected_num
             else:
                 cdetected_figures += extracted_num
-            prepare_for_review(parameters, entry, extracted_num, expected_num):
+            prepare_for_review(parameters, entry, extracted_num, expected_num)
 
     finalise_statistics(parameters, stat_data)
 
