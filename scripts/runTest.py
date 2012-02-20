@@ -476,8 +476,10 @@ Accepted options
   -p           --pages           Dump page images
   -a           --annotate        Dump pages annotated with the location of
                                  figures
-  -z           --operations     Annotate pages with the location of all
+  -z           --operations      Annotate pages with the location of all
                                  PDF operations
+  -e fname --description=fname   Specifies a file with description of data.
+                                 Used to verify the correctness of the description.
 
 Examples:
 
@@ -493,9 +495,9 @@ Examples:
 def parse_input(arguments):
     """ Determine starting options"""
     try:
-        res = getopt.getopt(arguments, "r:t:f:d:o:hspaz" ,
+        res = getopt.getopt(arguments, "r:t:f:d:o:e:hspaz" ,
                             ["random=", "test=", "file=", "directory=",
-                             "output=", "help", "svg", "pages", "annotate",
+                             "output=", "description=","help", "svg", "pages", "annotate",
                              "operations"])
     except:
         return None
@@ -503,6 +505,7 @@ def parse_input(arguments):
     options = {}
     options["output_directory"] = "."
     options["test_name"] = ""
+#    options["descriptions_file"] = None # The file with figures description (page by page number of figures)
     options["svg"] = False
     options["dump_pages"] = False
     options["annotated_figures"] = False
@@ -539,6 +542,19 @@ def parse_input(arguments):
         if option[0] in ("-z", "--operations"):
             options["annotated_operations"] = True
 
+        if option[0] in ("-e", "--description"):
+            options["descriptions_file"] = option[1]
+            #parsing the description object and puttign it into options
+            fd = open(options["descriptions_file"])
+            con = fd.read()
+            fd.close()
+            obj = None
+            try:
+                obj = eval(con)
+            except Exception, e:
+                print "ERROR: The figures description file is incorrect. the contant should consist of a single Python expression constructing a dictionary"
+                return None
+            options["descriptions_object"] = obj
     return options
 
 
@@ -547,29 +563,97 @@ def get_input_files(options):
        no more files should be processed
        yields paths to files that should be processed together with corresponding
        directoreis, wehre output should be placed
-       """
-    if "input_file" in options:
-        pure_name = os.path.splitext(os.path.split(options["input_file"])[1])[0]
-        yield (options["input_file"],
-               os.path.join(options["output_directory"], pure_name,
-                            options["test_name"]), options["input_file"])
 
-    if "input_directory" in options:
-        for entry in os.listdir(options["input_directory"]):
-            file_name, ext = os.path.splitext(entry)
-            if ext.lower() == ".pdf":
-                yield (os.path.join(options["input_directory"], entry),
-                       os.path.join(options["output_directory"], file_name,
-                                    options["test_name"]), entry)
-    if "random" in options:
+       @return yields tuples describing subsequent output files: (input_file_path, output_directory, file_name)
+       """
+    if "descriptions_file" in options:
+        # There is a descriptions file, we must produce output only described there
+        obj = options["descriptions_object"]
+        for recid in obj.keys():
+            for pageid in obj[recid].keys():
+                inputfile =  "%i_%i.pdf" % (recid, pageid)
+
+                outbasedir = os.path.join(options["output_directory"], str(recid) + "_" +  str(pageid))
+                outdir = os.path.join(options["output_directory"],  str(recid) + "_" +  str(pageid), options["test_name"])
+                if not os.path.exists(outbasedir):
+                    os.mkdir(outbasedir)
+
+                if not os.path.exists(outdir):
+                    os.mkdir(outdir)
+
+                yield (os.path.join(options["input_directory"], inputfile),
+                       outdir, inputfile )
+
+    else:
+        if "input_file" in options:
+            pure_name = os.path.splitext(os.path.split(options["input_file"])[1])[0]
+            yield (options["input_file"],
+                   os.path.join(options["output_directory"], pure_name,
+                                options["test_name"]), options["input_file"])
+
+        if "input_directory" in options:
+            for entry in os.listdir(options["input_directory"]):
+                file_name, ext = os.path.splitext(entry)
+                if ext.lower() == ".pdf":
+                    yield (os.path.join(options["input_directory"], entry),
+                           os.path.join(options["output_directory"], file_name,
+                                        options["test_name"]), entry)
+        if "random" in options:
         #generate random samples in the output directory
-        random_generator = random.Random()
-        for sample_num in xrange(0, options["random"]):
+            random_generator = random.Random()
+            for sample_num in xrange(0, options["random"]):
             #download a sample !
-            recid, path = retrieve_random_document(random_generator,
-                                                   options["output_directory"])
-            yield (path, os.path.join(options["output_directory"],  str(recid),
-                                      options["test_name"]), str(recid))
+                recid, path = retrieve_random_document(random_generator,
+                                                       options["output_directory"])
+                yield (path, os.path.join(options["output_directory"],  str(recid),
+                                          options["test_name"]), str(recid))
+
+def read_number_of_figures_from_output_dir(directory):
+    """read a number of extracted figures from a provided path
+    @rtype int
+    @returns Number of detected figures
+    """
+    files = os.listdir(directory)
+    num_fig = 0
+    for fname in files:
+        if re.match("plot[0-9]+\\.png", fname):
+            num_fig += 1
+    return num_fig
+
+def verify_results_correctness(options, current_file):
+    """Verify that the results of the extraction are compliant
+    with the description provided at the input
+
+    @param current_file Describes the currently tested file
+    @type current_file tuple of strings (input_file_path, output_directory, file_name)
+    @returns (if_successful, extracted_number, expected_number)
+    """
+    retrieved_number = read_number_of_figures_from_output_dir(os.path.join(current_file[1], current_file[2] + ".extracted"))
+    # reading recid and page number from the file name
+    match_result = re.match("([0-9]+)_([0-9]+).pdf", current_file[2])
+    if not match_result or len(match_result.groups()) != 2 or int(match_result.groups()[0]) == 0 or int(match_result.groups()[1]) == 0:
+        # incorrect name of the entry !!!
+        raise Exception("Requested verification of results with incorrect file name path:%s output dir: %s entry name: %s " % current_file)
+
+    recid = int(match_result.groups()[0])
+    pagenum = int(match_result.groups()[1])
+
+    try:
+        expected_pagenum = options["descriptions_object"][recid][pagenum]
+    except Exception, e:
+        print "Key not found recid=%i pagenum=%i dict=%s" % (recid, pagenum, str(options["descriptions_object"]))
+        raise e
+
+
+
+    return (retrieved_number == expected_pagenum, retrieved_number, expected_pagenum)
+
+def prepare_for_review(options, current_file):
+    """In the case, an incorrect number of figures has been read, we want to make the manual review process easy,
+    we create a directory with the summary of expected and obtained results
+    @param current_file tuple describing the currently processed file (path, output_dir, name)
+    """
+    pass
 
 if __name__ == "__main__":
     parameters = parse_input(sys.argv[1:])
@@ -584,11 +668,41 @@ if __name__ == "__main__":
 
     stat_data = None
 
+    expected_figures = 0
+    cdetected_figures = 0
+    icdetected_figures = 0
+    processed_pages = 0
+    correct_pages = 0
+
     for entry in get_input_files(parameters):
         print "Processing input file %s writing output to the directory %s" % (entry[0], entry[1])
         res = extract_file(entry[0], entry[1], parameters)
         stat_data = include_in_statistics(parameters, entry[2], res, stat_data)
+        # If we have correct data specified, we should verify the result
+
+        if "descriptions_object" in parameters:
+            processed_pages += 1
+            correctly_extracted,extracted_num, expected_num  = verify_results_correctness(parameters, entry)
+            print "Returned %s %i %i\n" % (str(correctly_extracted), extracted_num, expected_num)
+            if correctly_extracted:
+                correct_pages += 1
+
+            expected_figures += expected_num
+
+            df = (extracted_num - expected_num)
+
+            if df > 0:
+                icdetected_figures += df
+                cdetected_figures += expected_num
+            else:
+                cdetected_figures += extracted_num
+
     finalise_statistics(parameters, stat_data)
 
-
-
+    if "descriptions_object" in options:
+        print """Statistics about the correctness of the extraction:
+    Processed pages: %i
+    Correctly extracted pages: %i
+    Expected figures: %i
+    Correctly detected figures: %i
+    Misdetected figures: %i""" % (processed_pages, correct_pages,  expected_figures, cdetected_figures, icdetected_figures)

@@ -27,9 +27,6 @@ public class DisplayedOperation extends Operation {
      */
     public final void setBoundary(Rectangle bnd) {
         this.boundary = bnd;
-        if (bnd.x == 109 && bnd.y == 840 && bnd.width == 1015 && bnd.height == 610){
-            System.out.println("Wiedz, ze cos sie dzieje");
-        }
     }
 
     /**

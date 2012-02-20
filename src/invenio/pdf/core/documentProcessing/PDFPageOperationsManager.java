@@ -122,8 +122,12 @@ class PDFPageOperationsManager {
     }
 
     public void setOperationBoundary(CSOperation op, Rectangle rec) {
+        if (rec == null) {
+            System.out.println("Wiedz, ze cos sie dzieje");
+        }
         this.operationBoundaries.put(op, new Rectangle(rec));
-        if (rec.x == 109 && rec.y == 840 && rec.width == 1015 && rec.height == 610) {
+        
+        if (this.operationBoundaries.get(op) == null) {
             System.out.println("Wiedz, ze cos sie dzieje");
         }
     }
@@ -138,7 +142,7 @@ class PDFPageOperationsManager {
          *  (find a minimal rectangle containing current boundary and the rectangle passed as a parameter)
          */
         Rectangle currentBoundary = this.getOperationBoundary(this.getCurrentOperation());
-        
+
         if (currentBoundary != null) {
             Rectangle bnd = currentBoundary.createUnion(rec.getBounds2D()).getBounds();
             if (bnd.x == 109 && bnd.y == 840 && bnd.width == 1015 && bnd.height == 610) {
