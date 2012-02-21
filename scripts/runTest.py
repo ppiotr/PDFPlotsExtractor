@@ -744,7 +744,7 @@ if __name__ == "__main__":
 
     finalise_statistics(parameters, stat_data)
 
-    if "descriptions_object" in options:
+    if "descriptions_object" in parameters:
         print """Statistics about the correctness of the extraction:
     Processed pages: %i
     Correctly extracted pages: %i
