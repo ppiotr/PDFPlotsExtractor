@@ -98,6 +98,15 @@ public class PlotsExtractorCli {
                 Images.writeImageToFile(img, rawFile);
                 pageMgr.setRawFileName(rawFile.getAbsolutePath());
 
+                // Now saving the layout for all pages ... a lot of files so only diring the very debugging phase
+                PageLayout pageLayout = (PageLayout) pageMgr.getPageFeature(PageLayout.featureName);
+                for (int layoutNum = 0; layoutNum < pageLayout.areas.size(); ++layoutNum) {
+                    BufferedImage layout_img = new BufferedImage(img.getWidth(), img.getHeight(), img.getType());
+                    layout_img.getGraphics().drawImage(img, 0, 0, null);
+                    PlotsExtractorTools.annotateWithLayout((Graphics2D) layout_img.getGraphics(), pageLayout, layoutNum);
+                    Images.writeImageToFile(layout_img, new File(outputDirectory.getPath(), "layout" + i + "_" + layoutNum + ".png"));
+                }
+
                 // saving annotated graphical operations -> checking their boundaries
 
                 BufferedImage img3 = new BufferedImage(img.getWidth(), img.getHeight(), img.getType());
@@ -162,12 +171,12 @@ public class PlotsExtractorCli {
                 /** Searchig for operations intersecting the layout in a very bad manner */
                 PageLayout layout = (PageLayout) pageMgr.getPageFeature(PageLayout.featureName);
                 for (Operation op : pageMgr.getOperations()) {
-                    if (op instanceof DisplayedOperation){
+                    if (op instanceof DisplayedOperation) {
                         DisplayedOperation dop = (DisplayedOperation) op;
-                        if (layout.getIntersectingAreas(dop.getBoundary()).size() > 1){
+                        if (layout.getIntersectingAreas(dop.getBoundary()).size() > 1) {
                             System.out.println("operation that intersects too many layout areas !");
-                        }                        
-                    }   
+                        }
+                    }
                 }
 
 

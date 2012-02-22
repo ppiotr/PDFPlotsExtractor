@@ -25,6 +25,25 @@ import org.w3c.dom.NodeList;
 
 public class PlotsExtractorTools {
 
+    /**
+     * Annotate the canvas with single layout area
+     * @param graphics
+     * @param layout
+     * @param areaNum 
+     */
+    public static void annotateWithLayout(Graphics2D graphics, PageLayout layout, int areaNum) {
+        graphics.setTransform(AffineTransform.getRotateInstance(0));
+        graphics.setPaintMode();
+        List<Rectangle> area = layout.areas.get(areaNum);
+
+        graphics.setColor(Color.black);
+
+        for (Rectangle bd : area) {
+            graphics.fillRect(bd.x, bd.y, bd.width - 1, bd.height - 1);
+            graphics.fillRect(bd.x + 1, bd.y + 1, bd.width - 3, bd.height - 3);
+        }
+    }
+
     public static void annotateImage(Graphics2D graphics, List<Plot> plots,
             TextAreas textAreas, PageLayout layout, List<Operation> operations, List<PDFObject> pdfObjects) {
         // annotate image with plot information
@@ -73,7 +92,8 @@ public class PlotsExtractorTools {
         }
 
         // annotating additional operations
-        graphics.setColor(Color.CYAN);        graphics.setColor(Color.BLUE);
+        graphics.setColor(Color.CYAN);
+        graphics.setColor(Color.BLUE);
 
         if (operations != null) {
             for (Operation operation : operations) {
@@ -97,10 +117,10 @@ public class PlotsExtractorTools {
                     graphics.setColor(Color.BLUE);
                 }
                 Rectangle bd = object.getBoundary();
-                
+
                 if (bd != null) {
                     graphics.drawRect(bd.x, bd.y, bd.width, bd.height);
-                }                
+                }
             }
         }
 

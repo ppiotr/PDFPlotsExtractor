@@ -104,6 +104,8 @@ public class PlotsWriter {
 
     public static JSONWriter writePlotMetadataJSON(JSONWriter writer, Plot plot) throws JSONException {
         JSONWriter w = writer;
+        ExtractorParameters parameters = ExtractorParameters.getExtractorParameters();
+
         w = w.object();
 
         w = w.key("identifier").value(plot.getId());
@@ -117,9 +119,14 @@ public class PlotsWriter {
         w = w.object();
         w = w.key("png");
         w = w.value(plot.getFile("png").getAbsolutePath());
-        w = w.key("svg");
-        w = w.value(plot.getFile("svg").getAbsolutePath());
+
+        if (parameters.generateSVG()) {
+            w = w.key("svg");
+            w = w.value(plot.getFile("svg").getAbsolutePath());
+        }
+
         w = w.endObject();
+
         // location of the source
 
         w = w.key("location").object();
@@ -204,6 +211,8 @@ public class PlotsWriter {
 
     public static void writePlotMetadata(Document document, Element containerElement, Plot plot)
             throws FileNotFoundException, Exception {
+        
+        ExtractorParameters parameters = ExtractorParameters.getExtractorParameters();
         Element rootElement = document.createElement("plot");
         containerElement.appendChild(rootElement);
 
@@ -214,8 +223,9 @@ public class PlotsWriter {
 
         // plot  image files
         XmlTools.appendElementWithTextNode(document, rootElement, "png", plot.getFile("png").getAbsolutePath());
-        XmlTools.appendElementWithTextNode(document, rootElement, "svg", plot.getFile("svg").getAbsolutePath());
-
+        if (parameters.generateSVG()) {
+            XmlTools.appendElementWithTextNode(document, rootElement, "svg", plot.getFile("svg").getAbsolutePath());
+        }
         // location of the source
 
         Element locationElement = document.createElement("location");

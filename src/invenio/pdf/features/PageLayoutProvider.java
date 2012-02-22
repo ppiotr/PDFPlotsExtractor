@@ -44,10 +44,10 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
 
     /**
     Useful for isolating unit tests from the rest of the environment
-
+    
     her == getHorizontalEmptinessRadius();
     ver == getVerticalEmptinessRadius();
-
+    
     mvsh == getMinimalVerticalSeparatorHeight();
     mmw == getMinimalMarginWidth(); // minimal height of an area separating columns
      * @param her
@@ -198,8 +198,8 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
         //ArrayList<ArrayList<Pair<Integer, Integer>>>  = new ArrayList<ArrayList<Pair<Integer, Integer>>>();
 
         ArrayList<Rectangle> columns = new ArrayList<Rectangle>();
-        ArrayList<Rectangle> startedColumns = new ArrayList<Rectangle>(); // started columns. Wodth is invalid as we do not know them yet
-        ArrayList<Integer> emptyAreas = new ArrayList<Integer>();
+        ArrayList<Rectangle> startedColumns = new ArrayList<Rectangle>(); // started columns. Width is invalid as we do not know them yet
+        ArrayList<Integer> emptyAreas = new ArrayList<Integer>();  // empty areas in current column
         startedColumns.add(new Rectangle(0, 0, raster.getWidth(), raster.getHeight()));
 
 
@@ -213,7 +213,7 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
 
         emptinessInitialise(raster);
         emptinessDataReset(raster);
-        
+
         for (int x = minimalLeft; x < maximalLeft; ++x) { // iterating over the columns
             // calculating signature of a line
             int emptyAreaBeginning = 0;
@@ -312,7 +312,7 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
         int curPointIndex = 0;
 
         Rectangle curRectangle = new Rectangle(curX, 0, 0, 0);
-        // this is used to generate newcomming rectangles
+        // this is used to generate open recangles after the separator
 
 
         for (Rectangle curCol : startedColumns) {
@@ -330,14 +330,15 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
                         newColumns.add(curRectangle);
                     }
 
-
-                    columns.add(new Rectangle(curCol.x, curY, curX - curCol.x,
-                            curPoint - curY));
-
+                    if (curPoint > curY) {
+                        columns.add(new Rectangle(curCol.x, curY, curX - curCol.x,
+                                curPoint - curY));
+                    }
                 } else { // the separator is just beginning
                     if (curPoint > curY) {
                         newColumns.add(new Rectangle(curCol.x, curY, 0,
                                 curPoint - curY));
+
                         // a rectangle starting at the x of old one
                     }
                     curRectangle = new Rectangle(curX, curPoint, 0, 0);
@@ -361,8 +362,10 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
             // do something with the remainder of this column
             if (onSeparator) {
                 // we have to split the remainder of the interval
+                if (curCol.y + curCol.height - curY > 0){
                 columns.add(new Rectangle(curCol.x, curY, curX - curCol.x,
                         curCol.y + curCol.height - curY));
+                }
             } else {
                 // we have to add the remainder of the interval intact
                 curCol.setBounds(curCol.x, curY, curCol.width, curCol.height
@@ -497,7 +500,7 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
 //        HashMap<Rectangle, Integer> upperRectangles = new HashMap<Rectangle, Integer>();
 //        HashMap<Rectangle, Integer> lowerRectangles = new HashMap<Rectangle, Integer>();
 
-        // mapping to the parent of a given area
+        // mapping to the parent of a given area. Parent and a child belong to the same layout element
         TreeMap<Integer, Integer> areasParents = new TreeMap<Integer, Integer>();
 
         // vertical separators touching those horizontal
@@ -510,8 +513,14 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
         // all the separators are represented as Rectangles having either width or height set to 0
         // 1) locate all the horizontal lines and sort them
 
+        
+        
+        /**
+         *  This variable remembers:
+         *   y coordinate of the horizontal separator -> (rectangle (the separator ... sorted by initial x) -> pair of numbers (adjacent vertical separators)
+         */
         HashMap<Integer, TreeMap<Rectangle, Pair<Integer, Integer>>> hSeparators = new HashMap<Integer, TreeMap<Rectangle, Pair<Integer, Integer>>>();
-
+        
 
         for (Rectangle rectangle : preliminaryAreas) {
             // add upper and lower edges to the data structure
