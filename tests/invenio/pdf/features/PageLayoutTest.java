@@ -4,6 +4,7 @@
  */
 package invenio.pdf.features;
 
+import java.util.Map;
 import java.util.HashSet;
 import java.util.Arrays;
 import java.util.Random;
@@ -633,7 +634,6 @@ public class PageLayoutTest {
     }
 
     /** Simple three columns */
-
     @After
     public void tearDown() {
     }
@@ -659,7 +659,6 @@ public class PageLayoutTest {
 //            Logger.getLogger(PageLayoutTest.class.getName()).log(Level.SEVERE, null, ex);
 //        }
 //    }
-
     private BufferedImage annotateImageWithColumns(BufferedImage img, List<Rectangle> columns) {
         Graphics graphics = img.getGraphics();
         graphics.setColor(Color.CYAN);
@@ -757,7 +756,6 @@ public class PageLayoutTest {
 //            Logger.getLogger(PageLayoutTest.class.getName()).log(Level.SEVERE, null, ex);
 //        }
 //    }
-
     ////// testing the function for updating current horizontal separators
     @Test
     public void updateHorizontalSeparators1() {
@@ -1059,5 +1057,116 @@ public class PageLayoutTest {
     @Test
     public void testMoveOnCorrectData() {
         // in this test no move should be performed becasue all the data is correct
+    }
+
+    /**
+     * Creates string representing intervals
+     * @param intervals
+     * @return 
+     */
+    private String printIntervals(TreeMap<Rectangle, Pair<Integer, Integer>> intervals) {
+
+        String upperLine = "";
+        String mainLine = "";
+        String bottomLine = "";
+        java.text.DecimalFormat nft = new java.text.DecimalFormat("#00.###");
+        nft.setDecimalSeparatorAlwaysShown(false);
+
+        for (Rectangle rec : intervals.keySet()) {
+            String upperNum;
+
+            if (intervals.get(rec).first > 0) {
+                upperNum = nft.format(intervals.get(rec).first);
+            } else {
+                upperNum = "-1";
+            }
+
+            String lowerNum;
+
+            if (intervals.get(rec).second > 0) {
+                lowerNum = nft.format(intervals.get(rec).second);
+            } else {
+                lowerNum = "-1";
+            }
+
+            upperLine += " " + nft.format(rec.x) + " " + upperNum + " " + nft.format(rec.x + rec.width) + " ";
+            mainLine += " (      ) ";
+            bottomLine += "    " + lowerNum + "    ";
+        }
+
+        return upperLine + "\n" + mainLine + "\n" + bottomLine;
+    }
+
+    /**
+     * Testing the method that allows to add a horizontal separator to a list
+     */
+    @Test
+    public void updateHorizontalSeparatorsList() {
+        Map<Integer, TreeMap<Rectangle, Pair<Integer, Integer>>> existingSeparators =
+                new HashMap<Integer, TreeMap<Rectangle, Pair<Integer, Integer>>>();
+
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(10, 10, 10, 0), 1, -1);
+        System.out.println(printIntervals(existingSeparators.get(10)));
+
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(10, 10, 10, 0), -1, 2);
+        System.out.println(printIntervals(existingSeparators.get(10)));
+
+        /**
+         * The following case:
+         * 
+         *                   1         2        3        4
+         *               (      )   (     )   (    )  (      )
+         *                  -1         -1       -1       -1
+         */
+        existingSeparators = new HashMap<Integer, TreeMap<Rectangle, Pair<Integer, Integer>>>();
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(1, 10, 3, 0), 1, -1);
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(5, 10, 3, 0), 2, -1);
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(9, 10, 3, 0), 3, -1);
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(13, 10, 3, 0), 4, -1);
+        System.out.println(printIntervals(existingSeparators.get(10)));
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(2, 10, 12, 0), -1, 5);
+        System.out.println(printIntervals(existingSeparators.get(10)));
+
+        existingSeparators = new HashMap<Integer, TreeMap<Rectangle, Pair<Integer, Integer>>>();
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(2, 10, 12, 0), -1, 5);
+        System.out.println(printIntervals(existingSeparators.get(10)));
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(1, 10, 3, 0), 1, -1);
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(5, 10, 3, 0), 2, -1);
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(9, 10, 3, 0), 3, -1);
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(13, 10, 3, 0), 4, -1);
+        System.out.println(printIntervals(existingSeparators.get(10)));
+
+        existingSeparators = new HashMap<Integer, TreeMap<Rectangle, Pair<Integer, Integer>>>();
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(1, 10, 15, 0), -1, 5);
+        System.out.println(printIntervals(existingSeparators.get(10)));
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(1, 10, 3, 0), 1, -1);
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(5, 10, 3, 0), 2, -1);
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(9, 10, 3, 0), 3, -1);
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(13, 10, 3, 0), 4, -1);
+        System.out.println(printIntervals(existingSeparators.get(10)));
+
+        existingSeparators = new HashMap<Integer, TreeMap<Rectangle, Pair<Integer, Integer>>>();
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(1, 10, 3, 0), 1, -1);
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(5, 10, 3, 0), 2, -1);
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(9, 10, 3, 0), 3, -1);
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(13, 10, 3, 0), 4, -1);
+        System.out.println(printIntervals(existingSeparators.get(10)));
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(1, 10, 15, 0), -1, 5);
+        System.out.println(printIntervals(existingSeparators.get(10)));
+        
+        
+        existingSeparators = new HashMap<Integer, TreeMap<Rectangle, Pair<Integer, Integer>>>();
+
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(20, 10, 3, 0), 19, -1);
+
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(1, 10, 3, 0), 1, -1);
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(5, 10, 3, 0), 2, -1);
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(9, 10, 3, 0), 3, -1);
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(13, 10, 3, 0), 4, -1);
+        System.out.println(printIntervals(existingSeparators.get(10)));
+        provider.updateHorizontalSeparators(existingSeparators, new Rectangle(1, 10, 15, 0), -1, 5);
+        System.out.println(printIntervals(existingSeparators.get(10)));
+
+
     }
 }

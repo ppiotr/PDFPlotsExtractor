@@ -40,6 +40,7 @@ import invenio.pdf.features.TextAreasProvider;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
+import java.awt.image.Raster;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -47,6 +48,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -105,6 +107,36 @@ public class PlotsExtractorCli {
                     layout_img.getGraphics().drawImage(img, 0, 0, null);
                     PlotsExtractorTools.annotateWithLayout((Graphics2D) layout_img.getGraphics(), pageLayout, layoutNum);
                     Images.writeImageToFile(layout_img, new File(outputDirectory.getPath(), "layout" + i + "_" + layoutNum + ".png"));
+                }
+
+                // writing preliminary rectangles of the page layout ... those before having separators moved
+                PageLayoutProvider provider = new PageLayoutProvider();
+                Raster raster = pageMgr.getRenderedPage().getData();
+                LinkedList<Rectangle> verticalSeparators = new LinkedList<Rectangle>();
+                List<Rectangle> preliminaryColumns = provider.getPageColumns(raster, verticalSeparators);
+
+                BufferedImage pre_layout_img = new BufferedImage(img.getWidth(), img.getHeight(), img.getType());
+                pre_layout_img.getGraphics().drawImage(img, 0, 0, null);
+                PlotsExtractorTools.annotateWithRectangles((Graphics2D) pre_layout_img.getGraphics(), preliminaryColumns);
+                Images.writeImageToFile(pre_layout_img, new File(outputDirectory.getPath(), "preliminary_layout" + i + ".png"));
+
+                /* verifying that rectangles are not intersecting !! */
+                int int_num = 0;
+                for (Rectangle r1 : preliminaryColumns) {
+                    for (Rectangle r2 : preliminaryColumns) {
+                        if (r1.intersects(r2) && r1 != r2) {
+                            // something went terribly wrong... initial rectangles intersect
+                            LinkedList<Rectangle> intRecs = new LinkedList<Rectangle>();
+                            intRecs.add(r1);
+                            intRecs.add(r2);
+                            
+                            BufferedImage int_layout_img = new BufferedImage(img.getWidth(), img.getHeight(), img.getType());
+                            int_layout_img.getGraphics().drawImage(img, 0, 0, null);
+                            PlotsExtractorTools.annotateWithEmptyRectangles((Graphics2D) int_layout_img.getGraphics(), intRecs);
+                            Images.writeImageToFile(int_layout_img, new File(outputDirectory.getPath(), "preliminary_layout_" + i +"intersection_" + int_num +".png"));
+                            int_num++;
+                        }
+                    }
                 }
 
                 // saving annotated graphical operations -> checking their boundaries

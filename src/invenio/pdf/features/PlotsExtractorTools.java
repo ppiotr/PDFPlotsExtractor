@@ -24,7 +24,28 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 public class PlotsExtractorTools {
-
+    /** draw a number of rectangles on the canvas*/
+    public static void annotateWithEmptyRectangles(Graphics2D graphics, List<Rectangle> rectangles) {
+        graphics.setTransform(AffineTransform.getRotateInstance(0));
+        graphics.setPaintMode();
+        graphics.setColor(Color.blue);
+        
+        for (Rectangle bd : rectangles) {
+            graphics.drawRect(bd.x, bd.y, bd.width - 1, bd.height - 1);
+            graphics.drawRect(bd.x + 1, bd.y + 1, bd.width - 3, bd.height - 3);
+        }
+    }
+    /** draw a number of rectangles on the canvas*/
+    public static void annotateWithRectangles(Graphics2D graphics, List<Rectangle> rectangles) {
+        graphics.setTransform(AffineTransform.getRotateInstance(0));
+        graphics.setPaintMode();
+        graphics.setColor(Color.blue);
+        
+        for (Rectangle bd : rectangles) {
+            graphics.fillRect(bd.x, bd.y, bd.width - 1, bd.height - 1);
+            graphics.fillRect(bd.x + 1, bd.y + 1, bd.width - 3, bd.height - 3);
+        }
+    }
     /**
      * Annotate the canvas with single layout area
      * @param graphics
