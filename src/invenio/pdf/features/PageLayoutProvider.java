@@ -543,8 +543,6 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
     public PageLayout fixHorizontalSeparators(List<Rectangle> preliminaryAreas,
             List<Rectangle> verticalSeparators, Raster raster) {
 
-
-
         // a set of separators that do not have to be processed again!
         HashSet<Rectangle> bannedSeparators = new HashSet<Rectangle>();
 
@@ -789,9 +787,6 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
                         Rectangle newShrinkedRectangle = new Rectangle(shRectangle.x, cSeparator.y, shRectangle.width, shRectangle.height - movedBy);
                         Rectangle newRectangle = new Rectangle(shRectangle.x, shRectangle.y, shRectangle.width, movedBy);
 
-                        if (newShrinkedRectangle.intersects(newRectangle)) {
-                            System.out.println("We have a problem");
-                        }
                         int newId = newElemId;
                         newElemId++;
                         layoutElements.add(newId, newRectangle);
@@ -812,9 +807,6 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
                     } else {
                         Rectangle newShrinkedRectangle = new Rectangle(shRectangle.x, shRectangle.y, shRectangle.width, shRectangle.height - movedBy);
                         Rectangle newRectangle = new Rectangle(shRectangle.x, cSeparator.y, shRectangle.width, movedBy);
-                        if (newShrinkedRectangle.intersects(newRectangle)) {
-                            System.out.println("We have a problem");
-                        }
                         int newId = newElemId;
                         newElemId++;
                         layoutElements.add(newId, newRectangle);
