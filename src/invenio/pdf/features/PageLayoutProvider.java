@@ -611,7 +611,7 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
         HashMap<Rectangle, Integer> upperRectangles = new HashMap<Rectangle, Integer>();
         HashMap<Rectangle, Integer> lowerRectangles = new HashMap<Rectangle, Integer>();
 
-        verify(layoutElements, lowerRectangles, upperRectangles, horizontalSeparators);
+      //  verify(layoutElements, lowerRectangles, upperRectangles, horizontalSeparators);
 
         for (Integer y : hSeparators.keySet()) {
             for (Rectangle sep : hSeparators.get(y).keySet()) {
@@ -637,7 +637,7 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
             adjacentVSeparators.put(hSeparator, adj);
         }
 
-        verify(layoutElements, lowerRectangles, upperRectangles, horizontalSeparators);
+        //verify(layoutElements, lowerRectangles, upperRectangles, horizontalSeparators);
 
         //
         //    II) Moving horizontal lines
@@ -806,7 +806,7 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
 
                         // and now establishing the parental relation
                         connectAreas(areasConnections, newId, upperRectangles.get(hSeparator));
-                        verify(layoutElements, lowerRectangles, upperRectangles, horizontalSeparators);
+                      //  verify(layoutElements, lowerRectangles, upperRectangles, horizontalSeparators);
 
 
                     } else {
@@ -833,7 +833,7 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
                         // and finally establishing the parental relation
 
                         connectAreas(areasConnections, newId, lowerRectangles.get(hSeparator));
-                        verify(layoutElements, lowerRectangles, upperRectangles, horizontalSeparators);
+                      //  verify(layoutElements, lowerRectangles, upperRectangles, horizontalSeparators);
 
 
                     }
@@ -899,6 +899,35 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
         return hSeparator.y >= moveUsing.y && hSeparator.y <= moveUsing.y + moveUsing.height;
     }
 
+    
+    /** 
+     * 
+     * Methods allowing to further refine the layout extraction after fixing
+     * position of horizontal separators
+     * 
+     */
+    
+    
+    
+    public int calculateLayoutAreaWidth(List<Rectangle> area){
+        int width = 0;
+        // sort all rectangles by Y coordinate
+        // pass by rectangles reaching subsequent Y values
+        return 0;
+    }
+    /** Process columns that are too small to be standalone.
+     *  Join them with already existing columns.
+     * 
+     *  Column width = width in the narrowest point.
+     *  Height = height in the lowest point
+     * 
+     * @param layout
+     * @return 
+     */
+    public PageLayout unifyNarrowColumns(PageLayout layout){
+        return layout;
+    }
+    
     // a general interface of the provider
     @Override
     public <T> IPDFPageFeature calculateFeature(PDFPageManager<T> pageManager)
@@ -908,6 +937,7 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
         LinkedList<Rectangle> verticalSeparators = new LinkedList<Rectangle>();
         List<Rectangle> preliminaryColumns = getPageColumns(raster, verticalSeparators);
         PageLayout layout = fixHorizontalSeparators(preliminaryColumns, verticalSeparators, raster);
+        layout = unifyNarrowColumns(layout); 
         return layout;
     }
 
