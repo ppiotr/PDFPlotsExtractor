@@ -903,20 +903,30 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
         if (area.isEmpty()) {
             return 0;
         }
-        TreeMap<Integer, Integer> widths = new TreeMap<Integer, Integer>();
-        widths.put(Integer.MIN_VALUE, 0); // in the minus infinity we have width 0
+        TreeMap<Integer, List<Integer>> widths = new TreeMap<Integer, List<Integer>>();
         for (Rectangle rec : area) {
-            widths.put(rec.y, widths.floorEntry(rec.y).getValue() + rec.width);
-            widths.put(rec.y + rec.height, widths.floorEntry(rec.y + rec.height).getValue() - rec.width);
+            if (!widths.containsKey(rec.y)){
+                widths.put(rec.y, new LinkedList<Integer>());
+            }
+            if (!widths.containsKey(rec.y + rec.height)){
+                widths.put(rec.y + rec.height, new LinkedList<Integer>());
+            }
+            
+            widths.get(rec.y).add(rec.width);
+            widths.get(rec.y + rec.height).add(-rec.width);
         }
-
-        int width = widths.ceilingEntry(Integer.MIN_VALUE + 1).getValue();
-        for (Integer val : widths.values()) {
-            if (val > 0 && val < width) {
-                width = val;
+        
+        int minWidth = Integer.MAX_VALUE;
+        int curWidth =0;
+        for (Integer val: widths.navigableKeySet()){
+            for (Integer delta: widths.get(val)){
+                curWidth += delta;
+            }
+            if (curWidth < minWidth && curWidth > 0){
+                minWidth = curWidth;
             }
         }
-        return width;
+        return minWidth;
     }
 
     /**
@@ -962,7 +972,7 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
             
             if (newWidth == 0){
                 // we are very sorry but it is impossible to improve the situation... maybe the conditions are too strict
-                System.err.println("The requirement of having columns wide enough can not be satisfied");
+                System.err.println("The requirement of having columns wide enough can not be satisfied. too narrow area: " + tooNarrowArea + " area width " + this.calculateLayoutAreaWidth(layout.areas.get(tooNarrowArea)));
                 break;
             } else {
                 // combining with maxArea

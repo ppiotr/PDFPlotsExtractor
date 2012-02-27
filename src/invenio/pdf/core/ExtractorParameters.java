@@ -114,7 +114,7 @@ public class ExtractorParameters extends Properties {
         this.setProperty("empty_pixel_colour_b", "255");
 
         this.setProperty("minimal_vertical_separator_height", "0.4");
-        this.setProperty("minimal_column_width", "0.3"); // minimally 1/3 of the page for a column
+        this.setProperty("minimal_column_width", "0.25"); // minimally 1/4 of the page for a column
         //this.setProperty("minimal_column_height", "0.25"); // minimally 1/4 of the page for a column
 
         this.setProperty("generate_debug_information", "true");
