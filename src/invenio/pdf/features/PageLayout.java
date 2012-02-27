@@ -47,6 +47,80 @@ public class PageLayout implements IPDFPageFeature {
     }
 
     /**
+     *  Returns page areas lying on the left of a given area
+     * @param areaNum number of the area to be tested
+     * @return 
+     */
+    public HashSet<Integer> getLeftAreas(int areaNum) {
+        HashSet<Integer> onTheLeft = new HashSet<Integer>();
+        for (Rectangle rec : this.areas.get(areaNum)) {
+            // for each rectangle of an area generate a flat rectangle on the left
+            Rectangle tester = new Rectangle(rec.x - 1, rec.y, 1, rec.height);
+            for (Integer intArea : this.getIntersectingAreas(tester)) {
+                if (intArea != areaNum) {
+                    onTheLeft.add(intArea);
+                }
+            }
+        }
+        return onTheLeft;
+    }
+
+    /**
+     *  Returns page areas lying on the right of a given area
+     * @param areaNum number of the area to be tested
+     * @return 
+     */
+    public HashSet<Integer> getRightAreas(int areaNum) {
+        HashSet<Integer> onTheRight = new HashSet<Integer>();
+        for (Rectangle rec : this.areas.get(areaNum)) {
+            // for each rectangle of an area generate a flat rectangle on the left
+            Rectangle tester = new Rectangle(rec.x + rec.width, rec.y, 1, rec.height);
+            for (Integer intArea : this.getIntersectingAreas(tester)) {
+                if (intArea != areaNum) {
+                    onTheRight.add(intArea);
+                }
+            }
+        }
+        return onTheRight;
+    }
+    /**
+     *  Returns page areas lying on the top of a given area
+     * @param areaNum number of the area to be tested
+     * @return 
+     */
+    public HashSet<Integer> getTopAreas(int areaNum) {
+        HashSet<Integer> onTheTop = new HashSet<Integer>();
+        for (Rectangle rec : this.areas.get(areaNum)) {
+            // for each rectangle of an area generate a flat rectangle on the left
+            Rectangle tester = new Rectangle(rec.x, rec.y - 1, rec.width, 1);
+            for (Integer intArea : this.getIntersectingAreas(tester)) {
+                if (intArea != areaNum) {
+                    onTheTop.add(intArea);
+                }
+            }
+        }
+        return onTheTop;
+    }
+
+    /**
+     *  Returns page areas lying on the bottom of a given area
+     * @param areaNum number of the area to be tested
+     * @return 
+     */
+    public HashSet<Integer> getBottomAreas(int areaNum) {
+        HashSet<Integer> onTheBottom = new HashSet<Integer>();
+        for (Rectangle rec : this.areas.get(areaNum)) {
+            // for each rectangle of an area generate a flat rectangle on the left
+            Rectangle tester = new Rectangle(rec.x, rec.y + rec.height, rec.width, 1);
+            for (Integer intArea : this.getIntersectingAreas(tester)) {
+                if (intArea != areaNum) {
+                    onTheBottom.add(intArea);
+                }
+            }
+        }
+        return onTheBottom;
+    }
+    /**
      * Returns the area that fits the most
      * @return
      */

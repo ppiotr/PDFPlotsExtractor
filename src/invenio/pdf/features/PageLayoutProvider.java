@@ -11,6 +11,7 @@ import invenio.pdf.core.IPDFPageFeature;
 import invenio.pdf.core.IPDFPageFeatureProvider;
 import invenio.pdf.core.PDFPageManager;
 import java.awt.Rectangle;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.Raster;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -19,6 +20,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Stack;
 import java.util.TreeMap;
@@ -609,7 +611,7 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
         HashMap<Rectangle, Integer> upperRectangles = new HashMap<Rectangle, Integer>();
         HashMap<Rectangle, Integer> lowerRectangles = new HashMap<Rectangle, Integer>();
 
-      //  verify(layoutElements, lowerRectangles, upperRectangles, horizontalSeparators);
+        //  verify(layoutElements, lowerRectangles, upperRectangles, horizontalSeparators);
 
         for (Integer y : hSeparators.keySet()) {
             for (Rectangle sep : hSeparators.get(y).keySet()) {
@@ -801,7 +803,7 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
 
                         // and now establishing the parental relation
                         connectAreas(areasConnections, newId, upperRectangles.get(hSeparator));
-                      //  verify(layoutElements, lowerRectangles, upperRectangles, horizontalSeparators);
+                        //  verify(layoutElements, lowerRectangles, upperRectangles, horizontalSeparators);
 
 
                     } else {
@@ -825,7 +827,7 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
                         // and finally establishing the parental relation
 
                         connectAreas(areasConnections, newId, lowerRectangles.get(hSeparator));
-                      //  verify(layoutElements, lowerRectangles, upperRectangles, horizontalSeparators);
+                        //  verify(layoutElements, lowerRectangles, upperRectangles, horizontalSeparators);
 
 
                     }
@@ -891,22 +893,47 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
         return hSeparator.y >= moveUsing.y && hSeparator.y <= moveUsing.y + moveUsing.height;
     }
 
-    
     /** 
      * 
      * Methods allowing to further refine the layout extraction after fixing
      * position of horizontal separators
      * 
      */
-    
-    
-    
-    public int calculateLayoutAreaWidth(List<Rectangle> area){
-        int width = 0;
-        // sort all rectangles by Y coordinate
-        // pass by rectangles reaching subsequent Y values
-        return 0;
+    public int calculateLayoutAreaWidth(List<Rectangle> area) {
+        if (area.isEmpty()) {
+            return 0;
+        }
+        TreeMap<Integer, Integer> widths = new TreeMap<Integer, Integer>();
+        widths.put(Integer.MIN_VALUE, 0); // in the minus infinity we have width 0
+        for (Rectangle rec : area) {
+            widths.put(rec.y, widths.floorEntry(rec.y).getValue() + rec.width);
+            widths.put(rec.y + rec.height, widths.floorEntry(rec.y + rec.height).getValue() - rec.width);
+        }
+
+        int width = widths.ceilingEntry(Integer.MIN_VALUE + 1).getValue();
+        for (Integer val : widths.values()) {
+            if (val > 0 && val < width) {
+                width = val;
+            }
+        }
+        return width;
     }
+
+    /**
+     * Returns the number of an area that is too narrow
+     * @return 
+     */
+    private int getTooNarrowArea(PageLayout layout, int pageWidth) {
+        ExtractorParameters parameters = ExtractorParameters.getExtractorParameters();
+        double width = parameters.getMinimalPageLayoutColumnWidth() * pageWidth;
+        for (int area=0; area < layout.areas.size(); ++area){
+            if (width > this.calculateLayoutAreaWidth(layout.areas.get(area))){
+                return area;
+            }
+        }
+        return -1;
+    }
+
     /** Process columns that are too small to be standalone.
      *  Join them with already existing columns.
      * 
@@ -916,11 +943,54 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
      * @param layout
      * @return 
      */
-    public PageLayout unifyNarrowColumns(PageLayout layout){
+    public PageLayout unifyNarrowColumns(PageLayout layout,  Raster raster) {
+        int tooNarrowArea = getTooNarrowArea(layout, raster.getWidth());
+        while (tooNarrowArea != -1) {
+            //connect with the most promising left area
+            // electing the most promising candidate -> the one maximising the width
+            int newWidth = 0;
+            int maxArea = -1;
+            HashSet<Integer> candidates = layout.getLeftAreas(tooNarrowArea);
+            candidates.addAll(layout.getLeftAreas(tooNarrowArea));
+            for (int adjArea: candidates){
+                int tmpWidth = getCombinedAreaWidth(layout, adjArea, tooNarrowArea);
+                if (tmpWidth > newWidth){
+                    maxArea = adjArea;
+                    newWidth = tmpWidth;
+                }
+            }
+            
+            if (newWidth == 0){
+                // we are very sorry but it is impossible to improve the situation... maybe the conditions are too strict
+                System.err.println("The requirement of having columns wide enough can not be satisfied");
+                break;
+            } else {
+                // combining with maxArea
+                layout.areas.get(tooNarrowArea).addAll(layout.areas.get(maxArea));
+                layout.areas.remove(maxArea);
+            }
+            tooNarrowArea = getTooNarrowArea(layout, raster.getWidth());
+        }
+        
+        
+        
+        // processing too low areas
+        // TODO: this should be implemented if necessary
         return layout;
     }
-    
+
+    private int getCombinedAreaWidth(PageLayout layout, int area1, int area2) {
+        LinkedList<Rectangle> newCandidate = new LinkedList<Rectangle>();
+        for (Rectangle rec: layout.areas.get(area1)){
+            newCandidate.add(rec);
+        }
+        for (Rectangle rec: layout.areas.get(area2)){
+            newCandidate.add(rec);
+        }
+        return this.calculateLayoutAreaWidth(newCandidate);
+    }
     // a general interface of the provider
+
     @Override
     public <T> IPDFPageFeature calculateFeature(PDFPageManager<T> pageManager)
             throws FeatureNotPresentException, Exception {
@@ -929,7 +999,7 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
         LinkedList<Rectangle> verticalSeparators = new LinkedList<Rectangle>();
         List<Rectangle> preliminaryColumns = getPageColumns(raster, verticalSeparators);
         PageLayout layout = fixHorizontalSeparators(preliminaryColumns, verticalSeparators, raster);
-        layout = unifyNarrowColumns(layout); 
+        layout = unifyNarrowColumns(layout, raster);
         return layout;
     }
 
