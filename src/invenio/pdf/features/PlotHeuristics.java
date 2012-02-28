@@ -127,22 +127,52 @@ public class PlotHeuristics {
      * dimensions can not be considered plots
      * @return
      */
-    public static Map<Rectangle, Pair<List<Operation>, Integer>> removeBasedOnSize(Map<Rectangle, Pair<List<Operation>, Integer>> input) {
-        return input;
+    public static Map<Rectangle, Pair<List<Operation>, Integer>> removeBasedOnSize(
+            Map<Rectangle, Pair<List<Operation>, Integer>> areas,
+            PDFPageManager manager) {
+        ExtractorParameters parameters = ExtractorParameters.getExtractorParameters();
+        double minWidth = parameters.getMinimalFigureWidth() * manager.getRenderedPage().getHeight();
+        double minHeight = parameters.getMinimalFigureHeight() * manager.getRenderedPage().getWidth();
+        Map<Rectangle, Pair<List<Operation>, Integer>> results = new HashMap<Rectangle, Pair<List<Operation>, Integer>>();
+
+        for (Rectangle area : areas.keySet()) {
+            if (area.width > minWidth && area.height > minHeight){
+                results.put(area, areas.get(area));
+            }
+        }
+        
+        return results;
     }
 
     /**
-     * Remove irrelevant plots based on the number of graphical operations present inside.
-     * This for example allows us to exclude tables and frames containing text.
-     *
-     * @return
+     * Remove areas having too low number of operations
+     * @param areas
+     * @return 
      */
-    public static Map<Rectangle, List<Operation>> removeBasedOnNumberOfOperations() {
-        //Map<Rectangle, List<CSOperation>> result = new HashMap<Rectangle
-        //TODO Implement... for the moment this heuristic seems not to be crucial
-        //     for everything to work
+    public static Map<Rectangle, Pair<List<Operation>, Integer>> removeBasedOnOperationsNumber(
+            Map<Rectangle, Pair<List<Operation>, Integer>> areas) {
+        HashMap<Rectangle, Pair<List<Operation>, Integer>> result = new HashMap<Rectangle, Pair<List<Operation>, Integer>>();
 
-        return null;
+        ExtractorParameters parameters = ExtractorParameters.getExtractorParameters();
+        int minNum = parameters.getMinimalFiguresOperationsNumber();
+
+        for (Rectangle area : areas.keySet()) {
+            // Operators to consider non-blocking: Do BI, ID, EI 
+
+            boolean acceptAnyway = false;
+            for (Operation op : areas.get(area).first) {
+                String operator = op.getOriginalOperation().getOperator().toString();
+                if ("Do".equals(operator) || "BI".equals(operator) || "ID".equals(operator) || "EI".equals(operator)) {
+                    // we do not ommit this reference
+                    acceptAnyway = true;
+                }
+            }
+            if (areas.get(area).first.size() >= minNum || acceptAnyway) {
+                result.put(area, areas.get(area));
+            }
+
+        }
+        return result;
     }
 
     /**
@@ -151,11 +181,15 @@ public class PlotHeuristics {
      * of which the region is built and the integer identifier of the page layout area to which it belongs
      * @return 
      */
-    public static Map<Rectangle, Pair<List<Operation>, Integer>> removeFalsePlots(Map<Rectangle, Pair<List<Operation>, Integer>> areas) {
+    public static Map<Rectangle, Pair<List<Operation>, Integer>> removeFalsePlots(
+            Map<Rectangle, Pair<List<Operation>, Integer>> areas,
+            PDFPageManager manager) {
         // remove graphics with too small/too big aspect ratios
         Map<Rectangle, Pair<List<Operation>, Integer>> res = removeBasedOnAspectRatio(areas);
         res = removeBasedOnTextOperationsProportion(res);
         res = removeBasedOnHavingOnlyHorizontalLines(res);
+        res = removeBasedOnOperationsNumber(res);
+        res = removeBasedOnSize(res, manager);
         return res;
     }
 

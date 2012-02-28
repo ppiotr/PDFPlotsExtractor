@@ -81,8 +81,8 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
         areas = ExtractorGeometryTools.shrinkRectangleMap(areas, margins[0], margins[1]);
         areas = PlotHeuristics.removeIncorrectGraphicalRegions(areas);
         areas = PlotHeuristics.includeTextParts(areas, manager);
-        areas = PlotHeuristics.removeFalsePlots(areas);
-
+        areas = PlotHeuristics.removeFalsePlots(areas, manager);
+        
         // we are done with plot images -> creating plot structures for every
         // selected region
 
