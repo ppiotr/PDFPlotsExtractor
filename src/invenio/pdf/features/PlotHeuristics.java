@@ -129,23 +129,23 @@ public class PlotHeuristics {
      * @param areas
      * @return 
      */
-    public static Map<Rectangle, Pair<List<Operation>, Integer>> removeBasedOnGraphicalArea(
+    public static Map<Rectangle, Pair<List<Operation>, Integer>> removeBrasedOnGraphicalArea(
             Map<Rectangle, Pair<List<Operation>, Integer>> areas) {
         Map<Rectangle, Pair<List<Operation>, Integer>> results = new HashMap<Rectangle, Pair<List<Operation>, Integer>>();
         double graphicalAreaThreshold = ExtractorParameters.getExtractorParameters().getMinimalGraphicalAreaFraction();
-        
+
         for (Rectangle area : areas.keySet()) {
             double totalArea = area.width * area.height;
             double totalGraphicalArea = 0;
-            
-            for (Operation operation : areas.get(area).first){
-                if (operation instanceof GraphicalOperation){
+
+            for (Operation operation : areas.get(area).first) {
+                if (operation instanceof GraphicalOperation) {
                     GraphicalOperation go = (GraphicalOperation) operation;
                     totalGraphicalArea += go.getBoundary().width * go.getBoundary().height;
                 }
             }
-            
-            if (totalGraphicalArea / totalArea > graphicalAreaThreshold){
+
+            if (totalGraphicalArea / totalArea > graphicalAreaThreshold) {
                 results.put(area, areas.get(area));
             }
         }
@@ -186,25 +186,41 @@ public class PlotHeuristics {
         ExtractorParameters parameters = ExtractorParameters.getExtractorParameters();
         int minNum = parameters.getMinimalFiguresOperationsNumber();
         int minGraphical = parameters.getMinimalFiguresGraphicalOperationsNumber();
-        
+        double graphicalAreaThreshold = parameters.getMinimalGraphicalAreaFraction();
+
         for (Rectangle area : areas.keySet()) {
             // Operators to consider non-blocking: Do BI, ID, EI 
 
             boolean acceptAnyway = false;
             int numGraphical = 0;
+            double totalGraphicalArea = 0;
+            double totalArea = area.width * area.height;
             
             for (Operation op : areas.get(area).first) {
+                
                 String operator = op.getOriginalOperation().getOperator().toString();
                 if ("Do".equals(operator) || "BI".equals(operator) || "ID".equals(operator) || "EI".equals(operator)) {
                     // we do not ommit this reference
                     acceptAnyway = true;
                 }
-                if (op instanceof GraphicalOperation){
+                if (op instanceof GraphicalOperation) {
                     numGraphical += 1;
+                    GraphicalOperation go = (GraphicalOperation) op;
+                    totalGraphicalArea += go.getBoundary().width * go.getBoundary().height;
                 }
             }
-            
-            if ((areas.get(area).first.size() >= minNum && numGraphical > minGraphical)|| acceptAnyway) {
+
+            boolean addArea = false;
+            if (acceptAnyway) {
+                // the inline/external graphics has been painted ... we apply the criterion on teh area covered by graphics operations
+                addArea = ((totalGraphicalArea / totalArea) > graphicalAreaThreshold);
+            } else {
+                // no inline/external graphics... we apply the criteria on the number of operations
+               addArea = (areas.get(area).first.size() >= minNum && numGraphical > minGraphical);
+            }
+
+
+            if (addArea) {
                 result.put(area, areas.get(area));
             }
 
@@ -227,7 +243,7 @@ public class PlotHeuristics {
         res = removeBasedOnHavingOnlyHorizontalLines(res);
         res = removeBasedOnOperationsNumber(res);
         res = removeBasedOnSize(res, manager);
-        res = removeBasedOnGraphicalArea(res);
+        //res = removeBasedOnGraphicalArea(res); // we do not remove based on graphical area explicitly .... only in the case of including external or inline graphics
         return res;
     }
 

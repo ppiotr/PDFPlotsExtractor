@@ -132,7 +132,7 @@ public class ExtractorParameters extends Properties {
         this.setProperty("minimal_figure_height", "0.1"); // minimum 10% of the page
         this.setProperty("minimal_figure_width", "0.25"); // minimum 25% of the page
 
-        this.setProperty("minimal_graphical_area_fraction", "0.0");
+        this.setProperty("minimal_graphical_area_fraction", "0.15");
 
 
 
