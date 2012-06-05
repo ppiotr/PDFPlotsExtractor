@@ -185,19 +185,26 @@ public class PlotHeuristics {
 
         ExtractorParameters parameters = ExtractorParameters.getExtractorParameters();
         int minNum = parameters.getMinimalFiguresOperationsNumber();
-
+        int minGraphical = parameters.getMinimalFiguresGraphicalOperationsNumber();
+        
         for (Rectangle area : areas.keySet()) {
             // Operators to consider non-blocking: Do BI, ID, EI 
 
             boolean acceptAnyway = false;
+            int numGraphical = 0;
+            
             for (Operation op : areas.get(area).first) {
                 String operator = op.getOriginalOperation().getOperator().toString();
                 if ("Do".equals(operator) || "BI".equals(operator) || "ID".equals(operator) || "EI".equals(operator)) {
                     // we do not ommit this reference
                     acceptAnyway = true;
                 }
+                if (op instanceof GraphicalOperation){
+                    numGraphical += 1;
+                }
             }
-            if (areas.get(area).first.size() >= minNum || acceptAnyway) {
+            
+            if ((areas.get(area).first.size() >= minNum && numGraphical > minGraphical)|| acceptAnyway) {
                 result.put(area, areas.get(area));
             }
 
