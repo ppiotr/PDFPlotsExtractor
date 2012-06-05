@@ -123,6 +123,36 @@ public class PlotHeuristics {
     }
 
     /**
+     * Filters out areas where the total area covered by graphical operations is 
+     * smaller than a certain fraction of the entire figure candidate
+     * 
+     * @param areas
+     * @return 
+     */
+    public static Map<Rectangle, Pair<List<Operation>, Integer>> removeBasedOnGraphicalArea(
+            Map<Rectangle, Pair<List<Operation>, Integer>> areas) {
+        Map<Rectangle, Pair<List<Operation>, Integer>> results = new HashMap<Rectangle, Pair<List<Operation>, Integer>>();
+        double graphicalAreaThreshold = ExtractorParameters.getExtractorParameters().getMinimalGraphicalAreaFraction();
+        
+        for (Rectangle area : areas.keySet()) {
+            double totalArea = area.width * area.height;
+            double totalGraphicalArea = 0;
+            
+            for (Operation operation : areas.get(area).first){
+                if (operation instanceof GraphicalOperation){
+                    GraphicalOperation go = (GraphicalOperation) operation;
+                    totalGraphicalArea += go.getBoundary().width * go.getBoundary().height;
+                }
+            }
+            
+            if (totalGraphicalArea / totalArea > graphicalAreaThreshold){
+                results.put(area, areas.get(area));
+            }
+        }
+        return results;
+    }
+
+    /**
      * Remove false plots based on their sizes. Images having too small
      * dimensions can not be considered plots
      * @return
@@ -136,11 +166,11 @@ public class PlotHeuristics {
         Map<Rectangle, Pair<List<Operation>, Integer>> results = new HashMap<Rectangle, Pair<List<Operation>, Integer>>();
 
         for (Rectangle area : areas.keySet()) {
-            if (area.width > minWidth && area.height > minHeight){
+            if (area.width > minWidth && area.height > minHeight) {
                 results.put(area, areas.get(area));
             }
         }
-        
+
         return results;
     }
 
@@ -190,11 +220,12 @@ public class PlotHeuristics {
         res = removeBasedOnHavingOnlyHorizontalLines(res);
         res = removeBasedOnOperationsNumber(res);
         res = removeBasedOnSize(res, manager);
+        res = removeBasedOnGraphicalArea(res);
         return res;
     }
 
     /**
-     * Filter out graphical regions taht should not be extended into plots by
+     * Filter out graphical regions that should not be extended into plots by
      * the inclusion of small surrounding text parts
      * @param areas
      * @return

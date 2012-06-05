@@ -84,7 +84,8 @@ public class ExtractorParameters extends Properties {
                 + ""
                 + "minimal_figure_width : minimal width (as fraction of page width) that a figure has to have"
                 + "minimal_figure_height : minimal height (as fraction of page height) that a figure has to have"
-                + "minimal_column_width : minimal width of a detected page column. (smaller columns will be clustered with others)";
+                + "minimal_column_width : minimal width of a detected page column. (smaller columns will be clustered with others)"
+                + "minimal_graphical_area_fraction : fraction of an area of a figure candidate allowing it to be considered figure";
         // + "minimal_column_height : minimal height of a detected page column. (smaller columns will be clustered with others)";
     }
 
@@ -123,19 +124,25 @@ public class ExtractorParameters extends Properties {
         this.setProperty("generate_debug_information", "true");
         this.setProperty("generate_plot_provenance", "true");
         this.setProperty("generate_svg", "true");
-        
-        
+
+
         this.setProperty("minimal_figure_height", "0.1"); // minimum 10% of the page
         this.setProperty("minimal_figure_width", "0.25"); // minimum 25% of the page
-        
 
-        
+        this.setProperty("minimal_graphical_area_fraction", "0.15"); // minimum 25% of the page
+
+
+
+    }
+
+    public double getMinimalGraphicalAreaFraction() {
+        return Double.parseDouble(this.getProperty("minimal_graphical_area_fraction"));
     }
 
     public double getMinimalPageLayoutColumnWidth() {
         return Double.parseDouble(this.getProperty("minimal_column_width"));
     }
-    
+
     // public double getMinimalPageLayoutColumnHeight() {
     //     return Double.parseDouble(this.getProperty("minimal_column_height"));
     // }
@@ -325,6 +332,7 @@ public class ExtractorParameters extends Properties {
     public double getMinimalFigureWidth() {
         return Double.parseDouble(this.getProperty("minimal_figure_width"));
     }
+
     public double getMinimalFigureHeight() {
         return Double.parseDouble(this.getProperty("minimal_figure_height"));
     }
