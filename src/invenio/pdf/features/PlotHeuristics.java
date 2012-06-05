@@ -4,6 +4,7 @@ import invenio.pdf.core.ExtractorParameters;
 import invenio.common.ExtractorGeometryTools;
 import invenio.common.Pair;
 import invenio.common.SpatialClusterManager;
+import invenio.pdf.core.DisplayedOperation;
 import invenio.pdf.core.GraphicalOperation;
 import invenio.pdf.core.Operation;
 import invenio.pdf.core.PDFPageManager;
@@ -201,7 +202,10 @@ public class PlotHeuristics {
                 String operator = op.getOriginalOperation().getOperator().toString();
                 if ("Do".equals(operator) || "BI".equals(operator) || "ID".equals(operator) || "EI".equals(operator)) {
                     // we do not ommit this reference
-                    acceptAnyway = true;
+                    DisplayedOperation dop = (DisplayedOperation) op;
+                    
+                        acceptAnyway = (dop.getBoundary().width > 5 && dop.getBoundary().height > 5); // very small graphical operations should be treated as ordinary operations .... like lines
+                    
                 }
                 if (op instanceof GraphicalOperation) {
                     numGraphical += 1;
@@ -215,8 +219,8 @@ public class PlotHeuristics {
                 // the inline/external graphics has been painted ... we apply the criterion on teh area covered by graphics operations
                 addArea = ((totalGraphicalArea / totalArea) > graphicalAreaThreshold);
             } else {
-                // no inline/external graphics... we apply the criteria on the number of operations
-               addArea = (areas.get(area).first.size() >= minNum && numGraphical > minGraphical);
+                // no inline/external graphics... we apply the criteria on the number of operatio               
+                addArea = (areas.get(area).first.size() >= minNum && numGraphical > minGraphical);
             }
 
 
