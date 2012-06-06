@@ -86,7 +86,9 @@ public class ExtractorParameters extends Properties {
                 + "minimal_figure_height : minimal height (as fraction of page height) that a figure has to have"
                 + "minimal_column_width : minimal width of a detected page column. (smaller columns will be clustered with others)"
                 + "minimal_graphical_area_fraction : fraction of an area of a figure candidate allowing it to be considered figure"
-                + "minimal_figure_graphical_operations_number: minimal number of graphical operations that have to be included in a figure (unless external graphics)";
+                + "minimal_figure_graphical_operations_number: minimal number of graphical operations that have to be included in a figure (unless external graphics)"
+                + "minimal_figure_graphical_operations_fraction: Minimal fraction of graphical operations inside of a figure (unless inline or external graphics)";
+
         // + "minimal_column_height : minimal height of a detected page column. (smaller columns will be clustered with others)";
     }
 
@@ -120,8 +122,9 @@ public class ExtractorParameters extends Properties {
         this.setProperty("minimal_vertical_separator_height", "0.4");
         this.setProperty("minimal_column_width", "0.25"); // minimally 1/4 of the page for a column
         this.setProperty("minimal_figure_operations_number", "10"); // miniminal number of operations inside of a figure ... unless external graphics
-        this.setProperty("minimal_figure_graphical_operations_number", "4"); 
-        
+        this.setProperty("minimal_figure_graphical_operations_number", "4");
+        this.setProperty("minimal_figure_graphical_operations_fraction", "0.10");
+
         //this.setProperty("minimal_column_height", "0.25"); // minimally 1/4 of the page for a column
 
         this.setProperty("generate_debug_information", "true");
@@ -327,11 +330,15 @@ public class ExtractorParameters extends Properties {
 //        return false;
         return Boolean.parseBoolean(this.getProperty("generate_svg"));
     }
-    
+
     public int getMinimalFiguresGraphicalOperationsNumber() {
         return Integer.parseInt(this.getProperty("minimal_figure_graphical_operations_number"));
     }
     
+    public double getMinimalFiguresGraphicalOperationsFraction() {
+        return Double.parseDouble(this.getProperty("minimal_figure_graphical_operations_fraction"));
+    }
+
     public int getMinimalFiguresOperationsNumber() {
         return Integer.parseInt(this.getProperty("minimal_figure_operations_number"));
     }

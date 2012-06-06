@@ -188,7 +188,7 @@ public class PlotHeuristics {
         int minNum = parameters.getMinimalFiguresOperationsNumber();
         int minGraphical = parameters.getMinimalFiguresGraphicalOperationsNumber();
         double graphicalAreaThreshold = parameters.getMinimalGraphicalAreaFraction();
-
+        double minGraphicalFraction = parameters.getMinimalFiguresGraphicalOperationsFraction();
         for (Rectangle area : areas.keySet()) {
             // Operators to consider non-blocking: Do BI, ID, EI 
 
@@ -220,7 +220,7 @@ public class PlotHeuristics {
                 addArea = ((totalGraphicalArea / totalArea) > graphicalAreaThreshold);
             } else {
                 // no inline/external graphics... we apply the criteria on the number of operatio               
-                addArea = (areas.get(area).first.size() >= minNum && numGraphical > minGraphical);
+                addArea = (areas.get(area).first.size() >= minNum && numGraphical > minGraphical && (numGraphical / areas.get(area).first.size() > minGraphicalFraction));
             }
 
 
