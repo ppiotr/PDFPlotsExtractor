@@ -68,9 +68,12 @@ def recieve_data(request):
 
 
 class ProcessingResult(object):
-    def __init__(self, original_params, results, file_content=None, file_name=None):
+    def __init__(self, original_params, results, file_content=None, file_name=None, tempdir=None):
         if file_content:
-            fd, self.fileName = tempfile.mkstemp(suffix=".tgz")
+            if tempdir:
+                fd, self.fileName = tempfile.mkstemp(suffix=".tgz", dir=tempdir)
+            else:
+                fd, self.fileName = tempfile.mkstemp(suffix=".tgz")
             os.write(fd, file_content)
             os.close(fd)
         else:
@@ -79,11 +82,11 @@ class ProcessingResult(object):
         self.original_params = original_params
 
     @classmethod
-    def read_from_socket(self, soc):
+    def read_from_socket(self, soc, tempdir=None):
         results_s = recieve_data(soc)
         params_s = recieve_data(soc)
         content = recieve_data(soc)
-        return ProcessingResult(cPickle.loads(params_s), cPickle.loads(results_s), content)
+        return ProcessingResult(cPickle.loads(params_s), cPickle.loads(results_s), content, tempdir=tempdir)
 
     def send_over_socket(self, soc):
         send_data(soc, cPickle.dumps(self.results))
@@ -94,7 +97,7 @@ class ProcessingResult(object):
 
 class ProcessingRequest(object):
     """Stores a request to extract data from a file ... contains the PDF file and the parameters of the extractor"""
-    def __init__(self, params, file_name, input_content=None, input_file = None, folder=None):
+    def __init__(self, params, file_name, input_content=None, input_file = None, folder=None, tempdir=None):
         self.params = params
         self.file_name = file_name
 
@@ -103,7 +106,10 @@ class ProcessingRequest(object):
                 self.inputFileName = os.path.join(folder, file_name)
                 fd = open(self.inputFileName, "w")
             else:
-                fdl, self.inputFileName = tempfile.mkstemp(suffix=".pdf")
+                if tempdir:
+                    fdl, self.inputFileName = tempfile.mkstemp(suffix=".pdf", dir=tempdir)
+                else:
+                    fdl, self.inputFileName = tempfile.mkstemp(suffix=".pdf")
                 fd = os.fdopen(fdl, "w")
             fd.write(input_content)
             fd.close()
@@ -119,18 +125,19 @@ class ProcessingRequest(object):
 
 
     @classmethod
-    def read_from_socket(self, soc, folder=None):
+    def read_from_socket(self, soc, folder=None, tempdir=None):
         """reads a request from a socket"""
         file_name = recieve_data(soc)
         file_data = recieve_data(soc)
         request_ser = recieve_data(soc)
-        return ProcessingRequest(cPickle.loads(request_ser), file_name, input_content = file_data, folder = folder)
+        return ProcessingRequest(cPickle.loads(request_ser), file_name, input_content = file_data, folder = folder, tempdir=tempdir)
 
 class Worker():
     # processign of a single worker
-    def __init__(self, request):
+    def __init__(self, request, parameters):
         self.jar_md5 = "" # at the very beginning we will have to update JAR anyway
         self.request = request
+        self.parameters = parameters
 
     def handle(self):
         while True:
@@ -138,7 +145,10 @@ class Worker():
             self.update_jar_if_necessary()
             self.request.send("CMD")
             rq.send_over_socket(self.request)
-            res = ProcessingResult.read_from_socket(self.request)
+            tmpdir = None
+            if "tempdir" in self.parameters:
+                tmpdir = self.parameters["tempdir"]
+            res = ProcessingResult.read_from_socket(self.request, tempdir = self.parameters["tempdir"])
             results_queue.put(res)
 
     def update_jar_if_necessary(self):
@@ -152,9 +162,10 @@ class Worker():
         print "Worker disconnected"
 
 class Controller():
-    def __init__(self, request):
+    def __init__(self, request, parameters):
         global current_controller
         self.request = request;
+        self.parameters = parameters
         current_controller = self
 
     def handle(self):
@@ -172,7 +183,10 @@ class Controller():
         while cmd != "END":
             cmd = self.request.recv(3)
             if cmd == "REQ":
-                req = ProcessingRequest.read_from_socket(self.request)
+                tempdir = None
+                if "tempdir" in self.parameters:
+                    tempdir = self.parameters["tempdir"]
+                req = ProcessingRequest.read_from_socket(self.request, tempdir=tempdir)
                 requests_queue.put(req)
                 added_requests += 1
 
@@ -197,13 +211,13 @@ class ClientRequestHandler(SocketServer.BaseRequestHandler ):
         self.algorithm = None
         if client_type == "W":
             print "Worker connected at " + str(self.client_address)
-            self.algorithm = Worker(self.request)
+            self.algorithm = Worker(self.request, ClientRequestHandler.parameters)
 
         elif client_type == "C":
             print "Controller connected at " + str(self.client_address)
             # we can have only a single controller !
             if not current_controller:
-                self.algorithm = Controller(self.request)
+                self.algorithm = Controller(self.request, ClientRequestHandler.parameters)
                 self.request.send("ACK")
             else:
                 self.request.send("RJC")
@@ -219,7 +233,9 @@ class ClientRequestHandler(SocketServer.BaseRequestHandler ):
         print self.client_address, 'disconnected!'
         if self.algorithm:
             self.algorithm.disconnect()
-
+    @classmethod
+    def setParameters(self, params):
+        ClientRequestHandler.parameters = params
 
 # The usual definitions useful for processing
 #class Request
@@ -693,7 +709,7 @@ Accepted options
                                  PDF operations
   -e fname --description=fname   Specifies a file with description of data.
                                  Used to verify the correctness of the description.
-
+  --temp=dir                     Specifies the temporary directory
 
 Options allowing distributed execution on a cluster
 
@@ -720,7 +736,7 @@ def parse_input(arguments):
         res = getopt.getopt(arguments, "r:t:f:d:o:e:c:m:w:hspaz" ,
                             ["random=", "test=", "file=", "directory=",
                              "output=", "description=","help", "svg", "pages", "annotate",
-                             "operations", "controller=", "manager=", "worker="])
+                             "operations", "controller=", "manager=", "worker=", "temp="])
     except:
         return None
 
@@ -734,6 +750,8 @@ def parse_input(arguments):
     options["annotated_operations"] = False
 
     for option in res[0]:
+        if option[0] in ("--temp"):
+            options["tempdir"] = option[1]
         if option[0] in ("-r", "--random"):
             options["random"] = int(option[1])
 
@@ -790,6 +808,9 @@ def parse_input(arguments):
                 print "ERROR: The figures description file is incorrect. the contant should consist of a single Python expression constructing a dictionary"
                 return None
             options["descriptions_object"] = obj
+
+    if not "tempdir" in options:
+        options["tempdir"] = None
 
     if (not ("be_manager" in options)) and (not ("be_worker" in options)):
         # preparing the review directory
@@ -956,7 +977,8 @@ def perform_processing_controller(parameters, results, stat_data):
     def prepare_requests():
         res = []
         for entry in get_input_files(parameters):
-            res.append(ProcessingRequest(entry, os.path.split(entry[0])[1], input_file = entry[0]))
+
+            res.append(ProcessingRequest(entry, os.path.split(entry[0])[1], input_file = entry[0], tempdir=parameters["tempdir"]))
         return res
 
     def makedirs(d):
@@ -1009,19 +1031,21 @@ def perform_processing_controller(parameters, results, stat_data):
     # now waiting for the results
 
     for i in range(len(requests)):
-        result = ProcessingResult.read_from_socket(sock)
+
+        result = ProcessingResult.read_from_socket(sock, parameters["tempdir"])
         print "Recieved result in: %s" % (result.fileName, )
         process_result(result)
 
     sock.close()
 
-def resources_manager_main(port):
+def resources_manager_main(port, parameters):
     print "Starting the resources manager server"
 
+    ClientRequestHandler.setParameters(parameters)
     server = SocketServer.ThreadingTCPServer(('', port), ClientRequestHandler)
     server.serve_forever()
 
-def worker_main(host, port):
+def worker_main(host, port, parameters):
     def process_request(req, temp_dir):
         """process a single extraction request and return results"""
 
@@ -1067,14 +1091,21 @@ def worker_main(host, port):
             print "Recieved processing request"
             print "Recieving the input PDF file"
 
-            temp_dir = tempfile.mkdtemp()
+            if "tempdir" in parameters:
+                temp_dir = tempfile.mkdtemp(dir=parameters["tempdir"])
+            else:
+                temp_dir = tempfile.mkdtemp()
 
-            request = ProcessingRequest.read_from_socket(sock, folder=temp_dir)
+            request = ProcessingRequest.read_from_socket(sock, folder=temp_dir, tempdir=parameters["tempdir"])
             # now process command using the obtained data
             output_data, tarfile = process_request(request, temp_dir)
 
             # now send results file (compressed results folder)
-            res = ProcessingResult(output_data["params"], output_data["data"], file_name = tarfile)
+            tempdir = None
+            if "tempdir" in parameters:
+                tempdir = parameters["tempdir"]
+
+            res = ProcessingResult(output_data["params"], output_data["data"], file_name = tarfile, tempdir = tempdir)
             res.send_over_socket(sock)
             print "FINISHED PROCESSINGFILE"
 
@@ -1089,11 +1120,11 @@ def main():
         sys.exit()
 
     if "be_manager" in parameters:
-        resources_manager_main(parameters["be_manager"])
+        resources_manager_main(parameters["be_manager"], parameters)
         return
 
     if "be_worker" in parameters:
-        worker_main(parameters["be_worker"]["address"], parameters["be_worker"]["port"])
+        worker_main(parameters["be_worker"]["address"], parameters["be_worker"]["port"], parameters)
         return
 
     if not os.path.exists(parameters["output_directory"]):
