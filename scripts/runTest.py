@@ -980,6 +980,7 @@ def perform_processing_controller(parameters, results, stat_data):
 
         entry = result.original_params
         res = result.results
+        print "Appending result: entry=%s results=%s" % (str(entry), str(res))
         results.append((entry ,(parameters, entry[2], res, stat_data)))
 
     HOST, PORT = parameters["be_controller"]["address"], parameters["be_controller"]["port"]
@@ -1082,6 +1083,7 @@ def worker_main(host, port):
             # now send results file (compressed results folder)
             res = ProcessingResult(output_data["params"], output_data["data"], file_name = tarfile)
             res.send_over_socket(sock)
+            print "FINISHED PROCESSINGFILE"
 
 
     sock.close()
@@ -1124,6 +1126,7 @@ def main():
         perform_processing_local(parameters, results, stat_data)
 
     for res in results:
+        print str(res)
         stat_data = include_in_statistics(res[1][0], res[1][1], res[1][2], res[1][3])
         # If we have correct data specified, we should verify the result
         if "descriptions_object" in parameters:
