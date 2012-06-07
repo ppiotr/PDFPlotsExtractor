@@ -19,12 +19,210 @@ import SocketServer
 import hashlib
 import tempfile
 import cPickle
-
+from Queue import Queue
 import base64
 
-#class Request
 
-from Queue import Queue
+
+# Definitions for networked usage - distribution of the execution
+
+latest_md5 = "" # md5 hash of the latest version of JAR file
+latest_jar = "ABCD" * 10 + "F" # the content of the latest JAR file
+current_controller = None
+requests_queue = Queue()
+results_queue = Queue()
+
+def send_data(request, file_content_raw):
+    #transfer a file over a request object
+    file_content = base64.b64encode(file_content_raw)
+    chunk_size = 16000 # the size of single sending
+    file_len = len(file_content)
+    request.send("%012i" % ( file_len))
+    request.send(hashlib.md5(file_content).hexdigest())
+    # now sending the file in chunks
+    sent = 0
+    while sent != file_len:
+        sent_to = sent + chunk_size
+        if sent_to > file_len:
+            sent_to = file_len
+        request.send(file_content[sent: sent_to])
+        sent = sent_to
+
+def recieve_data(request):
+    file_size = int(request.recv(12))
+    file_md5 = request.recv(32)
+    chunk_size = 16000
+    recieved = 0
+    parts = []
+    while recieved != file_size:
+        if recieved + chunk_size > file_size:
+            # decrease last chunk size
+            chunk_size = file_size - recieved
+        new_part = request.recv(chunk_size)
+        parts.append(new_part)
+        recieved += len(new_part)
+
+    file_content = "".join(parts)
+
+    return base64.b64decode(file_content)
+
+
+class ProcessingResult(object):
+    def __init__(self, original_params, results, file_content=None, file_name=None):
+        if file_content:
+            fd, self.fileName = tempfile.mkstemp(suffix=".tgz")
+            os.write(fd, file_content)
+            os.close(fd)
+        else:
+            self.fileName = file_name
+        self.results = results
+        self.original_params = original_params
+
+    @classmethod
+    def read_from_socket(self, soc):
+        results_s = recieve_data(soc)
+        params_s = recieve_data(soc)
+        content = recieve_data(soc)
+        return ProcessingResult(cPickle.loads(params_s), cPickle.loads(results_s), content)
+
+    def send_over_socket(self, soc):
+        send_data(soc, cPickle.dumps(self.results))
+        send_data(soc, cPickle.dumps(self.original_params))
+        f = open(self.fileName, "r")
+        send_data(soc, f.read())
+        f.close()
+
+class ProcessingRequest(object):
+    """Stores a request to extract data from a file ... contains the PDF file and the parameters of the extractor"""
+    def __init__(self, params, file_name, input_content=None, input_file = None, folder=None):
+        self.params = params
+        self.file_name = file_name
+
+        if input_content:
+            if folder:
+                self.inputFileName = os.path.join(folder, file_name)
+                fd = open(self.inputFileName, "w")
+            else:
+                fdl, self.inputFileName = tempfile.mkstemp(suffix=".pdf")
+                fd = os.fdopen(fdl, "w")
+            fd.write(input_content)
+            fd.close()
+        else:
+            self.inputFileName = input_file
+
+    def send_over_socket(self, soc):
+        """Read data of a request and send it over a socket"""
+        f = open(self.inputFileName, "r")
+        send_data(soc, self.file_name)
+        send_data(soc, f.read())
+        send_data(soc, cPickle.dumps(self.params))
+
+
+    @classmethod
+    def read_from_socket(self, soc, folder=None):
+        """reads a request from a socket"""
+        file_name = recieve_data(soc)
+        file_data = recieve_data(soc)
+        request_ser = recieve_data(soc)
+        return ProcessingRequest(cPickle.loads(request_ser), file_name, input_content = file_data, folder = folder)
+
+class Worker():
+    # processign of a single worker
+    def __init__(self, request):
+        self.jar_md5 = "" # at the very beginning we will have to update JAR anyway
+        self.request = request
+
+    def handle(self):
+        while True:
+            rq = requests_queue.get()
+            self.update_jar_if_necessary()
+            self.request.send("CMD")
+            rq.send_over_socket(self.request)
+            res = ProcessingResult.read_from_socket(self.request)
+            results_queue.put(res)
+
+    def update_jar_if_necessary(self):
+        """Update the jar archive"""
+        if self.jar_md5 != latest_md5:
+            print "updating JAR"
+            self.request.send("JAR")
+            send_data(self.request, latest_jar)
+            self.jar_md5 = hashlib.md5(latest_jar).hexdigest()
+    def disconnect(self):
+        print "Worker disconnected"
+
+class Controller():
+    def __init__(self, request):
+        global current_controller
+        self.request = request;
+        current_controller = self
+
+    def handle(self):
+        global current_controller
+        global latest_jar
+        global latest_md5
+
+       # recieve JAR, recieve requests (REQ + reqiest)* recieve END
+        latest_jar = recieve_data(self.request)
+        latest_md5 = recieve_data(self.request)
+
+        #hashlib.md5(latest_jar).hexdigest()
+        cmd = ""
+        added_requests = 0
+        while cmd != "END":
+            cmd = self.request.recv(3)
+            if cmd == "REQ":
+                req = ProcessingRequest.read_from_socket(self.request)
+                requests_queue.put(req)
+                added_requests += 1
+
+        # now we wait for the same number of results
+
+        print "Recieved a complete set of %i requests, now waiting for workers to finish processing\n\n\n" % (added_requests, )
+
+        while added_requests > 0:
+            result = results_queue.get()
+            result.send_over_socket(self.request)
+            added_requests -= 1
+        current_controller = None
+
+    def disconnect(self):
+        global current_controller
+        current_controller = None
+
+
+class ClientRequestHandler(SocketServer.BaseRequestHandler ):
+    def setup(self):
+        client_type = self.request.recv(1)
+        self.algorithm = None
+        if client_type == "W":
+            print "Worker connected at " + str(self.client_address)
+            self.algorithm = Worker(self.request)
+
+        elif client_type == "C":
+            print "Controller connected at " + str(self.client_address)
+            # we can have only a single controller !
+            if not current_controller:
+                self.algorithm = Controller(self.request)
+                self.request.send("ACK")
+            else:
+                self.request.send("RJC")
+                print "Rejected controller request because there is already one connected controller"
+        else:
+            print "ERROR: unknown type of client connected"
+
+    def handle(self):
+        if self.algorithm:
+            self.algorithm.handle()
+
+    def finish(self):
+        print self.client_address, 'disconnected!'
+        if self.algorithm:
+            self.algorithm.disconnect()
+
+
+# The usual definitions useful for processing
+#class Request
 
 def create_directories(path):
     """creates directory and if necessary, all intermediate directories as well"""
@@ -597,8 +795,13 @@ def parse_input(arguments):
         # preparing the review directory
         basedirname = os.path.join(options["output_directory"], "review")
         dirname = os.path.join(options["output_directory"], "review", options["test_name"])
+
+        if not os.path.exists(options["output_directory"]):
+            os.mkdir(options["output_directory"])
+
         if not os.path.exists(basedirname):
             os.mkdir(basedirname)
+
         if not os.path.exists(dirname):
             os.mkdir(dirname)
 
@@ -753,8 +956,31 @@ def perform_processing_controller(parameters, results, stat_data):
     def prepare_requests():
         res = []
         for entry in get_input_files(parameters):
-            res.append(ProcessingRequest(entry, input_file = entry[0]))
+            res.append(ProcessingRequest(entry, os.path.split(entry[0])[1], input_file = entry[0]))
         return res
+
+    def makedirs(d):
+        if d[-1] == "/":
+            d = d[:-1]
+
+        if not os.path.exists(d):
+            makedirs(os.path.split(d)[0])
+            os.mkdir(d)
+
+    def process_result(result):
+        """consume a single ProcessingResult object ... uncompress to the output directory and """
+        output_dir = result.original_params[1]
+        #make sure that teh output dir is there
+        makedirs(output_dir)
+
+
+        f = os.popen("tar -zxf %s -C %s --strip-components=1" % ( result.fileName, output_dir))
+        f.read()
+        f.close()
+
+        entry = result.original_params
+        res = result.results
+        results.append((entry ,(parameters, entry[2], res, stat_data)))
 
     HOST, PORT = parameters["be_controller"]["address"], parameters["be_controller"]["port"]
     # SOCK_STREAM == a TCP socket
@@ -774,7 +1000,6 @@ def perform_processing_controller(parameters, results, stat_data):
     requests = prepare_requests()
 
     for res in requests:
-        print "SENDING REQUEST \n\n\n\n"
         sock.send("REQ")
         res.send_over_socket(sock)
 
@@ -784,15 +1009,10 @@ def perform_processing_controller(parameters, results, stat_data):
 
     for i in range(len(requests)):
         result = ProcessingResult.read_from_socket(sock)
-        process_processing_result(result)
+        print "Recieved result in: %s" % (result.fileName, )
+        process_result(result)
 
     sock.close()
-
-    for entry in get_input_files(parameters):
-        print "Processing input file %s writing output to the directory %s" % (entry[0], entry[1])
-        res = extract_file(entry[0], entry[1], parameters)
-        results.append((entry ,(parameters, entry[2], res, stat_data)))
-
 
 def resources_manager_main(port):
     print "Starting the resources manager server"
@@ -802,7 +1022,7 @@ def resources_manager_main(port):
 
 def worker_main(host, port):
 
-    def process_request(req):
+    def process_request(req, temp_dir):
         """process a single extraction request and return results"""
 
         print "recieved request: args: %s file: %s " %( str(req.params), str(req.inputFileName))
@@ -813,7 +1033,6 @@ def worker_main(host, port):
         #results = execute_track([EXTRACTOR_EXECUTABLE, input_file, output_folder], output_folder)
         #make temporary directory
 
-        temp_dir = tempfile.mkdtemp()
         results = extract_file(req.inputFileName, os.path.join(temp_dir, "results"), req.params)
 
         # preparing compressed version of the temp
@@ -854,11 +1073,11 @@ def worker_main(host, port):
             print "Recieved processing request"
             print "Recieving the input PDF file"
 
-            request = ProcessingRequest.read_from_socket(sock)
+            temp_dir = tempfile.mkdtemp()
 
+            request = ProcessingRequest.read_from_socket(sock, folder=temp_dir)
             # now process command using the obtained data
-
-            output_data, tarfile = process_request(request)
+            output_data, tarfile = process_request(request, temp_dir)
 
             # now send results file (compressed results folder)
             res = ProcessingResult(output_data["params"], output_data["data"], file_name = tarfile)
@@ -937,196 +1156,6 @@ def main():
     Expected figures: %i
     Correctly detected figures: %i
     Misdetected figures: %i""" % (processed_pages, correct_pages,  expected_figures, cdetected_figures, icdetected_figures)
-
-
-# definitions for networked usage
-
-latest_md5 = "" # md5 hash of the latest version of JAR file
-latest_jar = "ABCD" * 10 + "F" # the content of the latest JAR file
-current_controller = None
-requests_queue = Queue()
-results_queue = Queue()
-
-def send_data(request, file_content_raw):
-    #transfer a file over a request object
-    file_content = base64.b64encode(file_content_raw)
-    chunk_size = 16000 # the size of single sending
-    file_len = len(file_content)
-    request.send("%012i" % ( file_len))
-    request.send(hashlib.md5(file_content).hexdigest())
-    # now sending the file in chunks
-    sent = 0
-    while sent != file_len:
-        sent_to = sent + chunk_size
-        if sent_to > file_len:
-            sent_to = file_len
-        request.send(file_content[sent: sent_to])
-        sent = sent_to
-
-def recieve_data(request):
-    file_size = int(request.recv(12))
-    file_md5 = request.recv(32)
-    chunk_size = 16000
-    recieved = 0
-    parts = []
-    while recieved != file_size:
-        if recieved + chunk_size > file_size:
-            # decrease last chunk size
-            chunk_size = file_size - recieved
-        new_part = request.recv(chunk_size)
-        parts.append(new_part)
-        recieved += len(new_part)
-
-    file_content = "".join(parts)
-
-    return base64.b64decode(file_content)
-
-
-class ProcessingResult(object):
-    def __init__(self, original_params, results, file_content=None, file_name=None):
-        if file_content:
-            fd, self.fileName = tempfile.mkstemp(suffix=".tgz")
-            os.write(fd, file_content)
-            os.close(fd)
-        else:
-            self.fileName = file_name
-        self.results = results
-        self.original_params = original_params
-
-    @classmethod
-    def read_from_socket(self, soc):
-        results_s = recieve_data(soc)
-        params_s = recieve_data(soc)
-        content = recieve_data(soc)
-        return ProcessingResult(cPickle.loads(params_s), cPickle.loads(results_s), content)
-
-    def send_over_socket(self, soc):
-        send_data(soc, cPickle.dumps(self.results))
-        send_data(soc, cPickle.dumps(self.original_params))
-        f = open(self.fileName, "r")
-        send_data(soc, f.read())
-        f.close()
-
-class ProcessingRequest(object):
-    """Stores a request to extract data from a file ... contains the PDF file and the parameters of the extractor"""
-    def __init__(self, params, input_content=None, input_file = None):
-        self.params = params
-        if input_content:
-            fd, self.inputFileName = tempfile.mkstemp(suffix=".pdf")
-            os.write(fd, input_content)
-            os.close(fd)
-        else:
-            self.inputFileName = input_file
-
-    def send_over_socket(self, soc):
-        """Read data of a request and send it over a socket"""
-        f = open(self.inputFileName, "r")
-        send_data(soc, f.read())
-        send_data(soc, cPickle.dumps(self.params))
-
-    @classmethod
-    def read_from_socket(self, soc):
-        """reads a request from a socket"""
-        file_data = recieve_data(soc)
-        request_ser = recieve_data(soc)
-        return ProcessingRequest(cPickle.loads(request_ser), input_content = file_data)
-
-
-class Worker():
-    # processign of a single worker
-    def __init__(self, request):
-        self.jar_md5 = "" # at the very beginning we will have to update JAR anyway
-        self.request = request
-
-    def handle(self):
-        while True:
-            rq = requests_queue.get()
-            self.update_jar_if_necessary()
-            print "SENDING A REQUEST"
-            self.request.send("CMD")
-            rq.send_over_socket(self.request)
-            res = ProcessingResult.read_from_socket(self.request)
-            results_queue.put(res)
-
-    def update_jar_if_necessary(self):
-        """Update the jar archive"""
-        if self.jar_md5 != latest_md5:
-            print "updating JAR"
-            self.request.send("JAR")
-            send_data(self.request, latest_jar)
-            self.jar_md5 = hashlib.md5(latest_jar).hexdigest()
-    def disconnect(self):
-        print "Worker disconnected"
-
-class Controller():
-    def __init__(self, request):
-        global current_controller
-        self.request = request;
-        current_controller = self
-
-    def handle(self):
-        global current_controller
-        global latest_jar
-        global latest_md5
-
-       # recieve JAR, recieve requests (REQ + reqiest)* recieve END
-        latest_jar = recieve_data(self.request)
-        latest_md5 = recieve_data(self.request)
-
-        #hashlib.md5(latest_jar).hexdigest()
-        cmd = ""
-        added_requests = 0
-        while cmd != "END":
-            cmd = self.request.recv(3)
-            print "Recieved command: %s" % (cmd, )
-            if cmd == "REQ":
-                print "RECIEVING A REQUEST \n\n\n"
-                req = ProcessingRequest.read_from_socket(self.request)
-                requests_queue.put(req)
-                added_requests += 1
-
-        # now we wait for the same number of results
-
-        print "NOW WAITING FOR RESULTS FROM WORKERS\n\n\n"
-        while added_requests > 0:
-            result = results_queue.get()
-            result.send_over_socket(self.request)
-            added_requests -= 1
-        current_controller = None
-
-    def disconnect(self):
-        global current_controller
-        current_controller = None
-
-
-class ClientRequestHandler(SocketServer.BaseRequestHandler ):
-    def setup(self):
-        client_type = self.request.recv(1)
-        self.algorithm = None
-        if client_type == "W":
-            print "Worker connected at " + str(self.client_address)
-            self.algorithm = Worker(self.request)
-
-        elif client_type == "C":
-            print "Controller connected at " + str(self.client_address)
-            # we can have only a single controller !
-            if not current_controller:
-                self.algorithm = Controller(self.request)
-                self.request.send("ACK")
-            else:
-                self.request.send("RJC")
-                print "Rejected controller request because there is already one connected controller"
-        else:
-            print "ERROR: unknown type of client connected"
-
-    def handle(self):
-        if self.algorithm:
-            self.algorithm.handle()
-
-    def finish(self):
-        print self.client_address, 'disconnected!'
-        if self.algorithm:
-            self.algorithm.disconnect()
 
 if __name__ == "__main__":
     main()
