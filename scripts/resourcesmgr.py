@@ -2,6 +2,10 @@
 
 import SocketServer
 import hashlib
+import tempfile
+import cPickle
+import os
+import base64
 
 #class Request
 
@@ -9,12 +13,17 @@ from Queue import Queue
 
 latest_md5 = "" # md5 hash of the latest version of JAR file
 latest_jar = "ABCD" * 10 + "F" # the content of the latest JAR file
+current_controller = None
+requests_queue = Queue()
+results_queue = Queue()
 
 
-def send_data(request, file_content):
+def send_data(request, file_content_raw):
     #transfer a file over a request object
+    file_content = base64.b64encode(file_content_raw)
+
     print "File transfer started"
-    chunk_size = 3 # the size of single sending
+    chunk_size = 16000 # the size of single sending
     file_len = len(file_content)
     request.send("%012i" % ( file_len))
     request.send(hashlib.md5(file_content).hexdigest())
@@ -32,7 +41,7 @@ def recieve_data(request):
     file_size = int(request.recv(12))
     file_md5 = request.recv(32)
     print("Recieving file of size %i and md5 %s" % (file_size, file_md5))
-    chunk_size = 2
+    chunk_size = 16000
     recieved = 0
     parts = []
     while recieved != file_size:
@@ -49,53 +58,11 @@ def recieve_data(request):
     file_content = "".join(parts)
 
     print "Expected md5: %s actual md5: %s " % (file_md5, hashlib.md5(file_content).hexdigest())
-    return file_content
+    return base64.b64decode(file_content)
 
-
-class Worker():
-    # processign of a single worker
-    def __init__(self, request):
-        self.specialQueue = Queue()
-        self.jar_md5 = ""
-        self.request = request
-
-
-    def update_jar_if_necessary(self):
-        """Update the jar archive"""
-        if self.jar_md5 != latest_md5:
-            self.request.send("")
-
-
-
-
-class ClientRequestHandler(SocketServer.BaseRequestHandler ):
-    def setup(self):
-        client_type = self.request.recv(1)
-
-        if client_type == "W":
-            print "Worker connected at " + str(self.client_address)
-        elif client_type == "C":
-            print "Controller connected at " + str(self.client_address)
-            # we can have only a single controller !
-        else:
-            print "ERROR: unknown type of client connected"
-
-        self.request.send("JAR")
-        send_data(self.request, latest_jar)
-
-    def handle(self):
-        data = 'dummy'
-        while data:
-            data = self.request.recv(1024)
-            self.request.send(data)
-            if data.strip() == 'bye':
-                return
-
-    def finish(self):
-        print self.client_address, 'disconnected!'
-        self.request.send('bye ' + str(self.client_address) + '\n')
+#        self.request.send('bye ' + str(self.client_address) + '\n')
 
     #server host is a tuple ('host', port)
 if __name__=="__main__":
-    server = SocketServer.ThreadingTCPServer(('', 50700), ClientRequestHandler)
+    server = SocketServer.ThreadingTCPServer(('', 50717), ClientRequestHandler)
     server.serve_forever()

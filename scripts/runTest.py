@@ -14,6 +14,18 @@ from datetime import datetime
 import getopt
 from threading import Thread
 
+import socket
+import SocketServer
+import hashlib
+import tempfile
+import cPickle
+
+import base64
+
+#class Request
+
+from Queue import Queue
+
 def create_directories(path):
     """creates directory and if necessary, all intermediate directories as well"""
     to_create = []
@@ -34,6 +46,8 @@ def create_directories(path):
 
 CFG_SLEEP_INTERVAL = 0.1
 CFG_MAX_EXECUTION_TIME = 15 * 60 # 36000 # we kill task running more than one hour !
+
+jar_file_path = "./PDFPlotsExtractor.jar"
 
 def get_current_timestamp():
     """returns a current timestamp up to 0.01 s"""
@@ -83,7 +97,7 @@ def execute_track(args, folder = None):
     """
 #    import rpdb2; rpdb2.start_embedded_debugger('password', fAllowRemote=False)
 #    print "Executing task: %s folder: %s" % (str(args), folder)
-
+    print "Execution args: %s folder: %s" % (str(args), str(folder))
     results = {}
 
     start_time = time.time()
@@ -208,17 +222,18 @@ def extract_file(input_file, output_folder, parameters):
     results = execute_track([EXTRACTOR_EXECUTABLE, input_file, output_folder], output_folder)
     return results
 
-def extract_single_record(rec_id, test_folder):
-    folder = get_record_path(test_folder, rec_id)
-    fulltext_path = folder + "/fulltext.pdf"
-    results = execute_track([EXTRACTOR_EXECUTABLE, fulltext_path], folder)
-    return results
+# this seems not to be used
+#def extract_single_record(rec_id, test_folder):
+#    folder = get_record_path(test_folder, rec_id)
+#    fulltext_path = folder + "/fulltext.pdf"
+#    results = execute_track([EXTRACTOR_EXECUTABLE, fulltext_path], folder)
+#    return results
 
-def perform_single_test(random_generator, test_folder):
-    # download random record from Inspire
-    record_id = retrieve_random_document(random_generator, test_folder)
-    result = extract_single_record(record_id, test_folder)
-    return 0 if ("forced_exit" in result) else 1
+#def perform_single_test(random_generator, test_folder):
+#    # download random record from Inspire
+#    record_id = retrieve_random_document(random_generator, test_folder)
+#    result = extract_single_record(record_id, test_folder)
+#    return 0 if ("forced_exit" in result) else 1
 
 def include_in_statistics(parameters, input_id, result, internal_data=None):
     """Helps building statistics incrementally"""
@@ -481,6 +496,15 @@ Accepted options
   -e fname --description=fname   Specifies a file with description of data.
                                  Used to verify the correctness of the description.
 
+
+Options allowing distributed execution on a cluster
+
+  -c address:port --controller=address:port Act as a controller for a farm of
+                                 extracting machines. A resource manager has to be working
+                                 on the machine whose address is specified
+
+  -m port --manager=port  Starts a resources manager at a given port
+  -w address:port --worker=address:port Starts a worker connecting to manager at address:port
 Examples:
 
    run.py -r 1000 -o some_test_dir
@@ -495,10 +519,10 @@ Examples:
 def parse_input(arguments):
     """ Determine starting options"""
     try:
-        res = getopt.getopt(arguments, "r:t:f:d:o:e:hspaz" ,
+        res = getopt.getopt(arguments, "r:t:f:d:o:e:c:m:w:hspaz" ,
                             ["random=", "test=", "file=", "directory=",
                              "output=", "description=","help", "svg", "pages", "annotate",
-                             "operations"])
+                             "operations", "controller=", "manager=", "worker="])
     except:
         return None
 
@@ -517,6 +541,19 @@ def parse_input(arguments):
 
         if option[0] in ("-t", "--test"):
             options["test_name"] = option[1]
+
+        if option[0] in ("-m", "--manager"):
+            options["be_manager"] = int(option[1])
+
+        if option[0] in ("-w", "--worker"):
+            address = option[1].split(":")[0]
+            port = int(option[1].split(":")[1])
+            options["be_worker"] = {"address": address, "port" : port}
+
+        if option[0] in ("-c", "--controller"):
+            address = option[1].split(":")[0]
+            port = int(option[1].split(":")[1])
+            options["be_controller"] = {"address": address, "port" : port}
 
         if option[0] in ("-f", "--file"):
             options["input_file"] = option[1]
@@ -555,26 +592,28 @@ def parse_input(arguments):
                 print "ERROR: The figures description file is incorrect. the contant should consist of a single Python expression constructing a dictionary"
                 return None
             options["descriptions_object"] = obj
-    # preparing the review directory
-    basedirname = os.path.join(options["output_directory"], "review")
-    dirname = os.path.join(options["output_directory"], "review", options["test_name"])
-    if not os.path.exists(basedirname):
-        os.mkdir(basedirname)
-    if not os.path.exists(dirname):
-        os.mkdir(dirname)
 
-    os.mkdir(os.path.join(dirname, "all"))
-    os.mkdir(os.path.join(dirname, "overdetected"))
-    os.mkdir(os.path.join(dirname, "overdetectedmany")) #overdetected with more than one misdetected figure
-    os.mkdir(os.path.join(dirname, "underdetected"))
-    os.mkdir(os.path.join(dirname, "underdetectedmany")) #underedetected with more than one figure missing
+    if (not ("be_manager" in options)) and (not ("be_worker" in options)):
+        # preparing the review directory
+        basedirname = os.path.join(options["output_directory"], "review")
+        dirname = os.path.join(options["output_directory"], "review", options["test_name"])
+        if not os.path.exists(basedirname):
+            os.mkdir(basedirname)
+        if not os.path.exists(dirname):
+            os.mkdir(dirname)
 
-    options["review_dir"] = dirname
-    options["review_dir_all"] = os.path.join(dirname, "all")
-    options["review_dir_overdetected"] = os.path.join(dirname, "overdetected")
-    options["review_dir_overdetectedmany"] = os.path.join(dirname, "overdetectedmany")
-    options["review_dir_underdetected"] = os.path.join(dirname, "underdetected")
-    options["review_dir_underdetectedmany"] = os.path.join(dirname, "underdetectedmany")
+        os.mkdir(os.path.join(dirname, "all"))
+        os.mkdir(os.path.join(dirname, "overdetected"))
+        os.mkdir(os.path.join(dirname, "overdetectedmany")) #overdetected with more than one misdetected figure
+        os.mkdir(os.path.join(dirname, "underdetected"))
+        os.mkdir(os.path.join(dirname, "underdetectedmany")) #underedetected with more than one figure missing
+
+        options["review_dir"] = dirname
+        options["review_dir_all"] = os.path.join(dirname, "all")
+        options["review_dir_overdetected"] = os.path.join(dirname, "overdetected")
+        options["review_dir_overdetectedmany"] = os.path.join(dirname, "overdetectedmany")
+        options["review_dir_underdetected"] = os.path.join(dirname, "underdetected")
+        options["review_dir_underdetectedmany"] = os.path.join(dirname, "underdetectedmany")
 
     return options
 
@@ -670,7 +709,6 @@ def verify_results_correctness(options, current_file):
     return (retrieved_number == expected_pagenum, retrieved_number, expected_pagenum)
 
 
-
 def prepare_for_review(options, current_file, detected, expected):
     """In the case, an incorrect number of figures has been read, we want to make the manual review process easy,
     we create a directory with the summary of expected and obtained results
@@ -699,11 +737,150 @@ def prepare_for_review(options, current_file, detected, expected):
             _prepare_directory_for_review(options["review_dir_underdetectedmany"])
 
 
-if __name__ == "__main__":
+
+def perform_processing_local(parameters, results, stat_data):
+    """ the function that performs the actuall processing of the input data"""
+    for entry in get_input_files(parameters):
+        print "Processing input file %s writing output to the directory %s" % (entry[0], entry[1])
+        res = extract_file(entry[0], entry[1], parameters)
+        results.append((entry ,(parameters, entry[2], res, stat_data)))
+
+
+def perform_processing_controller(parameters, results, stat_data):
+    """Perfomrs extraction as a controller of the server farm"""
+    print "Running processing as controller"
+
+    def prepare_requests():
+        res = []
+        for entry in get_input_files(parameters):
+            res.append(ProcessingRequest(entry, input_file = entry[0]))
+        return res
+
+    HOST, PORT = parameters["be_controller"]["address"], parameters["be_controller"]["port"]
+    # SOCK_STREAM == a TCP socket
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #sock.setblocking(0)  # optional non-blocking
+    sock.connect((HOST, PORT))
+    sock.send("C") # we are a worker
+    if sock.recv(3) != "ACK":
+        print "Connection to the resources manager refused..."
+        sock.close()
+        return
+    f = open(jar_file_path, "r")
+    jar_content = f.read()
+    f.close()
+    send_data(sock, jar_content)
+    send_data(sock, hashlib.md5(jar_content).hexdigest())
+    requests = prepare_requests()
+
+    for res in requests:
+        print "SENDING REQUEST \n\n\n\n"
+        sock.send("REQ")
+        res.send_over_socket(sock)
+
+    sock.send("END")
+
+    # now waiting for the results
+
+    for i in range(len(requests)):
+        result = ProcessingResult.read_from_socket(sock)
+        process_processing_result(result)
+
+    sock.close()
+
+    for entry in get_input_files(parameters):
+        print "Processing input file %s writing output to the directory %s" % (entry[0], entry[1])
+        res = extract_file(entry[0], entry[1], parameters)
+        results.append((entry ,(parameters, entry[2], res, stat_data)))
+
+
+def resources_manager_main(port):
+    print "Starting the resources manager server"
+
+    server = SocketServer.ThreadingTCPServer(('', port), ClientRequestHandler)
+    server.serve_forever()
+
+def worker_main(host, port):
+
+    def process_request(req):
+        """process a single extraction request and return results"""
+
+        print "recieved request: args: %s file: %s " %( str(req.params), str(req.inputFileName))
+
+        # we start with argument substitution .... file names must be changed
+        results_data, file_content = "", ""
+
+        #results = execute_track([EXTRACTOR_EXECUTABLE, input_file, output_folder], output_folder)
+        #make temporary directory
+
+        temp_dir = tempfile.mkdtemp()
+        results = extract_file(req.inputFileName, os.path.join(temp_dir, "results"), req.params)
+
+        # preparing compressed version of the temp
+
+        tarfile = os.path.join(temp_dir, "results.tgz")
+        f = os.popen("tar -czf %s -C %s results" % (tarfile, temp_dir))
+        f.read()
+        f.close
+
+        f = open(tarfile, "r")
+        file_content = f.read()
+        f.close()
+
+        # removing temporary directory
+#        f = os.popen("rm -Rf %s" % (temp_dir, ))
+#        f.read()
+#        f.close()
+        return {"data": results_data, "params" : req.params }, tarfile
+
+    # SOCK_STREAM == a TCP socket
+    print "Started a worker connected to host %s at port %i" % (host, port)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #sock.setblocking(0)  # optional non-blocking
+    sock.connect((host, port))
+    sock.send("W") # we are a worker
+
+    while True:
+        command = sock.recv(3)  # limit reply to 16K
+        if command == "JAR":
+            jar_file = recieve_data(sock)
+
+            f = open(jar_file_path, "w")
+            f.write(jar_file)
+            f.close()
+            print "UPDATED JAR archive. md5: %s" % (hashlib.md5(jar_file).hexdigest(),)
+
+        elif command == "CMD":
+            print "Recieved processing request"
+            print "Recieving the input PDF file"
+
+            request = ProcessingRequest.read_from_socket(sock)
+
+            # now process command using the obtained data
+
+            output_data, tarfile = process_request(request)
+
+            # now send results file (compressed results folder)
+            res = ProcessingResult(output_data["params"], output_data["data"], file_name = tarfile)
+            res.send_over_socket(sock)
+
+
+    sock.close()
+    return reply
+
+def main():
     parameters = parse_input(sys.argv[1:])
     if not parameters:
         usage()
         sys.exit()
+
+    if "be_manager" in parameters:
+        resources_manager_main(parameters["be_manager"])
+        return
+
+    if "be_worker" in parameters:
+        worker_main(parameters["be_worker"]["address"], parameters["be_worker"]["port"])
+        return
 
     if not os.path.exists(parameters["output_directory"]):
         create_directories(parameters["output_directory"])
@@ -718,15 +895,21 @@ if __name__ == "__main__":
     processed_pages = 0
     correct_pages = 0
 
-    for entry in get_input_files(parameters):
-        print "Processing input file %s writing output to the directory %s" % (entry[0], entry[1])
-        res = extract_file(entry[0], entry[1], parameters)
-        stat_data = include_in_statistics(parameters, entry[2], res, stat_data)
-        # If we have correct data specified, we should verify the result
+    results = []
 
+
+    # the code for collecting results using
+    if "be_controller" in parameters:
+        perform_processing_controller(parameters, results, stat_data)
+    else:
+        perform_processing_local(parameters, results, stat_data)
+
+    for res in results:
+        stat_data = include_in_statistics(res[1][0], res[1][1], res[1][2], res[1][3])
+        # If we have correct data specified, we should verify the result
         if "descriptions_object" in parameters:
             processed_pages += 1
-            correctly_extracted,extracted_num, expected_num  = verify_results_correctness(parameters, entry)
+            correctly_extracted,extracted_num, expected_num  = verify_results_correctness(parameters, res[0])
             print "Returned %s %i %i\n" % (str(correctly_extracted), extracted_num, expected_num)
             if correctly_extracted:
                 correct_pages += 1
@@ -740,7 +923,10 @@ if __name__ == "__main__":
                 cdetected_figures += expected_num
             else:
                 cdetected_figures += extracted_num
-            prepare_for_review(parameters, entry, extracted_num, expected_num)
+            prepare_for_review(parameters, res[0], extracted_num, expected_num)
+
+
+
 
     finalise_statistics(parameters, stat_data)
 
@@ -751,3 +937,196 @@ if __name__ == "__main__":
     Expected figures: %i
     Correctly detected figures: %i
     Misdetected figures: %i""" % (processed_pages, correct_pages,  expected_figures, cdetected_figures, icdetected_figures)
+
+
+# definitions for networked usage
+
+latest_md5 = "" # md5 hash of the latest version of JAR file
+latest_jar = "ABCD" * 10 + "F" # the content of the latest JAR file
+current_controller = None
+requests_queue = Queue()
+results_queue = Queue()
+
+def send_data(request, file_content_raw):
+    #transfer a file over a request object
+    file_content = base64.b64encode(file_content_raw)
+    chunk_size = 16000 # the size of single sending
+    file_len = len(file_content)
+    request.send("%012i" % ( file_len))
+    request.send(hashlib.md5(file_content).hexdigest())
+    # now sending the file in chunks
+    sent = 0
+    while sent != file_len:
+        sent_to = sent + chunk_size
+        if sent_to > file_len:
+            sent_to = file_len
+        request.send(file_content[sent: sent_to])
+        sent = sent_to
+
+def recieve_data(request):
+    file_size = int(request.recv(12))
+    file_md5 = request.recv(32)
+    chunk_size = 16000
+    recieved = 0
+    parts = []
+    while recieved != file_size:
+        if recieved + chunk_size > file_size:
+            # decrease last chunk size
+            chunk_size = file_size - recieved
+        new_part = request.recv(chunk_size)
+        parts.append(new_part)
+        recieved += len(new_part)
+
+    file_content = "".join(parts)
+
+    return base64.b64decode(file_content)
+
+
+class ProcessingResult(object):
+    def __init__(self, original_params, results, file_content=None, file_name=None):
+        if file_content:
+            fd, self.fileName = tempfile.mkstemp(suffix=".tgz")
+            os.write(fd, file_content)
+            os.close(fd)
+        else:
+            self.fileName = file_name
+        self.results = results
+        self.original_params = original_params
+
+    @classmethod
+    def read_from_socket(self, soc):
+        results_s = recieve_data(soc)
+        params_s = recieve_data(soc)
+        content = recieve_data(soc)
+        return ProcessingResult(cPickle.loads(params_s), cPickle.loads(results_s), content)
+
+    def send_over_socket(self, soc):
+        send_data(soc, cPickle.dumps(self.results))
+        send_data(soc, cPickle.dumps(self.original_params))
+        f = open(self.fileName, "r")
+        send_data(soc, f.read())
+        f.close()
+
+class ProcessingRequest(object):
+    """Stores a request to extract data from a file ... contains the PDF file and the parameters of the extractor"""
+    def __init__(self, params, input_content=None, input_file = None):
+        self.params = params
+        if input_content:
+            fd, self.inputFileName = tempfile.mkstemp(suffix=".pdf")
+            os.write(fd, input_content)
+            os.close(fd)
+        else:
+            self.inputFileName = input_file
+
+    def send_over_socket(self, soc):
+        """Read data of a request and send it over a socket"""
+        f = open(self.inputFileName, "r")
+        send_data(soc, f.read())
+        send_data(soc, cPickle.dumps(self.params))
+
+    @classmethod
+    def read_from_socket(self, soc):
+        """reads a request from a socket"""
+        file_data = recieve_data(soc)
+        request_ser = recieve_data(soc)
+        return ProcessingRequest(cPickle.loads(request_ser), input_content = file_data)
+
+
+class Worker():
+    # processign of a single worker
+    def __init__(self, request):
+        self.jar_md5 = "" # at the very beginning we will have to update JAR anyway
+        self.request = request
+
+    def handle(self):
+        while True:
+            rq = requests_queue.get()
+            self.update_jar_if_necessary()
+            print "SENDING A REQUEST"
+            self.request.send("CMD")
+            rq.send_over_socket(self.request)
+            res = ProcessingResult.read_from_socket(self.request)
+            results_queue.put(res)
+
+    def update_jar_if_necessary(self):
+        """Update the jar archive"""
+        if self.jar_md5 != latest_md5:
+            print "updating JAR"
+            self.request.send("JAR")
+            send_data(self.request, latest_jar)
+            self.jar_md5 = hashlib.md5(latest_jar).hexdigest()
+    def disconnect(self):
+        print "Worker disconnected"
+
+class Controller():
+    def __init__(self, request):
+        global current_controller
+        self.request = request;
+        current_controller = self
+
+    def handle(self):
+        global current_controller
+        global latest_jar
+        global latest_md5
+
+       # recieve JAR, recieve requests (REQ + reqiest)* recieve END
+        latest_jar = recieve_data(self.request)
+        latest_md5 = recieve_data(self.request)
+
+        #hashlib.md5(latest_jar).hexdigest()
+        cmd = ""
+        added_requests = 0
+        while cmd != "END":
+            cmd = self.request.recv(3)
+            print "Recieved command: %s" % (cmd, )
+            if cmd == "REQ":
+                print "RECIEVING A REQUEST \n\n\n"
+                req = ProcessingRequest.read_from_socket(self.request)
+                requests_queue.put(req)
+                added_requests += 1
+
+        # now we wait for the same number of results
+
+        print "NOW WAITING FOR RESULTS FROM WORKERS\n\n\n"
+        while added_requests > 0:
+            result = results_queue.get()
+            result.send_over_socket(self.request)
+            added_requests -= 1
+        current_controller = None
+
+    def disconnect(self):
+        global current_controller
+        current_controller = None
+
+
+class ClientRequestHandler(SocketServer.BaseRequestHandler ):
+    def setup(self):
+        client_type = self.request.recv(1)
+        self.algorithm = None
+        if client_type == "W":
+            print "Worker connected at " + str(self.client_address)
+            self.algorithm = Worker(self.request)
+
+        elif client_type == "C":
+            print "Controller connected at " + str(self.client_address)
+            # we can have only a single controller !
+            if not current_controller:
+                self.algorithm = Controller(self.request)
+                self.request.send("ACK")
+            else:
+                self.request.send("RJC")
+                print "Rejected controller request because there is already one connected controller"
+        else:
+            print "ERROR: unknown type of client connected"
+
+    def handle(self):
+        if self.algorithm:
+            self.algorithm.handle()
+
+    def finish(self):
+        print self.client_address, 'disconnected!'
+        if self.algorithm:
+            self.algorithm.disconnect()
+
+if __name__ == "__main__":
+    main()
