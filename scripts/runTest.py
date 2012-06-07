@@ -1022,17 +1022,10 @@ def resources_manager_main(port):
     server.serve_forever()
 
 def worker_main(host, port):
-
     def process_request(req, temp_dir):
         """process a single extraction request and return results"""
 
         print "recieved request: args: %s file: %s " %( str(req.params), str(req.inputFileName))
-
-        # we start with argument substitution .... file names must be changed
-        results_data, file_content = "", ""
-
-        #results = execute_track([EXTRACTOR_EXECUTABLE, input_file, output_folder], output_folder)
-        #make temporary directory
 
         results = extract_file(req.inputFileName, os.path.join(temp_dir, "results"), req.params)
 
@@ -1051,7 +1044,7 @@ def worker_main(host, port):
 #        f = os.popen("rm -Rf %s" % (temp_dir, ))
 #        f.read()
 #        f.close()
-        return {"data": results_data, "params" : req.params }, tarfile
+        return {"data": results, "params" : req.params }, tarfile
 
     # SOCK_STREAM == a TCP socket
     print "Started a worker connected to host %s at port %i" % (host, port)
@@ -1117,7 +1110,6 @@ def main():
     correct_pages = 0
 
     results = []
-
 
     # the code for collecting results using
     if "be_controller" in parameters:
