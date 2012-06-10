@@ -31,46 +31,53 @@ current_controller = None
 requests_queue = Queue()
 results_queue = Queue()
 
+
+def recv_bytes(sock, size):
+    """Recieve exact number of bytes from a socket"""
+    recvd = 0
+    res = []
+    chunk = 8192
+    while recvd != size:
+        if recvd + chunk > size:
+            chunk = size - recvd
+        part = sock.recv(chunk)
+        recvd += len(part)
+        res.append(part)
+    return "".join(res)
+
+def send_bytes(sock, buf):
+    """Send exact number of bytes to a socket"""
+    to_send = len(buf)
+    sent = 0
+    chunk = 8192
+
+    while sent !=to_send:
+        if sent + chunk > to_send:
+            chunk = to_send - sent
+        sent += sock.send(buf[sent:sent+chunk])
+
 def send_data(request, file_content_raw):
     #transfer a file over a request object
     file_content = base64.b64encode(file_content_raw)
     chunk_size = 16000 # the size of single sending
     file_len = len(file_content)
-    request.send("%012i" % ( file_len))
-    request.send(hashlib.md5(file_content).hexdigest())
+
+    send_bytes(request, "%012i" % ( file_len))
+    send_bytes(request, hashlib.md5(file_content).hexdigest())
     # now sending the file in chunks
-    sent = 0
-    while sent != file_len:
-        sent_to = sent + chunk_size
-        if sent_to > file_len:
-            sent_to = file_len
-        request.send(file_content[sent: sent_to])
-        sent = sent_to
+    send_bytes(request, file_content)
 
 def recieve_data(request):
-    file_size = int(request.recv(12))
-    file_md5 = request.recv(32)
-    chunk_size = 16000
-    recieved = 0
-    parts = []
-    while recieved != file_size:
-        if recieved + chunk_size > file_size:
-            # decrease last chunk size
-            chunk_size = file_size - recieved
-        new_part = request.recv(chunk_size)
-        parts.append(new_part)
-        recieved += len(new_part)
-
-    file_content = "".join(parts)
-
-    return base64.b64decode(file_content)
+    file_size = int(recv_bytes(request, 12))
+    file_md5 = recv_bytes(request, 32)
+    return base64.b64decode(recv_bytes(request, file_size))
 
 
 class ProcessingResult(object):
     def __init__(self, original_params, results, file_content=None, file_name=None, tempdir=None):
         if file_content:
             if tempdir:
-                print "tempdir: " + str(tempdir)
+#                print "tempdir: " + str(tempdir)
                 fd, self.fileName = tempfile.mkstemp(suffix=".tgz", dir=tempdir)
             else:
                 fd, self.fileName = tempfile.mkstemp(suffix=".tgz")
@@ -174,7 +181,7 @@ class Worker():
 
 
             self.update_jar_if_necessary()
-            self.request.send("CMD")
+            send_bytes(self.request, "CMD")
             rq.send_over_socket(self.request)
             tmpdir = None
             if "tempdir" in self.parameters:
@@ -195,7 +202,7 @@ class Worker():
         """Update the jar archive"""
         if self.jar_md5 != latest_md5:
             print "updating JAR"
-            self.request.send("JAR")
+            send_bytes(self.request, "JAR")
             send_data(self.request, latest_jar)
             self.jar_md5 = hashlib.md5(latest_jar).hexdigest()
     def disconnect(self):
@@ -228,7 +235,7 @@ class Controller():
         cmd = ""
         added_requests = 0
         while cmd != "END":
-            cmd = self.request.recv(3)
+            cmd = recv_bytes(self.request, 3)
             if cmd == "REQ":
                 tempdir = None
                 if "tempdir" in self.parameters:
@@ -241,10 +248,12 @@ class Controller():
 
         print "Recieved a complete set of %i requests, now waiting for workers to finish processing\n\n\n" % (added_requests, )
 
-        while added_requests > 0:
+        while returned_results != added_requests:
             result = results_queue.get()
             result.send_over_socket(self.request)
-            added_requests -= 1
+            returned_results += 1
+            print "Returned result %i of %i" % (returned_results, added_requests)
+
         current_controller = None
 
     def disconnect(self):
@@ -254,7 +263,7 @@ class Controller():
 
 class ClientRequestHandler(SocketServer.BaseRequestHandler ):
     def setup(self):
-        client_type = self.request.recv(1)
+        client_type = recv_bytes(self.request, 1)
         self.algorithm = None
         if client_type == "W":
             print "Worker connected at " + str(self.client_address)
@@ -265,9 +274,9 @@ class ClientRequestHandler(SocketServer.BaseRequestHandler ):
             # we can have only a single controller !
             if not current_controller:
                 self.algorithm = Controller(self.request, ClientRequestHandler.parameters)
-                self.request.send("ACK")
+                send_bytes(self.request, "ACK")
             else:
-                self.request.send("RJC")
+                send_bytes(self.request, "RJC")
                 print "Rejected controller request because there is already one connected controller"
         else:
             print "ERROR: unknown type of client connected"
@@ -1056,8 +1065,8 @@ def perform_processing_controller(parameters, results, stat_data):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     #sock.setblocking(0)  # optional non-blocking
     sock.connect((HOST, PORT))
-    sock.send("C") # we are a worker
-    if sock.recv(3) != "ACK":
+    send_bytes(sock, "C")
+    if recv_bytes(sock, 3) != "ACK":
         print "Connection to the resources manager refused..."
         sock.close()
         return
@@ -1069,10 +1078,10 @@ def perform_processing_controller(parameters, results, stat_data):
     requests = prepare_requests()
 
     for res in requests:
-        sock.send("REQ")
+        send_bytes(sock, "REQ")
         res.send_over_socket(sock)
 
-    sock.send("END")
+    send_bytes(sock, "END")
 
     # now waiting for the results
 
@@ -1121,10 +1130,10 @@ def worker_main(host, port, parameters):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     #sock.setblocking(0)  # optional non-blocking
     sock.connect((host, port))
-    sock.send("W") # we are a worker
+    send_bytes(sock, "W") # we are a worker
 
     while True:
-        command = sock.recv(3)  # limit reply to 16K
+        command = recv_bytes(sock, 3)  # limit reply to 16K
         if command == "JAR":
             jar_file = recieve_data(sock)
 
