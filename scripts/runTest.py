@@ -22,7 +22,6 @@ from Queue import Queue
 import base64
 
 
-
 # Definitions for networked usage - distribution of the execution
 
 latest_md5 = "" # md5 hash of the latest version of JAR file
@@ -43,6 +42,10 @@ def recv_bytes(sock, size):
         part = sock.recv(chunk)
         recvd += len(part)
         res.append(part)
+        if len(part) == 0:
+            # we have not recieved anything... we will wait a bit
+            time.sleep(1)
+
     return "".join(res)
 
 def send_bytes(sock, buf):
@@ -54,7 +57,12 @@ def send_bytes(sock, buf):
     while sent !=to_send:
         if sent + chunk > to_send:
             chunk = to_send - sent
-        sent += sock.send(buf[sent:sent+chunk])
+
+        sent_now = sock.send(buf[sent:sent+chunk])
+        sent += sent_now
+        if sent_now == 0:
+            time.sleep(1)
+
 
 def send_data(request, file_content_raw):
     #transfer a file over a request object
