@@ -248,6 +248,7 @@ class Controller():
 
         print "Recieved a complete set of %i requests, now waiting for workers to finish processing\n\n\n" % (added_requests, )
 
+        returned_results = 0
         while returned_results != added_requests:
             result = results_queue.get()
             result.send_over_socket(self.request)
