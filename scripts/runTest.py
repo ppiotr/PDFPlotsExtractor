@@ -12,8 +12,7 @@ import subprocess
 import time
 from datetime import datetime
 import getopt
-from threading import Thread
-
+from threading import Thread, Semaphore
 import socket
 import SocketServer
 import hashlib
@@ -71,6 +70,7 @@ class ProcessingResult(object):
     def __init__(self, original_params, results, file_content=None, file_name=None, tempdir=None):
         if file_content:
             if tempdir:
+                print "tempdir: " + str(tempdir)
                 fd, self.fileName = tempfile.mkstemp(suffix=".tgz", dir=tempdir)
             else:
                 fd, self.fileName = tempfile.mkstemp(suffix=".tgz")
@@ -102,6 +102,7 @@ class ProcessingRequest(object):
         self.file_name = file_name
 
         if input_content:
+            self.hash = hashlib.md5(input_content).hexdigest()
             if folder:
                 self.inputFileName = os.path.join(folder, file_name)
                 fd = open(self.inputFileName, "w")
@@ -115,6 +116,10 @@ class ProcessingRequest(object):
             fd.close()
         else:
             self.inputFileName = input_file
+            f = open(input_file, "r")
+            self.hash = hashlib.md5(f.read()).hexdigest()
+            f.close()
+
 
     def send_over_socket(self, soc):
         """Read data of a request and send it over a socket"""
@@ -132,6 +137,9 @@ class ProcessingRequest(object):
         request_ser = recieve_data(soc)
         return ProcessingRequest(cPickle.loads(request_ser), file_name, input_content = file_data, folder = folder, tempdir=tempdir)
 
+tasks_sem = Semaphore()
+tasks_in_processing = {} # which tasks are being currently processed "hash of the file" -> (ProcessingRequest(), number of workers)
+
 class Worker():
     # processign of a single worker
     def __init__(self, request, parameters):
@@ -141,7 +149,30 @@ class Worker():
 
     def handle(self):
         while True:
-            rq = requests_queue.get()
+            rq = None
+            updated_stats = False
+
+            try:
+                rq = requests_queue.get()
+            except:
+                # there are no new tasks waiting ... we pick an existing task with the smallest count for execution
+                tasks_sem.acquire()
+                items = tasks_in_processing.items()
+                items.sort(lambda x, y: x[1][1] - y[1][1])
+                if items:
+                    rq = items[0][1][0]
+                    tasks_in_processing[item[0]] = (items[1][0], items[1][1])
+                    updated_stats = True
+                    print "Resubmitting already submitted task"
+                tasks_sem.release()
+            if not rq: # wait in the queue !
+                rq = requests_queue.get()
+            if not updated_stats:
+                tasks_sem.acquire()
+                tasks_in_processing[rq.hash] = (rq, 1)
+                tasks_sem.release()
+
+
             self.update_jar_if_necessary()
             self.request.send("CMD")
             rq.send_over_socket(self.request)
@@ -149,7 +180,16 @@ class Worker():
             if "tempdir" in self.parameters:
                 tmpdir = self.parameters["tempdir"]
             res = ProcessingResult.read_from_socket(self.request, tempdir = self.parameters["tempdir"])
-            results_queue.put(res)
+            tasks_sem.acquire()
+            if rq.hash in tasks_in_processing:
+                del tasks_in_processing[rq.hash]
+            else: # in this case the request has already returned.... not enqueueing any result
+                res = None
+            tasks_sem.release()
+
+            if res:
+                results_queue.put(res)
+
 
     def update_jar_if_necessary(self):
         """Update the jar archive"""
@@ -167,7 +207,14 @@ class Controller():
         self.request = request;
         self.parameters = parameters
         current_controller = self
+        finish = False
+        # clearing all the results from the queue
 
+        while not finish:
+            try:
+                results_queue.get_nowait()
+            except:
+                finish=True
     def handle(self):
         global current_controller
         global latest_jar
@@ -1002,7 +1049,6 @@ def perform_processing_controller(parameters, results, stat_data):
 
         entry = result.original_params
         res = result.results
-        print "Appending result: entry=%s results=%s" % (str(entry), str(res))
         results.append((entry ,(parameters, entry[2], res, stat_data)))
 
     HOST, PORT = parameters["be_controller"]["address"], parameters["be_controller"]["port"]
