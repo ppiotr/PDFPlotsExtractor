@@ -168,7 +168,7 @@ class Worker():
                 items.sort(lambda x, y: x[1][1] - y[1][1])
                 if items:
                     rq = items[0][1][0]
-                    tasks_in_processing[item[0]] = (items[1][0], items[1][1])
+                    tasks_in_processing[items[0]] = (items[1][0], items[1][1])
                     updated_stats = True
                     print "Resubmitting already submitted task"
                 tasks_sem.release()
