@@ -160,7 +160,7 @@ class Worker():
             updated_stats = False
 
             try:
-                rq = requests_queue.get()
+                rq = requests_queue.get_nowait()
             except:
                 # there are no new tasks waiting ... we pick an existing task with the smallest count for execution
                 tasks_sem.acquire()
