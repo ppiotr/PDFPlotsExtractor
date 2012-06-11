@@ -179,6 +179,7 @@ class Worker():
                     tasks_in_processing[items[0][0]] = (items[0][1][0], items[0][1][1] + 1)
                     updated_stats = True
                     print "Resubmitting already submitted task"
+                    print "Running tasks: " + str(tasks_in_processing)
                 tasks_sem.release()
             if not rq: # wait in the queue !
                 rq = requests_queue.get()
