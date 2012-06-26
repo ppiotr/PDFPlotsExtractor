@@ -45,11 +45,14 @@ class ExtractorCSInterpreter extends CSPlatformRenderer {
     protected void process(CSOperation operation) throws CSException {
         this.operationsManager.setCurrentOperation(operation);
 
+        /*
         try {
             this.operationsManager.contentStreamStateMachine.process(operation);
         } catch (Exception ex) {
             System.out.println("Something went wrong with parsing the stream of operations. " + ex.getMessage());
         }
+         * 
+         */
 
         super.process(operation);
 
@@ -60,7 +63,10 @@ class ExtractorCSInterpreter extends CSPlatformRenderer {
      * Returns a stream of higher level objects
      * @return
      */
+    /*
     public LinkedList<PDFObject> getObjects(){
         return this.operationsManager.contentStreamStateMachine.getObjects();
     }
+     * 
+     */
 }

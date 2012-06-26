@@ -4,7 +4,6 @@
  */
 package invenio.pdf.core;
 
-import de.intarsys.pdf.pd.PDPage;
 import invenio.pdf.core.PDFObjects.PDFObject;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
@@ -203,6 +202,7 @@ public class PDFPageManager<InternalPageType> {
         return this.rawImageFileName;
     }
 
+    /*
     public void setPDFObjects(LinkedList<PDFObject> objects) {
         this.pdfObjects = objects;
     }
@@ -210,4 +210,6 @@ public class PDFPageManager<InternalPageType> {
     public LinkedList<PDFObject> getPDFObjects(){
         return this.pdfObjects;
     }
+     * 
+     */
 }

@@ -182,15 +182,18 @@ public class PlotsExtractorCli {
                         null, graphicalOperations, null);
                 File graphicalAnnotatedFile = new File(outputDirectory.getPath(), "graphical_output" + i + ".png");
                 Images.writeImageToFile(img3, graphicalAnnotatedFile);
+                /*
                 // annotating with detected PDFObjects
                 BufferedImage img4 = Images.copyBufferedImage(img);
                 PlotsExtractorTools.annotateImage((Graphics2D) img4.getGraphics(),
                         null,
                         null,
                         null, null, pageMgr.getPDFObjects());
+                
+                
                 File pdfObjectsFile = new File(outputDirectory.getPath(), "pdfobjects_output" + i + ".png");
                 Images.writeImageToFile(img4, pdfObjectsFile);
-
+*/
                 BufferedImage img40 = Images.copyBufferedImage(img);
                 PlotsExtractorTools.annotateImage((Graphics2D) img40.getGraphics(),
                         null,
@@ -211,7 +214,7 @@ public class PlotsExtractorCli {
                     }
                 }
 
-
+                /*
                 System.out.println("Statistics about objects stored in the PDF");
                 // now dealing with operations ..
                 for (PDFObject object : pageMgr.getPDFObjects()) {
@@ -244,7 +247,7 @@ public class PlotsExtractorCli {
                     }
 
                     System.out.println("");
-                }
+                }*/
             }
         }
 

@@ -38,7 +38,7 @@ class PDFPageOperationsManager {
     private Rectangle pageBoundary;
     private Map<CSOperation, int[]> operationTextPositions;
     private String pageText;
-    public ContentStreamStateMachine contentStreamStateMachine;
+    //public ContentStreamStateMachine contentStreamStateMachine;
 
     /**
      * Creates a new instance of the page manager for a page of a given boundary
@@ -56,7 +56,7 @@ class PDFPageOperationsManager {
         this.operationTextPositions = new HashMap<CSOperation, int[]>();
         this.pageText = "";
 
-        this.contentStreamStateMachine = new ContentStreamStateMachine();
+        //this.contentStreamStateMachine = new ContentStreamStateMachine();
     }
 
     /**
@@ -122,14 +122,7 @@ class PDFPageOperationsManager {
     }
 
     public void setOperationBoundary(CSOperation op, Rectangle rec) {
-        if (rec == null) {
-            System.out.println("Wiedz, ze cos sie dzieje");
-        }
         this.operationBoundaries.put(op, new Rectangle(rec));
-        
-        if (this.operationBoundaries.get(op) == null) {
-            System.out.println("Wiedz, ze cos sie dzieje");
-        }
     }
 
     public Rectangle getOperationBoundary(CSOperation op) {
@@ -145,18 +138,13 @@ class PDFPageOperationsManager {
 
         if (currentBoundary != null) {
             Rectangle bnd = currentBoundary.createUnion(rec.getBounds2D()).getBounds();
-            if (bnd.x == 109 && bnd.y == 840 && bnd.width == 1015 && bnd.height == 610) {
-                System.out.println("Wiedz, ze cos sie dzieje");
-            }
+
             this.setOperationBoundary(this.getCurrentOperation(), bnd);
         } else {
             this.setOperationBoundary(this.getCurrentOperation(), new Rectangle(rec));
-            if (rec.x == 109 && rec.y == 840 && rec.width == 1015 && rec.height == 610) {
-                System.out.println("Wiedz, ze cos sie dzieje");
-            }
         }
 
-        this.contentStreamStateMachine.extendCurrentBoundary(rec);
+//        this.contentStreamStateMachine.extendCurrentBoundary(rec);
     }
 
     public void addTextOperation(CSOperation op) {

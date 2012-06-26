@@ -140,7 +140,7 @@ public class PDFDocumentTools {
                 result = opManager.transformToPDFPageManager();
                 result.setRenderedPage(image);
                 result.setInternalPage(page);
-                result.setPDFObjects(renderer.getObjects());
+                //result.setPDFObjects(renderer.getObjects());
             }
             return result;
 

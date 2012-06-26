@@ -27,7 +27,7 @@ public class Plot {
 
     private Rectangle boundary; // The boundary inside the rendered page
     private Rectangle pageBoundary; // The boundary of the rendered page
-    private String caption; // Detected caption of the plot
+    private FigureCaption caption; // Detected caption of the plot
     private List<String> references; // a list of references to the plot, from the article text
     private List<Operation> operations; // a list of all the PDF operations creating this plot
     private int pageNumber;
@@ -36,14 +36,13 @@ public class Plot {
     private PDFPageManager pageManager;
     
     private static int identifierFactory = 0;
-    private Rectangle captionBoundary;
 
     /**
      * A default constructor - creates a plot descriptor holding empty information
      */
     public Plot() {
         this.references = new ArrayList<String>();
-        this.caption = "";
+        this.caption = null;
         this.boundary = new Rectangle(0, 0, 0, 0);
         this.pageBoundary = new Rectangle(0, 0, 0, 0);
         this.operations = new LinkedList<Operation>();
@@ -86,7 +85,7 @@ public class Plot {
      * Sets the caption of the plot
      * @param cap
      */
-    public void setCaption(String cap) {
+    public void setCaption(FigureCaption cap) {
         this.caption = cap;
     }
 
@@ -94,7 +93,7 @@ public class Plot {
      * Return the caption of teh plot
      * @return
      */
-    public String getCaption() {
+    public FigureCaption getCaption() {
         return this.caption;
     }
 
@@ -158,14 +157,4 @@ public class Plot {
         identifierFactory++;
         return "plot" + identifierFactory;
     }
-
-    public void setCaptionBoundary(Rectangle bd) {
-        this.captionBoundary = bd;
-    }
-
-    public Rectangle getCaptionBoundary(){
-        return this.captionBoundary;
-    }
-
-
 }

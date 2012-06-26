@@ -78,7 +78,7 @@ public class PlotHeuristics {
     public static Map<Rectangle, Pair<List<Operation>, Integer>> removeBasedOnHavingOnlyHorizontalLines(
             Map<Rectangle, Pair<List<Operation>, Integer>> areas) {
         Map<Rectangle, Pair<List<Operation>, Integer>> result = new HashMap<Rectangle, Pair<List<Operation>, Integer>>();
-        System.out.println("Filtering out areas having only horizontal lines");
+//        System.out.println("Filtering out areas having only horizontal lines");
         for (Rectangle curRec : areas.keySet()) {
             boolean containsNonHorizontal = false;
             for (Operation op : areas.get(curRec).first) {
