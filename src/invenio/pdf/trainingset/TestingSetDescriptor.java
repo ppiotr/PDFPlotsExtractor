@@ -122,7 +122,7 @@ public class TestingSetDescriptor {
             System.out.println("Plot: ");
             System.out.println("   rectangle = " + model.currentPlot.getBoundary().toString());
             System.out.println("   caption text = " + model.currentPlot.getCaption());
-            System.out.println("   caption rectangle = " + model.currentPlot.getCaptionBoundary().toString());
+            System.out.println("   caption rectangle = " + model.currentPlot.getCaption().boundary.toString());
         }
     }
 
@@ -236,7 +236,7 @@ public class TestingSetDescriptor {
         Rectangle bd = plot.getBoundary();
         gc.drawRectangle(bd.x, bd.y, bd.width, bd.height);
         gc.setForeground(new org.eclipse.swt.graphics.Color(gc.getDevice(), 0, 255, 0));
-        bd = plot.getCaptionBoundary();
+        bd = plot.getCaption().boundary;
         if (bd != null) {
             gc.drawRectangle(bd.x, bd.y, bd.width, bd.height);
         }
@@ -356,7 +356,7 @@ public class TestingSetDescriptor {
 
                 @Override
                 public void execute() throws Exception {
-                    model.currentPlot.setCaptionBoundary(this.rectangle);
+                    model.currentPlot.getCaption().boundary = this.rectangle;
                     setCurrentPlot(model.currentPlot);
                     System.out.println("Finished selecting new plot data");
                     inOperation = false;
@@ -370,8 +370,8 @@ public class TestingSetDescriptor {
         if (model.currentPage != null) {
             Plot newPlot = new Plot();
             newPlot.setPageManager(model.currentPage);
-            newPlot.setCaptionBoundary(new Rectangle(0, 0, 0, 0));
-            newPlot.setCaption("");
+            newPlot.getCaption().boundary = new Rectangle(0, 0, 0, 0);
+            newPlot.getCaption().text = "";
             setCurrentPlot(newPlot);
             newPlot.setPageNumber(model.currentPage.getPageNumber());
             if (model.plotsOnPages.get(model.currentPage.getPageNumber()) == null) {

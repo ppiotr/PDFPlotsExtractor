@@ -220,7 +220,7 @@ public class PlotHeuristics {
                 addArea = ((totalGraphicalArea / totalArea) > graphicalAreaThreshold);
             } else {
                 // no inline/external graphics... we apply the criteria on the number of operatio               
-                addArea = (areas.get(area).first.size() >= minNum && numGraphical > minGraphical && (numGraphical / areas.get(area).first.size() > minGraphicalFraction));
+                addArea = (areas.get(area).first.size() >= minNum && numGraphical > minGraphical && ((double) numGraphical / (double) areas.get(area).first.size() > minGraphicalFraction));
             }
 
 

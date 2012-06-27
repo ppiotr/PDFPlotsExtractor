@@ -162,7 +162,7 @@ public class PlotsWriter {
             w = w.key("height").value(pb.height);
             w = w.endObject();
         }
-        bd = plot.getCaptionBoundary();
+        bd = plot.getCaption().boundary;
         if (bd != null) {
             w = w.key("boundary").object();
             w = w.key("x").value(bd.x);
@@ -256,7 +256,7 @@ public class PlotsWriter {
         rootElement.appendChild(captionEl);
         // caption coordinates
         XmlTools.appendRectangle(document, captionEl, "coordinates",
-                plot.getCaptionBoundary());
+                plot.getCaption().boundary);
         // caption text
         XmlTools.appendElementWithTextNode(document, captionEl, "captionText",
                 "" + plot.getCaption());
@@ -280,7 +280,7 @@ public class PlotsWriter {
         Rectangle bd = plot.getBoundary();
         gr.drawRect(bd.x, bd.y, bd.width, bd.height);
         gr.setColor(Color.green);
-        bd = plot.getCaptionBoundary();
+        bd = plot.getCaption().boundary;
         if (bd != null) {
             gr.drawRect(bd.x, bd.y, bd.width, bd.height);
         }
@@ -295,7 +295,7 @@ public class PlotsWriter {
     }
 
     public static void writePlotCaptionImage(Plot plot) throws IOException {
-        Rectangle b = plot.getCaptionBoundary();
+        Rectangle b = plot.getCaption().boundary;
         if (plot.getPageManager().getRenderedPage() != null) {
             if (b == null) {
                 return;

@@ -41,20 +41,51 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
             result.plots.add(getPlotsFromPage(docManager.getPage(pageNum)));
         }
         HashMap<Integer, HashMap<Integer, LinkedList<FigureCaption>>> captions = getAllCaptions(docManager);
+        
         PlotsProvider.matchPlotsWithCaptions(docManager, result, captions);
-
+        
+        // now time to detect situations when we have detected too many plots ... we join plots that lie together and have single caption
+        PlotsProvider.joinBySingleCaption(docManager, result);
         // Now we are left with some unmatched captions.... we should further investigate this
 
 
-
-        /// Debugging code ... we show all captions found inside of the document
         
+        /// Debugging code ... we show all captions found inside of the document
+        System.out.println("Matched captions : \n\n");
+        for (int pageNum: captions.keySet()){
+            System.out.println("Page " + pageNum + "\n");
+            for (int regNum: captions.get(pageNum).keySet()){
+                for (FigureCaption caption: captions.get(pageNum).get(regNum)){
+                    if (caption.alreadyMatched){
+                        System.out.println("In region " + regNum + " found caption " + caption.text + "\n");
+                    }
+                }
+            }
+        }
+        System.out.println("\n****************************************************************************\n\nUnmatched captions:\n\n");
+        for (int pageNum: captions.keySet()){
+            System.out.println("Page " + pageNum + "\n");
+            for (int regNum: captions.get(pageNum).keySet()){
+                for (FigureCaption caption: captions.get(pageNum).get(regNum)){
+                    if (!caption.alreadyMatched){
+                        System.out.println("In region " + regNum + " found caption " + caption.text + "\n");
+                    }
+                }
+            }
+        }
         return result;
     }
 
     @Override
     public String getProvidedFeatureName() {
         return Plots.featureName;
+    }
+
+    
+    private static void joinBySingleCaption(PDFDocumentManager docManager, Plots result) {
+        //throw new UnsupportedOperationException("Not yet implemented");
+        // iterate over figures not having caption assigned. find the closest caption for them (maybe should be precached somewhere ... ).
+        // determine if figures having the same closest caption are close to each other and if necessary, join them into one figure
     }
 
     /** matches extracted captions with figure candidates 
@@ -108,8 +139,10 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
                         
                     }
                 }
+                
                 if (closestCaption != null){
                     plot.setCaption(closestCaption);
+                    closestCaption.alreadyMatched = true;
                 }
             }
         }
@@ -139,7 +172,8 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
                     (PageLayout) pageManager.getPageFeature(PageLayout.featureName);
 
             for (Rectangle textRegion : textAreas.areas.keySet()) {
-                FigureCaption caption = toFigureCaption(textAreas.areas.get(textRegion).first);
+                String textContent = textAreas.areas.get(textRegion).first;
+                FigureCaption caption = toFigureCaption(textContent);
                 if (caption != null) {
                     int bestArea = pageLayout.getSingleBestIntersectingArea(textRegion);
 
@@ -187,7 +221,7 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
 
 
         /*************
-         * Treating graphics operations - clustering them, filtering and
+         * Treating graphics operations - clustering them, filtering and 
          * including appropriate text operations
          **************/
         GraphicalAreas graphicalAreas =
@@ -201,7 +235,6 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
 
 
         areas = graphicalAreas.areas;
-
         areas = ExtractorGeometryTools.shrinkRectangleMap(areas, margins[0], margins[1]);
         areas = PlotHeuristics.removeIncorrectGraphicalRegions(areas);
         areas = PlotHeuristics.includeTextParts(areas, manager);
@@ -231,59 +264,6 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
         return plots;
     }
 
-    private static Pair<String, Rectangle> getPlotCaption(Plot plot, PDFPageManager pageManager)
-            throws FeatureNotPresentException, Exception {
-
-        TextAreas textAreas =
-                (TextAreas) pageManager.getPageFeature(TextAreas.featureName);
-
-        PageLayout pageLayout =
-                (PageLayout) pageManager.getPageFeature(PageLayout.featureName);
-
-        // finding the first text area next to the plot
-        Rectangle currentArea = null;
-
-        double plotEnding = plot.getBoundary().getMaxY();
-        int plotArea = pageLayout.getSingleBestIntersectingArea(plot.getBoundary());
-
-        // now filtering all the text areas. We want to consider only correct captions
-        // layout area number -> rectangle -> string
-        HashMap<Integer, HashMap<Rectangle, String>> possibleCaptions = new HashMap<Integer, HashMap<Rectangle, String>>();
-
-        for (Rectangle textRegion : textAreas.areas.keySet()) {
-            if (isPlotCaption(textAreas.areas.get(textRegion).first)) {
-                int bestArea = pageLayout.getSingleBestIntersectingArea(textRegion);
-
-                if (!possibleCaptions.containsKey(bestArea)) {
-                    possibleCaptions.put(bestArea, new HashMap<Rectangle, String>());
-                }
-
-                possibleCaptions.get(bestArea).put(textRegion,
-                        textAreas.areas.get(textRegion).first);
-            }
-        }
-        // until now should be precalculated for every page
-
-        HashMap<Rectangle, String> captions = possibleCaptions.get(plotArea);
-        if (captions == null) {
-            return new Pair<String, Rectangle>("", null);
-        }
-
-        for (Rectangle textRegion : captions.keySet()) {
-            if (currentArea == null
-                    || (currentArea.getMinY() > textRegion.getMinY()
-                    && textRegion.getMinY() > plotEnding)) {
-                currentArea = textRegion;
-            }
-        }
-
-        if (currentArea == null) {
-            return new Pair<String, Rectangle>("", null);
-        } else {
-            return new Pair<String, Rectangle>(captions.get(currentArea), currentArea);
-        }
-    }
-
     private static FigureCaption toFigureCaption(String candidate) {
         String prepared = candidate.toLowerCase().trim();
         ExtractorLogger.logMessage(2, "Processing a potential caption : " + candidate);
@@ -292,7 +272,7 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
         Pattern p = Pattern.compile("(figure|fig\\.|fig|plot|image|img.|img|table|tab.|tab)([^:]{1,5}+):");
         Matcher m = p.matcher(prepared);
 
-        if (m.matches()) {
+        if (m.lookingAt()) {
             FigureCaption caption = new FigureCaption();
             caption.text = candidate;
             caption.figureIdentifier = m.group(0); // the entire word
@@ -302,6 +282,5 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
         } else {
             return null;
         }
-        // m.group(2) - identifier of the figure (has to be trimmed before usage)
     }
 }

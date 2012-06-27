@@ -42,7 +42,7 @@ public class Plot {
      */
     public Plot() {
         this.references = new ArrayList<String>();
-        this.caption = null;
+        this.caption = new FigureCaption();
         this.boundary = new Rectangle(0, 0, 0, 0);
         this.pageBoundary = new Rectangle(0, 0, 0, 0);
         this.operations = new LinkedList<Operation>();

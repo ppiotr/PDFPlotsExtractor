@@ -179,11 +179,11 @@ public class PlotsExtractorTools {
         Element textElement = (Element) captionElement.getElementsByTagName("captionText").item(0);
 
         try {
-            plot.setCaptionBoundary(readRectangleFromXmlNode(coordElement));
-            plot.setCaption(textElement.getFirstChild().getNodeValue().trim());
+            plot.getCaption().boundary = readRectangleFromXmlNode(coordElement);
+            plot.getCaption().text = textElement.getFirstChild().getNodeValue().trim();
         } catch (Exception e) {
-            plot.setCaptionBoundary(new Rectangle(0, 0, 0, 0));
-            plot.setCaption("");
+            plot.getCaption().boundary = new Rectangle(0, 0, 0, 0);
+            plot.getCaption().text = "";
         }
     }
 
