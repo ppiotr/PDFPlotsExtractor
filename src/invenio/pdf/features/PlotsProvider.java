@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.fop.pdf.PDFPage;
 
 /**
  *
@@ -41,33 +42,37 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
             result.plots.add(getPlotsFromPage(docManager.getPage(pageNum)));
         }
         HashMap<Integer, HashMap<Integer, LinkedList<FigureCaption>>> captions = getAllCaptions(docManager);
-        
+
+        /** 
+         *  At this moment we do not support captions appearing on a different page than the figure itself, 
+         *  but such situations happen in rare cases. 
+         */
         PlotsProvider.matchPlotsWithCaptions(docManager, result, captions);
-        
+
         // now time to detect situations when we have detected too many plots ... we join plots that lie together and have single caption
         PlotsProvider.joinBySingleCaption(docManager, result);
         // Now we are left with some unmatched captions.... we should further investigate this
 
 
-        
+
         /// Debugging code ... we show all captions found inside of the document
         System.out.println("Matched captions : \n\n");
-        for (int pageNum: captions.keySet()){
+        for (int pageNum : captions.keySet()) {
             System.out.println("Page " + pageNum + "\n");
-            for (int regNum: captions.get(pageNum).keySet()){
-                for (FigureCaption caption: captions.get(pageNum).get(regNum)){
-                    if (caption.alreadyMatched){
+            for (int regNum : captions.get(pageNum).keySet()) {
+                for (FigureCaption caption : captions.get(pageNum).get(regNum)) {
+                    if (caption.alreadyMatched) {
                         System.out.println("In region " + regNum + " found caption " + caption.text + "\n");
                     }
                 }
             }
         }
         System.out.println("\n****************************************************************************\n\nUnmatched captions:\n\n");
-        for (int pageNum: captions.keySet()){
+        for (int pageNum : captions.keySet()) {
             System.out.println("Page " + pageNum + "\n");
-            for (int regNum: captions.get(pageNum).keySet()){
-                for (FigureCaption caption: captions.get(pageNum).get(regNum)){
-                    if (!caption.alreadyMatched){
+            for (int regNum : captions.get(pageNum).keySet()) {
+                for (FigureCaption caption : captions.get(pageNum).get(regNum)) {
+                    if (!caption.alreadyMatched) {
                         System.out.println("In region " + regNum + " found caption " + caption.text + "\n");
                     }
                 }
@@ -81,7 +86,6 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
         return Plots.featureName;
     }
 
-    
     private static void joinBySingleCaption(PDFDocumentManager docManager, Plots result) {
         //throw new UnsupportedOperationException("Not yet implemented");
         // iterate over figures not having caption assigned. find the closest caption for them (maybe should be precached somewhere ... ).
@@ -115,32 +119,32 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
 
             for (Plot plot : toIteratePlots) {
                 int area = pageLayout.getSingleBestIntersectingArea(plot.getBoundary());
-                double minDist = 0;
+                double minDist = Double.MAX_VALUE;
                 FigureCaption closestCaption = null;
-                
+
                 if (captions.containsKey(pageNum) && captions.get(pageNum).containsKey(area)) {
                     for (FigureCaption caption : captions.get(pageNum).get(area)) {
                         double distance = 0;
-                        if (!caption.alreadyMatched){
-                            if (caption.boundary.x > plot.getBoundary().x){
-                                distance = caption.boundary.x - plot.getBoundary().x - plot.getBoundary().height;
+                        if (!caption.alreadyMatched) {
+                            if (caption.boundary.y > plot.getBoundary().y) {
+                                distance = caption.boundary.y - plot.getBoundary().y - plot.getBoundary().height;
                             } else {
-                                distance = plot.getBoundary().x - caption.boundary.x - caption.boundary.height;
+                                distance = plot.getBoundary().y - caption.boundary.y - caption.boundary.height;
                             }
                         }
-                        if (distance < minDist){
+                        if (distance < minDist) {
                             minDist = distance;
                             closestCaption = caption;
                         }
-                        
-                        if (distance < 0){
+
+                        if (distance < 0) {
                             System.out.println("WARNING: Problem on page " + pageNum + " caption overlaping with figure");
                         }
-                        
+
                     }
                 }
-                
-                if (closestCaption != null){
+
+                if (closestCaption != null) {
                     plot.setCaption(closestCaption);
                     closestCaption.alreadyMatched = true;
                 }
@@ -148,15 +152,11 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
         }
     }
 
-        /** Retrieve all captions appearing in the document, aggregated by page number, layout element number and the rectangle 
-         * 
-         * @param docManager the document manager describing currently processed PDF
-         * @return 
-         */
-    
-
-    
-
+    /** Retrieve all captions appearing in the document, aggregated by page number, layout element number and the rectangle 
+     * 
+     * @param docManager the document manager describing currently processed PDF
+     * @return 
+     */
     public static HashMap<Integer, HashMap<Integer, LinkedList<FigureCaption>>> getAllCaptions(PDFDocumentManager docManager) throws FeatureNotPresentException, Exception {
         HashMap<Integer, HashMap<Integer, LinkedList<FigureCaption>>> captions =
                 new HashMap<Integer, HashMap<Integer, LinkedList<FigureCaption>>>();
@@ -185,10 +185,10 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
                     captions.get(pageNum).get(bestArea).add(caption);
                 }
             }
-            
+
             // now we sort caption within every area... by y coordinate
-            for (int areaNum: captions.get(pageNum).keySet()){
-                java.util.Collections.sort(captions.get(pageNum).get(areaNum), new Comparator<FigureCaption>(){
+            for (int areaNum : captions.get(pageNum).keySet()) {
+                java.util.Collections.sort(captions.get(pageNum).get(areaNum), new Comparator<FigureCaption>() {
 
                     @Override
                     public int compare(FigureCaption o1, FigureCaption o2) {
@@ -198,8 +198,8 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
             }
 
         }
-        
-        
+
+
         return captions;
     }
 
@@ -212,7 +212,6 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
      * @return List of plot descriptors
      */
     public static List<Plot> getPlotsFromPage(PDFPageManager manager) throws FeatureNotPresentException, Exception {
-        List<Plot> plots = new LinkedList<Plot>();
 
         // first we generate algorithm parameters depending on the page parameters
         //TODO: extend this
@@ -238,24 +237,36 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
         areas = ExtractorGeometryTools.shrinkRectangleMap(areas, margins[0], margins[1]);
         areas = PlotHeuristics.removeIncorrectGraphicalRegions(areas);
         areas = PlotHeuristics.includeTextParts(areas, manager);
-        areas = PlotHeuristics.removeFalsePlots(areas, manager);
+
+        List<Plot> plots = PlotsProvider.areasToPlots(areas, manager);
+
+        PlotHeuristics.removeFalsePlots(plots, manager); // removals from this stage can be reverted !
 
         // we are done with plot images -> creating plot structures for every
         // selected region
+
+        return plots;
+    }
+
+    private static List<Plot> areasToPlots(
+            Map<Rectangle, Pair<List<Operation>, Integer>> areas,
+            PDFPageManager manager) {
+        // transforms a collection of areas to an instance of Plots
+        List<Plot> plots = new LinkedList<Plot>();
 
         for (Rectangle area : areas.keySet()) {
             Plot plot = new Plot();
             plot.setBoundary(area);
             plot.addOperations(areas.get(area).first);
             plot.setPageNumber(manager.getPageNumber());
-            
-            
+
+
             /* We do not assign caption at this stage !
             Pair<String, Rectangle> caption = getPlotCaption(plot, manager);        
             plot.setCaption(caption.first);
             plot.setCaptionBoundary(caption.second);
-            */
-            
+             */
+
             plot.setPageManager(manager);
             plot.setId(getPlotIdFromCaption(plot.getCaption().figureIdentifier));
             plots.add(plot);

@@ -36,7 +36,9 @@ public class Plot {
     private PDFPageManager pageManager;
     
     private static int identifierFactory = 0;
-
+    
+    public Boolean isApproved = false;
+    public Boolean isToplevelPlot = true;
     /**
      * A default constructor - creates a plot descriptor holding empty information
      */
@@ -48,7 +50,7 @@ public class Plot {
         this.operations = new LinkedList<Operation>();
         this.files = new HashMap<String, File>();
     }
-
+    
     /**
      * Sets the page on which the plot is located
      * @param num
@@ -156,5 +158,9 @@ public class Plot {
     public static String getUniqueIdentifier(){
         identifierFactory++;
         return "plot" + identifierFactory;
+    }
+
+    int getOperationsNumber() {
+        return this.operations.size();
     }
 }

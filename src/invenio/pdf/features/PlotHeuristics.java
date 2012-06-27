@@ -49,25 +49,26 @@ public class PlotHeuristics {
     }
      */
     /** Removes regions based on the ratio between number of graphical and text operations */
-    public static Map<Rectangle, Pair<List<Operation>, Integer>> removeBasedOnTextOperationsProportion(
-            Map<Rectangle, Pair<List<Operation>, Integer>> areas) {
-        Map<Rectangle, Pair<List<Operation>, Integer>> result = new HashMap<Rectangle, Pair<List<Operation>, Integer>>();
-        for (Rectangle curRec : areas.keySet()) {
-            int numText = 0;
-            int numGraph = 0;
-            for (Operation op : areas.get(curRec).first) {
-                if (op instanceof TextOperation) {
-                    numText++;
-                }
-                if (op instanceof GraphicalOperation) {
-                    numGraph++;
-                }
-
-                //TODO: contidions here !! and some real filtering out
-                result.put(curRec, areas.get(curRec));
-            }
-        }
-        return result;
+    public static void removeBasedOnTextOperationsProportion(List<Plot> plots) {
+    
+//         
+//        for (Plot plot: plots.getPlots()){
+//            int numText = 0;
+//            int numGraph = 0;
+//            for (Operation op : plot.getOperations()) {
+//                if (op instanceof TextOperation) {
+//                    numText++;
+//                }
+//                if (op instanceof GraphicalOperation) {
+//                    numGraph++;
+//                }
+//
+//                //TODO: contidions here !! and some real filtering out .... and then remove the initial return statement 
+//                
+//                //result.put(curRec, areas.get(curRec));
+//            }
+//        }
+//        
     }
 
     /**
@@ -75,28 +76,50 @@ public class PlotHeuristics {
      * @param areas
      * @return 
      */
-    public static Map<Rectangle, Pair<List<Operation>, Integer>> removeBasedOnHavingOnlyHorizontalLines(
-            Map<Rectangle, Pair<List<Operation>, Integer>> areas) {
-        Map<Rectangle, Pair<List<Operation>, Integer>> result = new HashMap<Rectangle, Pair<List<Operation>, Integer>>();
-//        System.out.println("Filtering out areas having only horizontal lines");
-        for (Rectangle curRec : areas.keySet()) {
+    public static void removeBasedOnHavingOnlyHorizontalLines(List<Plot> plots) {
+        for (Plot plot: plots){
             boolean containsNonHorizontal = false;
-            for (Operation op : areas.get(curRec).first) {
+            for (Operation op : plot.getOperations()) {
                 if (op instanceof GraphicalOperation) {
                     GraphicalOperation gop = (GraphicalOperation) op;
                     containsNonHorizontal = containsNonHorizontal || (gop.getBoundary().height > 3);
                 }
             }
-            if (containsNonHorizontal) {
-                result.put(curRec, areas.get(curRec));
-            } else {
+            if (!containsNonHorizontal) {
+                plot.isApproved = false;
                 System.out.println("Removed a figure candidate that contained only horizontal lines");
             }
         }
-        return result;
     }
+    
+    
+   
+   /**
+     * Removes areas that can not be plots because of a wrong aspect ratio
+     * (plots can not for example be half of the page hight and few pixels broad
+     * @param areas
+     */
+   public static void removePlotsBasedOnAspectRatio(List<Plot> plots) {
 
-    /**
+        Map<Rectangle, Pair<List<Operation>, Integer>> result =
+                new HashMap<Rectangle, Pair<List<Operation>, Integer>>();
+
+        ExtractorParameters parameters = ExtractorParameters.getExtractorParameters();
+
+        double minAR = parameters.getMinimalAspectRatio();
+        double maxAR = parameters.getMaximalAspectRatio();
+
+        for (Plot plot: plots){
+            Rectangle curRec = plot.getBoundary();
+            double aspectRatio = curRec.getWidth() / curRec.getHeight();
+            if (minAR >= aspectRatio || aspectRatio >= maxAR) {
+                plot.isApproved = false; 
+         
+            }
+        }
+    }
+   
+   /**
      * Removes areas that can not be plots because of a wrong aspect ratio
      * (plots can not for example be half of the page hight and few pixels broad
      * @param areas
@@ -158,21 +181,18 @@ public class PlotHeuristics {
      * dimensions can not be considered plots
      * @return
      */
-    public static Map<Rectangle, Pair<List<Operation>, Integer>> removeBasedOnSize(
-            Map<Rectangle, Pair<List<Operation>, Integer>> areas,
-            PDFPageManager manager) {
+    public static void removeBasedOnSize(List<Plot> plots, PDFPageManager manager) {
         ExtractorParameters parameters = ExtractorParameters.getExtractorParameters();
         double minWidth = parameters.getMinimalFigureWidth() * manager.getRenderedPage().getHeight();
         double minHeight = parameters.getMinimalFigureHeight() * manager.getRenderedPage().getWidth();
         Map<Rectangle, Pair<List<Operation>, Integer>> results = new HashMap<Rectangle, Pair<List<Operation>, Integer>>();
 
-        for (Rectangle area : areas.keySet()) {
-            if (area.width > minWidth && area.height > minHeight) {
-                results.put(area, areas.get(area));
+        for (Plot plot: plots) {
+             Rectangle area = plot.getBoundary();
+            if (area.width <= minWidth || area.height <= minHeight) {
+                plot.isApproved = false;
             }
         }
-
-        return results;
     }
 
     /**
@@ -180,8 +200,8 @@ public class PlotHeuristics {
      * @param areas
      * @return 
      */
-    public static Map<Rectangle, Pair<List<Operation>, Integer>> removeBasedOnOperationsNumber(
-            Map<Rectangle, Pair<List<Operation>, Integer>> areas) {
+    public static void removeBasedOnOperationsNumber(
+           List<Plot> plots) {
         HashMap<Rectangle, Pair<List<Operation>, Integer>> result = new HashMap<Rectangle, Pair<List<Operation>, Integer>>();
 
         ExtractorParameters parameters = ExtractorParameters.getExtractorParameters();
@@ -189,15 +209,16 @@ public class PlotHeuristics {
         int minGraphical = parameters.getMinimalFiguresGraphicalOperationsNumber();
         double graphicalAreaThreshold = parameters.getMinimalGraphicalAreaFraction();
         double minGraphicalFraction = parameters.getMinimalFiguresGraphicalOperationsFraction();
-        for (Rectangle area : areas.keySet()) {
+        
+        for (Plot plot: plots) {
             // Operators to consider non-blocking: Do BI, ID, EI 
-
+            Rectangle area = plot.getBoundary();
             boolean acceptAnyway = false;
             int numGraphical = 0;
             double totalGraphicalArea = 0;
             double totalArea = area.width * area.height;
             
-            for (Operation op : areas.get(area).first) {
+            for (Operation op : plot.getOperations()) {
                 
                 String operator = op.getOriginalOperation().getOperator().toString();
                 if ("Do".equals(operator) || "BI".equals(operator) || "ID".equals(operator) || "EI".equals(operator)) {
@@ -217,38 +238,32 @@ public class PlotHeuristics {
             boolean addArea = false;
             if (acceptAnyway) {
                 // the inline/external graphics has been painted ... we apply the criterion on teh area covered by graphics operations
-                addArea = ((totalGraphicalArea / totalArea) > graphicalAreaThreshold);
+                plot.isApproved = plot.isApproved && ((totalGraphicalArea / totalArea) > graphicalAreaThreshold);
             } else {
                 // no inline/external graphics... we apply the criteria on the number of operatio               
-                addArea = (areas.get(area).first.size() >= minNum && numGraphical > minGraphical && ((double) numGraphical / (double) areas.get(area).first.size() > minGraphicalFraction));
+                plot.isApproved = plot.isApproved && (plot.getOperationsNumber() >= minNum && numGraphical > minGraphical && ((double) numGraphical / (double) plot.getOperationsNumber() > minGraphicalFraction));
             }
-
-
-            if (addArea) {
-                result.put(area, areas.get(area));
-            }
-
         }
-        return result;
     }
 
     /**
-     * 
-     * @param areas A dictionary mapping areas to a pair containing list of operations 
-     * of which the region is built and the integer identifier of the page layout area to which it belongs
+     * Mark some plot candidates as incorrect by using heuristic techniques
+     * @param plots
      * @return 
      */
-    public static Map<Rectangle, Pair<List<Operation>, Integer>> removeFalsePlots(
-            Map<Rectangle, Pair<List<Operation>, Integer>> areas,
-            PDFPageManager manager) {
+    
+    public static void removeFalsePlots(
+            /*Map<Rectangle, Pair<List<Operation>, Integer>> areas,
+            PDFPageManager manager) {*/
+            List<Plot> plots,
+            PDFPageManager manager){
+        
         // remove graphics with too small/too big aspect ratios
-        Map<Rectangle, Pair<List<Operation>, Integer>> res = removeBasedOnAspectRatio(areas);
-        res = removeBasedOnTextOperationsProportion(res);
-        res = removeBasedOnHavingOnlyHorizontalLines(res);
-        res = removeBasedOnOperationsNumber(res);
-        res = removeBasedOnSize(res, manager);
-        //res = removeBasedOnGraphicalArea(res); // we do not remove based on graphical area explicitly .... only in the case of including external or inline graphics
-        return res;
+        removePlotsBasedOnAspectRatio(plots);
+        removeBasedOnTextOperationsProportion(plots);
+        removeBasedOnHavingOnlyHorizontalLines(plots);
+        removeBasedOnOperationsNumber(plots);
+        removeBasedOnSize(plots, manager);
     }
 
     /**
