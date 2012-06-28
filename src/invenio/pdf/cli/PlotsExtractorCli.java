@@ -14,14 +14,6 @@ import invenio.pdf.core.FeatureNotPresentException;
 import invenio.pdf.core.GraphicalOperation;
 import invenio.pdf.core.Operation;
 import invenio.pdf.core.PDFDocumentManager;
-import invenio.pdf.core.PDFObjects.PDFClippingPathObject;
-import invenio.pdf.core.PDFObjects.PDFExternalObject;
-import invenio.pdf.core.PDFObjects.PDFInlineImageObject;
-import invenio.pdf.core.PDFObjects.PDFObject;
-import invenio.pdf.core.PDFObjects.PDFPageDescriptionObject;
-import invenio.pdf.core.PDFObjects.PDFPathObject;
-import invenio.pdf.core.PDFObjects.PDFShadingObject;
-import invenio.pdf.core.PDFObjects.PDFTextObject;
 import invenio.pdf.core.PDFPageManager;
 import invenio.pdf.core.TextOperation;
 import invenio.pdf.core.TransformationOperation;
@@ -203,7 +195,7 @@ public class PlotsExtractorCli {
                 File pdfOperations = new File(outputDirectory.getPath(), "pdfops_output" + i + ".png");
                 Images.writeImageToFile(img40, pdfOperations);
 
-                /** Searchig for operations intersecting the layout in a very bad manner */
+                /** Searching for operations intersecting the layout in a very bad manner */
                 PageLayout layout = (PageLayout) pageMgr.getPageFeature(PageLayout.featureName);
                 for (Operation op : pageMgr.getOperations()) {
                     if (op instanceof DisplayedOperation) {

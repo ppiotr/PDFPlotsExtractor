@@ -87,7 +87,8 @@ public class ExtractorParameters extends Properties {
                 + "minimal_column_width : minimal width of a detected page column. (smaller columns will be clustered with others)"
                 + "minimal_graphical_area_fraction : fraction of an area of a figure candidate allowing it to be considered figure"
                 + "minimal_figure_graphical_operations_number: minimal number of graphical operations that have to be included in a figure (unless external graphics)"
-                + "minimal_figure_graphical_operations_fraction: Minimal fraction of graphical operations inside of a figure (unless inline or external graphics)";
+                + "minimal_figure_graphical_operations_fraction: Minimal fraction of graphical operations inside of a figure (unless inline or external graphics)" 
+                + "maximal_inclusion_height - maximal percantage of page height that can be included in a figure in the case, caption can not be matched with figure candidate";
 
         // + "minimal_column_height : minimal height of a detected page column. (smaller columns will be clustered with others)";
     }
@@ -136,6 +137,8 @@ public class ExtractorParameters extends Properties {
         this.setProperty("minimal_figure_width", "0.15"); // minimum 25% of the page
 
         this.setProperty("minimal_graphical_area_fraction", "0.15");
+        this.setProperty("maximal_inclusion_height", "0.10");
+        
 
 
 
@@ -349,5 +352,14 @@ public class ExtractorParameters extends Properties {
 
     public double getMinimalFigureHeight() {
         return Double.parseDouble(this.getProperty("minimal_figure_height"));
+    }
+
+    /**
+     * the minimal percentage of page height that can be included in misdetected figure
+     * in the case, caption can not be matched
+     * @return 
+     */
+    public double getMaximalInclusionHeight() {
+        return Double.parseDouble(this.getProperty("maximal_inclusion_height"));
     }
 }

@@ -9,19 +9,13 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.PriorityQueue;
-import java.util.Random;
 import java.util.Stack;
 import java.util.TreeMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *   An implementation of the balanced BST - interval tree
@@ -1013,15 +1007,6 @@ public class IntervalTree<IntervalObjectType> {
         Map<IntervalObjectType, int[]> result = new HashMap<IntervalObjectType, int[]>();
         for (IntervalObjectType obj : partialResult.keySet()) {
             result.put(obj, this.intervalsStored.get(obj));
-//            if (this.intervalsStored.get(obj) == null) {
-//                try {
-//                    // something went wrong - maybe an interval has been removed from the structure but not completely from the tree ?
-//                    Images.writeImageToFile(this.renderTree(), "c:\\intervalTrees\\wrongStoredIntervals.png");
-//                } catch (IOException ex) {
-//                    Logger.getLogger(IntervalTree.class.getName()).log(Level.SEVERE, null, ex);
-//                }
-//                System.out.print("WRONG INTERVAL!");
-//            }
         }
         return result;
     }

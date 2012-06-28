@@ -200,4 +200,5 @@ public class SpatialClusterManager<StoredObjectType> {
         // adding new intervals to the trees
 
     }
+    
 }

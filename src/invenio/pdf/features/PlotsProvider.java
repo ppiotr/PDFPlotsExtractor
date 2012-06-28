@@ -4,10 +4,15 @@
  */
 package invenio.pdf.features;
 
+import com.sun.jndi.cosnaming.IiopUrl.Address;
 import invenio.common.ExtractorGeometryTools;
+import invenio.common.IntervalTree;
 import invenio.common.Pair;
+import invenio.common.SpatialClusterManager;
 import invenio.pdf.core.ExtractorLogger;
+import invenio.pdf.core.ExtractorParameters;
 import invenio.pdf.core.FeatureNotPresentException;
+import invenio.pdf.core.GraphicalOperation;
 import invenio.pdf.core.IPDFDocumentFeatureProvider;
 import invenio.pdf.core.Operation;
 import invenio.pdf.core.PDFDocumentManager;
@@ -19,6 +24,9 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.fop.pdf.PDFPage;
@@ -41,7 +49,8 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
         for (int pageNum = 0; pageNum < docManager.getPagesNumber(); ++pageNum) {
             result.plots.add(getPlotsFromPage(docManager.getPage(pageNum)));
         }
-        HashMap<Integer, HashMap<Integer, LinkedList<FigureCaption>>> captions = getAllCaptions(docManager);
+
+        HashMap<Integer, LinkedList<FigureCaption>> captions = getAllCaptions(docManager);
 
         /** 
          *  At this moment we do not support captions appearing on a different page than the figure itself, 
@@ -49,8 +58,7 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
          */
         PlotsProvider.matchPlotsWithCaptions(docManager, result, captions);
 
-        // now time to detect situations when we have detected too many plots ... we join plots that lie together and have single caption
-        PlotsProvider.joinBySingleCaption(docManager, result);
+
         // Now we are left with some unmatched captions.... we should further investigate this
 
 
@@ -59,22 +67,20 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
         System.out.println("Matched captions : \n\n");
         for (int pageNum : captions.keySet()) {
             System.out.println("Page " + pageNum + "\n");
-            for (int regNum : captions.get(pageNum).keySet()) {
-                for (FigureCaption caption : captions.get(pageNum).get(regNum)) {
-                    if (caption.alreadyMatched) {
-                        System.out.println("In region " + regNum + " found caption " + caption.text + "\n");
-                    }
+            for (FigureCaption caption : captions.get(pageNum)) {
+                if (caption.alreadyMatched) {
+                    System.out.println("caption: " + caption.text + "\n");
                 }
+
             }
         }
         System.out.println("\n****************************************************************************\n\nUnmatched captions:\n\n");
         for (int pageNum : captions.keySet()) {
             System.out.println("Page " + pageNum + "\n");
-            for (int regNum : captions.get(pageNum).keySet()) {
-                for (FigureCaption caption : captions.get(pageNum).get(regNum)) {
-                    if (!caption.alreadyMatched) {
-                        System.out.println("In region " + regNum + " found caption " + caption.text + "\n");
-                    }
+
+            for (FigureCaption caption : captions.get(pageNum)) {
+                if (!caption.alreadyMatched) {
+                    System.out.println("Caption " + caption.text + "\n");
                 }
             }
         }
@@ -86,18 +92,225 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
         return Plots.featureName;
     }
 
-    private static void joinBySingleCaption(PDFDocumentManager docManager, Plots result) {
-        //throw new UnsupportedOperationException("Not yet implemented");
-        // iterate over figures not having caption assigned. find the closest caption for them (maybe should be precached somewhere ... ).
-        // determine if figures having the same closest caption are close to each other and if necessary, join them into one figure
+    /** Class used durign matching captions with figure candidates
+     *  it encapsulates one of 3 tyeops of objects:
+     *        - unassigned textual or graphical cluster
+     *        - figure candidate (rejected or not)
+     *        - caption cluster
+     */
+    private static class PageRegion {
+
+        Rectangle boundary;
+        List<Operation> unassignedArea = null;
+        boolean isCaption = false;
+        Plot plotCandidate = null;
     }
 
-    /** matches extracted captions with figure candidates 
-     * 
+    private static boolean intersectsCaptionOrFigureCandidate(Rectangle rec, List<Plot> figureCandidates, List<FigureCaption> figureCaptions) {
+        for (Plot plot : figureCandidates) {
+            if (rec.intersects(plot.getBoundary())) {
+                return true;
+            }
+        }
+        for (FigureCaption caption : figureCaptions) {
+            if (rec.intersects(caption.boundary)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**Matches detected captions with figure candidates, possibly reverting some unused candidates into figures
+     * and including parts of figures which were not considered figures before.
+     * @param docManager
      * @param plots
-     * @param captions 
+     * @param captions
+     * @throws FeatureNotPresentException
+     * @throws Exception 
      */
-    private static void matchPlotsWithCaptions(PDFDocumentManager docManager, Plots plots, HashMap<Integer, HashMap<Integer, LinkedList<FigureCaption>>> captions) throws FeatureNotPresentException, Exception {
+    private static void matchPlotsWithCaptions(
+            PDFDocumentManager docManager,
+            Plots plots,
+            HashMap<Integer, LinkedList<FigureCaption>> captions)
+            throws FeatureNotPresentException, Exception {
+        for (int pageNum = 0; pageNum < docManager.getPagesNumber(); ++pageNum) {
+            /**
+             * Preparing field for further processing - building interval trees and so on ...
+             */
+            PDFPageManager pageManager = docManager.getPage(pageNum);
+
+            GraphicalAreas graphicalAreas =
+                    (GraphicalAreas) pageManager.getPageFeature(GraphicalAreas.featureName);
+
+            TextAreas textAreas =
+                    (TextAreas) pageManager.getPageFeature(TextAreas.featureName);
+
+            List<Plot> figureCandidates = plots.getPlotCandidatesByPage(pageNum);
+
+
+//            IntervalTree<PageRegion> spatialMgrX = new IntervalTree<PageRegion>(
+//                    pageManager.getPageBoundary().x - 2,
+//                    pageManager.getPageBoundary().x + pageManager.getPageBoundary().width + 2);
+
+            IntervalTree<PageRegion> spatialMgrY = new IntervalTree<PageRegion>(
+                    pageManager.getPageBoundary().y - 2,
+                    pageManager.getPageBoundary().y + pageManager.getPageBoundary().height + 2);
+
+
+
+
+            TreeSet<Integer> yCoordinates = new TreeSet<Integer>();
+
+            ////// we process different types of operations and build the spatial cluster together with collection of y coordinates
+
+            // captions
+            for (FigureCaption caption : captions.get(pageNum)) {
+                // first consider the area above the caption ... search for first element above
+                PageRegion region = new PageRegion();
+                region.boundary = caption.boundary;
+                region.isCaption = true;
+                yCoordinates.add(caption.boundary.y);
+                yCoordinates.add(caption.boundary.y + caption.boundary.height);
+                //spatialMgrX.addInterval(caption.boundary.x, caption.boundary.x + caption.boundary.width, region);
+                spatialMgrY.addInterval(caption.boundary.y, caption.boundary.y + caption.boundary.height, region);
+            }
+
+            /// text and gfraphical regions
+
+            for (Rectangle rec : graphicalAreas.areas.keySet()) {
+                PageRegion region = new PageRegion();
+                /// if not intersecting any of plot candidates or captions
+                if (!intersectsCaptionOrFigureCandidate(rec, figureCandidates, captions.get(pageNum))) {
+                    region.boundary = rec;
+                    region.unassignedArea = graphicalAreas.areas.get(rec).first;
+                    yCoordinates.add(rec.y);
+                    yCoordinates.add(rec.y + rec.height);
+                    //spatialMgrX.addInterval(rec.x, rec.x + rec.width, region);
+                    spatialMgrY.addInterval(rec.y, rec.y + rec.height, region);
+                }
+            }
+
+            for (Rectangle rec : textAreas.areas.keySet()) {
+                PageRegion region = new PageRegion();
+                /// if not intersecting any of plot candidates or captions
+                if (!intersectsCaptionOrFigureCandidate(rec, figureCandidates, captions.get(pageNum))) {
+                    region.boundary = rec;
+                    region.unassignedArea = textAreas.areas.get(rec).second;
+                    yCoordinates.add(rec.y);
+                    yCoordinates.add(rec.y + rec.height);
+                    //  spatialMgrX.addInterval(rec.x, rec.x + rec.width, region);
+                    spatialMgrY.addInterval(rec.y, rec.y + rec.height, region);
+                }
+            }
+            /// processing figure candidates
+            for (Plot figureCandidate : figureCandidates) {
+                PageRegion region = new PageRegion();
+                Rectangle rec = figureCandidate.getBoundary();
+                region.boundary = rec;
+                region.plotCandidate = figureCandidate;
+                yCoordinates.add(rec.y);
+                yCoordinates.add(rec.y + rec.height);
+                //spatialMgrX.addInterval(rec.x, rec.x + rec.width, region);
+                spatialMgrY.addInterval(rec.y, rec.y + rec.height, region);
+            }
+
+            /** 
+             * 
+             *  END OF PREPARATION OF DATA STRUCTURES  ----  REAL CODE
+             * 
+             * 
+             * Now considering all the captions from the page in the order of increasing Y 
+             */
+            ExtractorParameters parameters = ExtractorParameters.getExtractorParameters();
+            double toleranceMargin = parameters.getMaximalInclusionHeight() * pageManager.getPageBoundary().height;
+
+            for (FigureCaption caption : captions.get(pageNum)) {
+                // first consider the area above the caption ... search for first element above
+
+                int curY = caption.boundary.y;
+                int referenceY = caption.boundary.y;
+                /// accumulator for small portions of page that have not been taken into account earlier
+                List<Operation> accumulator = new LinkedList<Operation>();
+                Rectangle accumulatorBoundary = null;
+                List<Plot> figuresAccumulator = new LinkedList<Plot>();
+                boolean stop = false;
+
+                // we will be moving the reference line until something stops us
+                while (!stop) {
+                    LinkedList<Operation> tmpAccumulator = new LinkedList<Operation>();
+                    LinkedList<Plot> tmpPlotAccumulator = new LinkedList<Plot>();
+
+                    int newY = yCoordinates.lower(curY);
+                    boolean ignoreTmpAcc = false;
+
+
+
+                    LinkedList<PageRegion> intersectingRegions = new LinkedList<PageRegion>();
+                    Set<PageRegion> intersectingIntervals = spatialMgrY.getIntersectingIntervals(newY - 1, newY + 1).keySet();
+                    for (PageRegion region : intersectingIntervals) {
+                        // check if they intersect in X
+                        if (!(region.boundary.x > caption.boundary.x + caption.boundary.width
+                                || region.boundary.x + region.boundary.width < caption.boundary.x)) {
+                            // caption -> STOP
+                            if (region.isCaption) {
+                                stop = true;
+                                ignoreTmpAcc = true;
+                                break;
+                            }
+                            // unassigned -> add to accumulator 
+                            if (region.unassignedArea != null) {
+                                tmpAccumulator.addAll(region.unassignedArea);
+                            }
+
+                            // figure candidate -> make it really a candidate, possibly combine different parts
+
+                            if (region.plotCandidate != null) {
+                                // add to accumulator, rest reference line
+                                if (region.plotCandidate.getCaption().text != "") {
+                                    stop = true;
+                                    ignoreTmpAcc = true;
+                                    break;
+                                } else {
+                                    tmpPlotAccumulator.add(region.plotCandidate);
+                                }
+
+                            }
+                        }
+                        /// now merging accumulator into the figure and possibly making the figure candidate visible again
+
+                    }
+
+                    if (!ignoreTmpAcc) {
+                        // include in global accumulator
+                        // we mark all plots from the accumulator as approved
+                        for (Operation op : tmpAccumulator) {
+                            if (op instanceof GraphicalOperation) {
+                                GraphicalOperation gop = (GraphicalOperation) op;
+                                accumulatorBoundary = accumulatorBoundary.union(gop.getBoundary());
+                                accumulator.add(op);
+                            }
+                        }
+
+                        for (Plot figure : tmpPlotAccumulator) {
+                            figure.isApproved = true;
+                            figuresAccumulator.add(figure);
+                        }
+                    }
+
+                }
+
+            }
+
+            /** matches extracted captions with figure candidates 
+             * 
+             * @param plots
+             * @param captions 
+             */
+    
+
+    
+
+    private static void matchPlotsWithCaptions2(PDFDocumentManager docManager, Plots plots, HashMap<Integer, HashMap<Integer, LinkedList<FigureCaption>>> captions) throws FeatureNotPresentException, Exception {
         // we assume that caption will lie in the same layout element
 
         for (int pageNum = 0; pageNum < docManager.getPagesNumber(); ++pageNum) {
@@ -157,46 +370,37 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
      * @param docManager the document manager describing currently processed PDF
      * @return 
      */
-    public static HashMap<Integer, HashMap<Integer, LinkedList<FigureCaption>>> getAllCaptions(PDFDocumentManager docManager) throws FeatureNotPresentException, Exception {
-        HashMap<Integer, HashMap<Integer, LinkedList<FigureCaption>>> captions =
-                new HashMap<Integer, HashMap<Integer, LinkedList<FigureCaption>>>();
+    public static HashMap<Integer, LinkedList<FigureCaption>> getAllCaptions(PDFDocumentManager docManager) throws FeatureNotPresentException, Exception {
+        HashMap<Integer, LinkedList<FigureCaption>> captions =
+                new HashMap<Integer, LinkedList<FigureCaption>>();
 
         for (int pageNum = 0; pageNum < docManager.getPagesNumber(); ++pageNum) {
             PDFPageManager pageManager = docManager.getPage(pageNum);
-            captions.put(pageNum, new HashMap<Integer, LinkedList<FigureCaption>>());
+
+            captions.put(pageNum, new LinkedList<FigureCaption>());
 
             TextAreas textAreas =
                     (TextAreas) pageManager.getPageFeature(TextAreas.featureName);
 
-            PageLayout pageLayout =
-                    (PageLayout) pageManager.getPageFeature(PageLayout.featureName);
-
             for (Rectangle textRegion : textAreas.areas.keySet()) {
                 String textContent = textAreas.areas.get(textRegion).first;
                 FigureCaption caption = toFigureCaption(textContent);
+
                 if (caption != null) {
-                    int bestArea = pageLayout.getSingleBestIntersectingArea(textRegion);
-
-
-                    if (!captions.get(pageNum).containsKey(bestArea)) {
-                        captions.get(pageNum).put(bestArea, new LinkedList<FigureCaption>());
-                    }
                     caption.boundary = textRegion;
-                    captions.get(pageNum).get(bestArea).add(caption);
+                    captions.get(pageNum).add(caption);
                 }
             }
 
             // now we sort caption within every area... by y coordinate
-            for (int areaNum : captions.get(pageNum).keySet()) {
-                java.util.Collections.sort(captions.get(pageNum).get(areaNum), new Comparator<FigureCaption>() {
 
-                    @Override
-                    public int compare(FigureCaption o1, FigureCaption o2) {
-                        return o1.boundary.y - o2.boundary.y;
-                    }
-                });
-            }
+            java.util.Collections.sort(captions.get(pageNum), new Comparator<FigureCaption>() {
 
+                @Override
+                public int compare(FigureCaption o1, FigureCaption o2) {
+                    return o1.boundary.y - o2.boundary.y;
+                }
+            });
         }
 
 
@@ -237,6 +441,8 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
         areas = ExtractorGeometryTools.shrinkRectangleMap(areas, margins[0], margins[1]);
         areas = PlotHeuristics.removeIncorrectGraphicalRegions(areas);
         areas = PlotHeuristics.includeTextParts(areas, manager);
+
+        // at this moment we should know unusd areas
 
         List<Plot> plots = PlotsProvider.areasToPlots(areas, manager);
 

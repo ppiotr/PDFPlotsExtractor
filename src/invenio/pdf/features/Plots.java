@@ -65,4 +65,8 @@ public class Plots implements IPDFDocumentFeature {
         }
         PlotsWriter.writePlotsMetadata(document, rootElement, toWrite);
     }
+
+    public List<Plot> getPlotCandidatesByPage(int pageNum) {
+        return this.plots.get(pageNum);
+    }
 }
