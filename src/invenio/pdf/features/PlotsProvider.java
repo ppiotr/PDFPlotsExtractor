@@ -4,11 +4,9 @@
  */
 package invenio.pdf.features;
 
-import com.sun.jndi.cosnaming.IiopUrl.Address;
 import invenio.common.ExtractorGeometryTools;
 import invenio.common.IntervalTree;
 import invenio.common.Pair;
-import invenio.common.SpatialClusterManager;
 import invenio.pdf.core.ExtractorLogger;
 import invenio.pdf.core.ExtractorParameters;
 import invenio.pdf.core.FeatureNotPresentException;
@@ -25,11 +23,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.apache.fop.pdf.PDFPage;
 
 /**
  *
@@ -104,6 +100,116 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
         List<Operation> unassignedArea = null;
         boolean isCaption = false;
         Plot plotCandidate = null;
+    }
+
+    private static abstract class CaptionMatcherGeneric {
+
+        List<Operation> accumulator = new LinkedList<Operation>();
+        Rectangle accumulatorBoundary = null;
+        List<Plot> figuresAccumulator = new LinkedList<Plot>();
+
+        public abstract int getNextNumber(int num, TreeSet<Integer> yCoordinates);
+
+        public abstract int updateReferenceY(Plot figure, int referenceY);
+
+        public void process(FigureCaption caption, double toleranceMargin,
+                TreeSet<Integer> yCoordinates, IntervalTree<PageRegion> spatialMgrY) {
+            int curY = caption.boundary.y;
+            int referenceY = caption.boundary.y;
+            boolean stop = false;
+
+            while (!stop && Math.abs(referenceY - curY) < toleranceMargin && yCoordinates.first() != curY) {
+                LinkedList<Operation> tmpAccumulator = new LinkedList<Operation>();
+                LinkedList<Plot> tmpPlotAccumulator = new LinkedList<Plot>();
+
+                int newY = this.getNextNumber(curY, yCoordinates);
+                boolean ignoreTmpAcc = false;
+
+                LinkedList<PageRegion> intersectingRegions = new LinkedList<PageRegion>();
+                Set<PageRegion> intersectingIntervals = spatialMgrY.getIntersectingIntervals(newY - 1, newY + 1).keySet();
+                for (PageRegion region : intersectingIntervals) {
+                    // check if they intersect in X
+                    if (!(region.boundary.x > caption.boundary.x + caption.boundary.width
+                            || region.boundary.x + region.boundary.width < caption.boundary.x)) {
+                        // caption -> STOP
+                        if (region.isCaption) {
+                            stop = true;
+                            ignoreTmpAcc = true;
+                            break;
+                        }
+                        // unassigned -> add to accumulator 
+                        if (region.unassignedArea != null) {
+                            tmpAccumulator.addAll(region.unassignedArea);
+                        }
+
+                        // figure candidate -> make it really a candidate, possibly combine different parts
+
+                        if (region.plotCandidate != null) {
+                            // add to accumulator, rest reference line
+                            if (!"".equals(region.plotCandidate.getCaption().text)) {
+                                stop = true;
+                                ignoreTmpAcc = true;
+                                break;
+                            } else {
+                                tmpPlotAccumulator.add(region.plotCandidate);
+                            }
+
+                        }
+                    }
+                    /// now merging accumulator into the figure and possibly making the figure candidate visible again
+
+                }
+
+                if (!ignoreTmpAcc) {
+                    // include in global accumulator
+                    // we mark all plots from the accumulator as approved
+                    for (Operation op : tmpAccumulator) {
+                        if (op instanceof GraphicalOperation) {
+                            GraphicalOperation gop = (GraphicalOperation) op;
+                            if (accumulatorBoundary == null) {
+                                accumulatorBoundary = gop.getBoundary();
+                            } else {
+                                accumulatorBoundary = accumulatorBoundary.union(gop.getBoundary());
+                            }
+                            accumulator.add(op);
+                        }
+                    }
+
+                    for (Plot figure : tmpPlotAccumulator) {
+                        figure.isApproved = true;
+                        figuresAccumulator.add(figure);
+                        referenceY = this.updateReferenceY(figure, referenceY);
+                    }
+                }
+                curY = newY;
+            }
+        }
+    }
+
+    private static class CaptionMatcherUp extends CaptionMatcherGeneric {
+
+        @Override
+        public int getNextNumber(int curY, TreeSet<Integer> yCoordinates) {
+            return yCoordinates.lower(curY);
+        }
+
+        @Override
+        public int updateReferenceY(Plot figure, int referenceY) {
+            return Math.min(referenceY, figure.getBoundary().y);
+        }
+    }
+
+    private static class CaptionMatcherDown extends CaptionMatcherGeneric {
+
+        @Override
+        public int getNextNumber(int num, TreeSet<Integer> yCoordinates) {
+            return yCoordinates.higher(num);
+        }
+
+        @Override
+        public int updateReferenceY(Plot figure, int referenceY) {
+            return Math.max(referenceY, figure.getBoundary().y + figure.getBoundary().height);
+        }
     }
 
     private static boolean intersectsCaptionOrFigureCandidate(Rectangle rec, List<Plot> figureCandidates, List<FigureCaption> figureCaptions) {
@@ -227,88 +333,37 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
             for (FigureCaption caption : captions.get(pageNum)) {
                 // first consider the area above the caption ... search for first element above
 
-                int curY = caption.boundary.y;
-                int referenceY = caption.boundary.y;
                 /// accumulator for small portions of page that have not been taken into account earlier
-                List<Operation> accumulator = new LinkedList<Operation>();
-                Rectangle accumulatorBoundary = null;
-                List<Plot> figuresAccumulator = new LinkedList<Plot>();
-                boolean stop = false;
+
 
                 // we will be moving the reference line until something stops us
-                while (!stop) {
-                    LinkedList<Operation> tmpAccumulator = new LinkedList<Operation>();
-                    LinkedList<Plot> tmpPlotAccumulator = new LinkedList<Plot>();
+                //......filll the stupid gap
+                CaptionMatcherGeneric matcher;
 
-                    int newY = yCoordinates.lower(curY);
-                    boolean ignoreTmpAcc = false;
+                matcher = new CaptionMatcherUp();
+                matcher.process(caption, toleranceMargin, yCoordinates, spatialMgrY);
 
-
-
-                    LinkedList<PageRegion> intersectingRegions = new LinkedList<PageRegion>();
-                    Set<PageRegion> intersectingIntervals = spatialMgrY.getIntersectingIntervals(newY - 1, newY + 1).keySet();
-                    for (PageRegion region : intersectingIntervals) {
-                        // check if they intersect in X
-                        if (!(region.boundary.x > caption.boundary.x + caption.boundary.width
-                                || region.boundary.x + region.boundary.width < caption.boundary.x)) {
-                            // caption -> STOP
-                            if (region.isCaption) {
-                                stop = true;
-                                ignoreTmpAcc = true;
-                                break;
-                            }
-                            // unassigned -> add to accumulator 
-                            if (region.unassignedArea != null) {
-                                tmpAccumulator.addAll(region.unassignedArea);
-                            }
-
-                            // figure candidate -> make it really a candidate, possibly combine different parts
-
-                            if (region.plotCandidate != null) {
-                                // add to accumulator, rest reference line
-                                if (region.plotCandidate.getCaption().text != "") {
-                                    stop = true;
-                                    ignoreTmpAcc = true;
-                                    break;
-                                } else {
-                                    tmpPlotAccumulator.add(region.plotCandidate);
-                                }
-
-                            }
-                        }
-                        /// now merging accumulator into the figure and possibly making the figure candidate visible again
-
-                    }
-
-                    if (!ignoreTmpAcc) {
-                        // include in global accumulator
-                        // we mark all plots from the accumulator as approved
-                        for (Operation op : tmpAccumulator) {
-                            if (op instanceof GraphicalOperation) {
-                                GraphicalOperation gop = (GraphicalOperation) op;
-                                accumulatorBoundary = accumulatorBoundary.union(gop.getBoundary());
-                                accumulator.add(op);
-                            }
-                        }
-
-                        for (Plot figure : tmpPlotAccumulator) {
-                            figure.isApproved = true;
-                            figuresAccumulator.add(figure);
-                        }
-                    }
-
+                if (matcher.figuresAccumulator.size() == 0) {
+                    matcher = new CaptionMatcherDown();
+                    matcher.process(caption, toleranceMargin, yCoordinates, spatialMgrY);
                 }
+
+                if (matcher.figuresAccumulator.size() > 0) {
+                    /*We have to assign at least one figure candidate. Otherwise we search in opposite direction*/
+                }
+
+
+
 
             }
 
-            /** matches extracted captions with figure candidates 
-             * 
-             * @param plots
-             * @param captions 
-             */
-    
 
-    
+        }
+
+
+
+
+    }
 
     private static void matchPlotsWithCaptions2(PDFDocumentManager docManager, Plots plots, HashMap<Integer, HashMap<Integer, LinkedList<FigureCaption>>> captions) throws FeatureNotPresentException, Exception {
         // we assume that caption will lie in the same layout element
