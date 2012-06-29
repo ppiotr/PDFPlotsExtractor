@@ -7,6 +7,7 @@ package invenio.pdf.features;
 import invenio.common.ExtractorGeometryTools;
 import invenio.common.IntervalTree;
 import invenio.common.Pair;
+import invenio.pdf.core.DisplayedOperation;
 import invenio.pdf.core.ExtractorLogger;
 import invenio.pdf.core.ExtractorParameters;
 import invenio.pdf.core.FeatureNotPresentException;
@@ -97,14 +98,14 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
     private static class PageRegion {
 
         Rectangle boundary;
-        List<Operation> unassignedArea = null;
+        DisplayedOperation unassignedOperation = null;
         boolean isCaption = false;
         Plot plotCandidate = null;
     }
 
     private static abstract class CaptionMatcherGeneric {
 
-        List<Operation> accumulator = new LinkedList<Operation>();
+        List<DisplayedOperation> accumulator = new LinkedList<DisplayedOperation>();
         Rectangle accumulatorBoundary = null;
         List<Plot> figuresAccumulator = new LinkedList<Plot>();
 
@@ -119,7 +120,7 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
             boolean stop = false;
 
             while (!stop && Math.abs(referenceY - curY) < toleranceMargin && yCoordinates.first() != curY) {
-                LinkedList<Operation> tmpAccumulator = new LinkedList<Operation>();
+                LinkedList<DisplayedOperation> tmpAccumulator = new LinkedList<DisplayedOperation>();
                 LinkedList<Plot> tmpPlotAccumulator = new LinkedList<Plot>();
 
                 int newY = this.getNextNumber(curY, yCoordinates);
@@ -138,8 +139,8 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
                             break;
                         }
                         // unassigned -> add to accumulator 
-                        if (region.unassignedArea != null) {
-                            tmpAccumulator.addAll(region.unassignedArea);
+                        if (region.unassignedOperation != null) {
+                            tmpAccumulator.add(region.unassignedOperation);
                         }
 
                         // figure candidate -> make it really a candidate, possibly combine different parts
@@ -163,16 +164,16 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
                 if (!ignoreTmpAcc) {
                     // include in global accumulator
                     // we mark all plots from the accumulator as approved
-                    for (Operation op : tmpAccumulator) {
-                        if (op instanceof GraphicalOperation) {
-                            GraphicalOperation gop = (GraphicalOperation) op;
-                            if (accumulatorBoundary == null) {
-                                accumulatorBoundary = gop.getBoundary();
-                            } else {
-                                accumulatorBoundary = accumulatorBoundary.union(gop.getBoundary());
-                            }
-                            accumulator.add(op);
+                    for (DisplayedOperation op : tmpAccumulator) {
+
+
+                        if (accumulatorBoundary == null) {
+                            accumulatorBoundary = op.getBoundary();
+                        } else {
+                            accumulatorBoundary = accumulatorBoundary.union(op.getBoundary());
                         }
+                        accumulator.add(op);
+
                     }
 
                     for (Plot figure : tmpPlotAccumulator) {
@@ -283,31 +284,26 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
 
             /// text and gfraphical regions
 
-            for (Rectangle rec : graphicalAreas.areas.keySet()) {
-                PageRegion region = new PageRegion();
-                /// if not intersecting any of plot candidates or captions
-                if (!intersectsCaptionOrFigureCandidate(rec, figureCandidates, captions.get(pageNum))) {
-                    region.boundary = rec;
-                    region.unassignedArea = graphicalAreas.areas.get(rec).first;
-                    yCoordinates.add(rec.y);
-                    yCoordinates.add(rec.y + rec.height);
-                    //spatialMgrX.addInterval(rec.x, rec.x + rec.width, region);
-                    spatialMgrY.addInterval(rec.y, rec.y + rec.height, region);
+
+            for (Object op : pageManager.getOperations()) {
+                if (op instanceof DisplayedOperation) {
+                    DisplayedOperation dop = (DisplayedOperation) op;
+                    PageRegion region = new PageRegion();
+                    /// if not intersecting any of plot candidates or captions
+                    Rectangle rec = dop.getBoundary();
+                    if (!intersectsCaptionOrFigureCandidate(dop.getBoundary(), figureCandidates, captions.get(pageNum))) {
+                        region.boundary = rec;
+                        region.unassignedOperation = dop;
+                        yCoordinates.add(rec.y);
+                        yCoordinates.add(rec.y + rec.height);
+                        //spatialMgrX.addInterval(rec.x, rec.x + rec.width, region);
+                        spatialMgrY.addInterval(rec.y, rec.y + rec.height, region);
+                    }
                 }
+
             }
 
-            for (Rectangle rec : textAreas.areas.keySet()) {
-                PageRegion region = new PageRegion();
-                /// if not intersecting any of plot candidates or captions
-                if (!intersectsCaptionOrFigureCandidate(rec, figureCandidates, captions.get(pageNum))) {
-                    region.boundary = rec;
-                    region.unassignedArea = textAreas.areas.get(rec).second;
-                    yCoordinates.add(rec.y);
-                    yCoordinates.add(rec.y + rec.height);
-                    //  spatialMgrX.addInterval(rec.x, rec.x + rec.width, region);
-                    spatialMgrY.addInterval(rec.y, rec.y + rec.height, region);
-                }
-            }
+
             /// processing figure candidates
             for (Plot figureCandidate : figureCandidates) {
                 PageRegion region = new PageRegion();
@@ -350,8 +346,9 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
 
                 if (matcher.figuresAccumulator.size() > 0) {
                     /*We have to assign at least one figure candidate. Otherwise we search in opposite direction*/
-                }
+                    System.out.println("Merging resulting figures");
 
+                }
 
 
 

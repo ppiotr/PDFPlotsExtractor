@@ -372,7 +372,7 @@ public class PlotHeuristics {
 
         }
 
-        // now taking every graphical are and electing a representant operation for it
+        // now taking every graphical area and electing a representant operation for it ... adding to cluster managers
 
 
         for (Rectangle rec : areas.keySet()) {
