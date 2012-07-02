@@ -250,14 +250,14 @@ public class PlotsExtractorCli {
         // writing the global metadata of all the plots collectively
         File completemetadataFile = new File(outputDirectory.getPath(), "completeMetadata.xml");
 
-        PlotsWriter.writePlotsMetadataToFile(plots.getPlots(), completemetadataFile);
+        PlotsWriter.writePlotsMetadataToFile(plots.getToplevelPlots(), completemetadataFile);
 
         File extractorOutputFile = new File(outputDirectory.getPath(), "description.xml");
         DocumentWriter.writeDocumentToFile(document, extractorOutputFile);
 
         File extractorJSONOutputFile = new File(outputDirectory.getPath(), "extracted.json");
 
-        PlotsWriter.writePlotsMetadataToFileJSON(plots.getPlots(), extractorJSONOutputFile);
+        PlotsWriter.writePlotsMetadataToFileJSON(plots.getToplevelPlots(), extractorJSONOutputFile);
         //writeDocumentToFileJSON(document, extractorJSONOutputFile);
     }
 

@@ -46,14 +46,14 @@ public class PlotsWriter {
     public static void writePlots(PDFDocumentManager document, File outputDirectory, boolean saveAttachments)
             throws FeatureNotPresentException, Exception {
         Plots plots = (Plots) document.getDocumentFeature(Plots.featureName);
-        for (List<Plot> pagePlots : plots.plots) {
-            for (Plot plot : pagePlots) {
+        for (List<FigureCandidate> pagePlots : plots.plots) {
+            for (FigureCandidate plot : pagePlots) {
                 writePlot(plot, outputDirectory, saveAttachments);
             }
         }
     }
 
-    public static void writePlot(Plot plot, File outputDirectory, boolean saveAttachments) throws FileNotFoundException, Exception {
+    public static void writePlot(FigureCandidate plot, File outputDirectory, boolean saveAttachments) throws FileNotFoundException, Exception {
         // first assure, the output directory exists
 
         ExtractorParameters parameters = ExtractorParameters.getExtractorParameters();
@@ -61,6 +61,9 @@ public class PlotsWriter {
             outputDirectory.mkdir();
         }
 
+        if (plot.getBoundary().width > 600){
+            System.out.println("DUPA");
+        }
         setFileNames(plot, outputDirectory);
         writePlotMetadataToFileJSON(plot);
         writePlotMetadataToFile(plot);
@@ -78,20 +81,20 @@ public class PlotsWriter {
     }
     //// JSON version of writers
 
-    public static void writePlotMetadataToFileJSON(Plot plot) throws FileNotFoundException, Exception {
-        LinkedList<Plot> plots = new LinkedList<Plot>();
+    public static void writePlotMetadataToFileJSON(FigureCandidate plot) throws FileNotFoundException, Exception {
+        LinkedList<FigureCandidate> plots = new LinkedList<FigureCandidate>();
         plots.add(plot);
         writePlotsMetadataToFileJSON(plots, plot.getFile("metadataJSON"));
 
     }
 
-    public static void writePlotsMetadataToFileJSON(List<Plot> plots, File plotMetadataFile)
+    public static void writePlotsMetadataToFileJSON(List<FigureCandidate> plots, File plotMetadataFile)
             throws FileNotFoundException, Exception {
         StringWriter stringWriter = new StringWriter();
 
         JSONWriter writer = new JSONWriter(stringWriter).array();
 
-        for (Plot plot : plots) {
+        for (FigureCandidate plot : plots) {
             writePlotMetadataJSON(writer, plot);
         }
 
@@ -102,7 +105,7 @@ public class PlotsWriter {
         out.close();
     }
 
-    public static JSONWriter writePlotMetadataJSON(JSONWriter writer, Plot plot) throws JSONException {
+    public static JSONWriter writePlotMetadataJSON(JSONWriter writer, FigureCandidate plot) throws JSONException {
         JSONWriter w = writer;
         ExtractorParameters parameters = ExtractorParameters.getExtractorParameters();
 
@@ -179,24 +182,24 @@ public class PlotsWriter {
     }
 
     //// XML versions of writers
-    public static void writePlotMetadataToFile(Plot plot) throws FileNotFoundException, Exception {
-        LinkedList<Plot> plots = new LinkedList<Plot>();
+    public static void writePlotMetadataToFile(FigureCandidate plot) throws FileNotFoundException, Exception {
+        LinkedList<FigureCandidate> plots = new LinkedList<FigureCandidate>();
         plots.add(plot);
         writePlotsMetadataToFile(plots, plot.getFile("metadata"));
     }
 
     public static void writePlotsMetadata(Document document, Element containerEl,
-            List<Plot> plots) throws FileNotFoundException, Exception {
+            List<FigureCandidate> plots) throws FileNotFoundException, Exception {
 
         Element plotsCollectionElement = document.createElement("plots");
         containerEl.appendChild(plotsCollectionElement);
 
-        for (Plot plot : plots) {
+        for (FigureCandidate plot : plots) {
             writePlotMetadata(document, plotsCollectionElement, plot);
         }
     }
 
-    public static void writePlotsMetadataToFile(List<Plot> plots, File plotMetadataFile)
+    public static void writePlotsMetadataToFile(List<FigureCandidate> plots, File plotMetadataFile)
             throws FileNotFoundException, Exception {
 
         Document document = XmlTools.createXmlDocument();
@@ -209,7 +212,7 @@ public class PlotsWriter {
         XmlTools.saveXmlDocument(document, plotMetadataFile);
     }
 
-    public static void writePlotMetadata(Document document, Element containerElement, Plot plot)
+    public static void writePlotMetadata(Document document, Element containerElement, FigureCandidate plot)
             throws FileNotFoundException, Exception {
         
         ExtractorParameters parameters = ExtractorParameters.getExtractorParameters();
@@ -272,7 +275,7 @@ public class PlotsWriter {
     /** Prepare and write the image of an annotated plot
      *
      */
-    public static void writePlotAnnotatedPage(Plot plot) throws Exception {
+    public static void writePlotAnnotatedPage(FigureCandidate plot) throws Exception {
         BufferedImage pageImg = Images.copyBufferedImage(plot.getPageManager().getRenderedPage());
         Graphics2D gr = (Graphics2D) pageImg.getGraphics();
         gr.setTransform(AffineTransform.getTranslateInstance(0, 0));
@@ -287,14 +290,14 @@ public class PlotsWriter {
         Images.writeImageToFile(pageImg, plot.getFile("annotatedImage"));
     }
 
-    public static void writePlotPng(Plot plot) throws IOException {
+    public static void writePlotPng(FigureCandidate plot) throws IOException {
         Rectangle b = plot.getBoundary();
         if (plot.getPageManager().getRenderedPage() != null) {
             Images.writeImageToFile(plot.getPageManager().getRenderedPage().getSubimage(b.x, b.y, b.width, b.height), plot.getFile("png"));
         }
     }
 
-    public static void writePlotCaptionImage(Plot plot) throws IOException {
+    public static void writePlotCaptionImage(FigureCandidate plot) throws IOException {
         Rectangle b = plot.getCaption().boundary;
         if (plot.getPageManager().getRenderedPage() != null) {
             if (b == null) {
@@ -304,7 +307,7 @@ public class PlotsWriter {
         }
     }
 
-    public static void writePlotSvg(Plot plot) throws UnsupportedEncodingException, SVGGraphics2DIOException, FileNotFoundException, IOException {
+    public static void writePlotSvg(FigureCandidate plot) throws UnsupportedEncodingException, SVGGraphics2DIOException, FileNotFoundException, IOException {
         // Get a DOMImplementation.
         DOMImplementation domImpl =
                 GenericDOMImplementation.getDOMImplementation();
@@ -344,7 +347,7 @@ public class PlotsWriter {
      * Calculates names of files where the plot should be saved
      * @param plot
      */
-    public static void setFileNames(Plot plot, File outputDirectory) {
+    public static void setFileNames(FigureCandidate plot, File outputDirectory) {
         //TODO Create some more realistic file names
         ExtractorLogger.logMessage(2, "Saving a plot from page "
                 + plot.getPageManager().getPageNumber()

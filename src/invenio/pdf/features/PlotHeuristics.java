@@ -49,7 +49,7 @@ public class PlotHeuristics {
     }
      */
     /** Removes regions based on the ratio between number of graphical and text operations */
-    public static void removeBasedOnTextOperationsProportion(List<Plot> plots) {
+    public static void removeBasedOnTextOperationsProportion(List<FigureCandidate> plots) {
     
 //         
 //        for (Plot plot: plots.getPlots()){
@@ -76,8 +76,8 @@ public class PlotHeuristics {
      * @param areas
      * @return 
      */
-    public static void removeBasedOnHavingOnlyHorizontalLines(List<Plot> plots) {
-        for (Plot plot: plots){
+    public static void removeBasedOnHavingOnlyHorizontalLines(List<FigureCandidate> plots) {
+        for (FigureCandidate plot: plots){
             boolean containsNonHorizontal = false;
             for (Operation op : plot.getOperations()) {
                 if (op instanceof GraphicalOperation) {
@@ -99,7 +99,7 @@ public class PlotHeuristics {
      * (plots can not for example be half of the page hight and few pixels broad
      * @param areas
      */
-   public static void removePlotsBasedOnAspectRatio(List<Plot> plots) {
+   public static void removePlotsBasedOnAspectRatio(List<FigureCandidate> plots) {
 
         Map<Rectangle, Pair<List<Operation>, Integer>> result =
                 new HashMap<Rectangle, Pair<List<Operation>, Integer>>();
@@ -109,7 +109,7 @@ public class PlotHeuristics {
         double minAR = parameters.getMinimalAspectRatio();
         double maxAR = parameters.getMaximalAspectRatio();
 
-        for (Plot plot: plots){
+        for (FigureCandidate plot: plots){
             Rectangle curRec = plot.getBoundary();
             double aspectRatio = curRec.getWidth() / curRec.getHeight();
             if (minAR >= aspectRatio || aspectRatio >= maxAR) {
@@ -181,13 +181,13 @@ public class PlotHeuristics {
      * dimensions can not be considered plots
      * @return
      */
-    public static void removeBasedOnSize(List<Plot> plots, PDFPageManager manager) {
+    public static void removeBasedOnSize(List<FigureCandidate> plots, PDFPageManager manager) {
         ExtractorParameters parameters = ExtractorParameters.getExtractorParameters();
         double minWidth = parameters.getMinimalFigureWidth() * manager.getRenderedPage().getHeight();
         double minHeight = parameters.getMinimalFigureHeight() * manager.getRenderedPage().getWidth();
         Map<Rectangle, Pair<List<Operation>, Integer>> results = new HashMap<Rectangle, Pair<List<Operation>, Integer>>();
 
-        for (Plot plot: plots) {
+        for (FigureCandidate plot: plots) {
              Rectangle area = plot.getBoundary();
             if (area.width <= minWidth || area.height <= minHeight) {
                 plot.isApproved = false;
@@ -201,7 +201,7 @@ public class PlotHeuristics {
      * @return 
      */
     public static void removeBasedOnOperationsNumber(
-           List<Plot> plots) {
+           List<FigureCandidate> plots) {
         HashMap<Rectangle, Pair<List<Operation>, Integer>> result = new HashMap<Rectangle, Pair<List<Operation>, Integer>>();
 
         ExtractorParameters parameters = ExtractorParameters.getExtractorParameters();
@@ -210,7 +210,7 @@ public class PlotHeuristics {
         double graphicalAreaThreshold = parameters.getMinimalGraphicalAreaFraction();
         double minGraphicalFraction = parameters.getMinimalFiguresGraphicalOperationsFraction();
         
-        for (Plot plot: plots) {
+        for (FigureCandidate plot: plots) {
             // Operators to consider non-blocking: Do BI, ID, EI 
             Rectangle area = plot.getBoundary();
             boolean acceptAnyway = false;
@@ -255,7 +255,7 @@ public class PlotHeuristics {
     public static void removeFalsePlots(
             /*Map<Rectangle, Pair<List<Operation>, Integer>> areas,
             PDFPageManager manager) {*/
-            List<Plot> plots,
+            List<FigureCandidate> plots,
             PDFPageManager manager){
         
         // remove graphics with too small/too big aspect ratios

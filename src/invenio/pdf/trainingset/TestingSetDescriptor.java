@@ -8,7 +8,7 @@ package invenio.pdf.trainingset;
 import invenio.common.Images;
 import invenio.pdf.core.PDFDocumentManager;
 import invenio.pdf.core.PDFPageManager;
-import invenio.pdf.features.Plot;
+import invenio.pdf.features.FigureCandidate;
 import invenio.pdf.features.PlotsExtractorTools;
 import invenio.pdf.features.PlotsWriter;
 import java.awt.Color;
@@ -58,11 +58,11 @@ public class TestingSetDescriptor {
 
         public PDFDocumentManager documentManager; // the main document manager
         public PDFPageManager<Object> currentPage;
-        public Plot currentPlot;
-        public TreeMap<Integer, LinkedList<Plot>> plotsOnPages;
+        public FigureCandidate currentPlot;
+        public TreeMap<Integer, LinkedList<FigureCandidate>> plotsOnPages;
 
         public Model() {
-            this.plotsOnPages = new TreeMap<Integer, LinkedList<Plot>>();
+            this.plotsOnPages = new TreeMap<Integer, LinkedList<FigureCandidate>>();
             this.documentManager = null;
             this.currentPage = null;
             this.currentPlot = null;
@@ -74,7 +74,7 @@ public class TestingSetDescriptor {
 
         public int getTotalNumberOfPlots() {
             int res = 0;
-            for (LinkedList<Plot> plots : this.plotsOnPages.values()) {
+            for (LinkedList<FigureCandidate> plots : this.plotsOnPages.values()) {
                 res += plots.size();
             }
             return res;
@@ -213,11 +213,11 @@ public class TestingSetDescriptor {
         for (File plotFile : plotMetadataFiles) {
             try {
                 // reading metadata of one plot
-                Plot plot = PlotsExtractorTools.readPlotMetadata(plotFile).get(0);
+                FigureCandidate plot = PlotsExtractorTools.readPlotMetadata(plotFile).get(0);
                 int pageNum = plot.getPageNumber();
                 plot.setPageManager(model.documentManager.getPage(pageNum));
                 if (!model.plotsOnPages.containsKey(pageNum)) {
-                    model.plotsOnPages.put(pageNum, new LinkedList<Plot>());
+                    model.plotsOnPages.put(pageNum, new LinkedList<FigureCandidate>());
                 }
                 model.plotsOnPages.get(pageNum).add(plot);
             } catch (Exception ex) {
@@ -229,7 +229,7 @@ public class TestingSetDescriptor {
         }
     }
 
-    public Image annotateImage(Image img, Plot plot) {
+    public Image annotateImage(Image img, FigureCandidate plot) {
         GC gc = new GC(img);
 
         gc.setForeground(new org.eclipse.swt.graphics.Color(gc.getDevice(), 0, 0, 255));
@@ -268,7 +268,7 @@ public class TestingSetDescriptor {
      * switching interface to a different plot
      * @param plot
      */
-    private void setCurrentPlot(Plot plot) {
+    private void setCurrentPlot(FigureCandidate plot) {
         model.currentPage = plot.getPageManager();
         model.currentPlot = plot;
 
@@ -294,7 +294,7 @@ public class TestingSetDescriptor {
             return;
         }
 
-        List<Plot> plotsOnPage = model.plotsOnPages.get(page.getPageNumber());
+        List<FigureCandidate> plotsOnPage = model.plotsOnPages.get(page.getPageNumber());
 
         if (plotsOnPage != null && !(plotsOnPage.isEmpty())) {
             // we are setting in fact the first plot from this page
@@ -368,14 +368,14 @@ public class TestingSetDescriptor {
     private void newPlot() {
         inOperation = true;
         if (model.currentPage != null) {
-            Plot newPlot = new Plot();
+            FigureCandidate newPlot = new FigureCandidate();
             newPlot.setPageManager(model.currentPage);
             newPlot.getCaption().boundary = new Rectangle(0, 0, 0, 0);
             newPlot.getCaption().text = "";
             setCurrentPlot(newPlot);
             newPlot.setPageNumber(model.currentPage.getPageNumber());
             if (model.plotsOnPages.get(model.currentPage.getPageNumber()) == null) {
-                model.plotsOnPages.put(model.currentPage.getPageNumber(), new LinkedList<Plot>());
+                model.plotsOnPages.put(model.currentPage.getPageNumber(), new LinkedList<FigureCandidate>());
             }
 
             model.plotsOnPages.get(model.currentPage.getPageNumber()).add(newPlot);
@@ -391,19 +391,19 @@ public class TestingSetDescriptor {
         inOperation = false;
     }
 
-    private Plot getNextPlot(Plot curPlot) {
+    private FigureCandidate getNextPlot(FigureCandidate curPlot) {
         if (curPlot == null) {
             return null;
         }
 
         int pageNumber = curPlot.getPageNumber();
         for (int consideredPage : model.plotsOnPages.tailMap(pageNumber).keySet()) {
-            List<Plot> plots = model.plotsOnPages.get(consideredPage);
+            List<FigureCandidate> plots = model.plotsOnPages.get(consideredPage);
 
             if (plots != null && !plots.isEmpty()) {
                 if (consideredPage == pageNumber) {
                     boolean canChoose = false;
-                    for (Plot plot : plots) {
+                    for (FigureCandidate plot : plots) {
                         if (plot == curPlot) {
                             // from now on, we can select
                             canChoose = true;
@@ -419,22 +419,22 @@ public class TestingSetDescriptor {
         return null;
     }
 
-    private Plot getPreviousPlot(Plot curPlot) {
+    private FigureCandidate getPreviousPlot(FigureCandidate curPlot) {
         if (curPlot == null) {
             return null;
         }
         int pageNumber = curPlot.getPageNumber();
-        Plot resPlot = null;
+        FigureCandidate resPlot = null;
 
         for (Integer consideredPage : model.plotsOnPages.keySet()) {
-            List<Plot> plots = model.plotsOnPages.get(consideredPage);
+            List<FigureCandidate> plots = model.plotsOnPages.get(consideredPage);
             if (plots != null && (!plots.isEmpty())) {
                 if (consideredPage > pageNumber) {
                     return null; // this should not happen, but in such a situation a correct answer would be null
                 }
 
                 if (consideredPage == pageNumber) {
-                    for (Plot plot : plots) {
+                    for (FigureCandidate plot : plots) {
                         if (plot == curPlot) {
                             return resPlot;
                         } else {
@@ -452,7 +452,7 @@ public class TestingSetDescriptor {
 
     private void nextPlot() {
         inOperation = true;
-        Plot curPlot = getNextPlot(model.currentPlot);
+        FigureCandidate curPlot = getNextPlot(model.currentPlot);
         if (curPlot != null) {
             setCurrentPlot(curPlot);
         }
@@ -462,7 +462,7 @@ public class TestingSetDescriptor {
 
     private void previousPlot() {
         inOperation = true;
-        Plot curPlot = getPreviousPlot(model.currentPlot);
+        FigureCandidate curPlot = getPreviousPlot(model.currentPlot);
 
         if (curPlot != null) {
             setCurrentPlot(curPlot);
@@ -508,7 +508,7 @@ public class TestingSetDescriptor {
 
         File outputDirectory = new File(inputDirectory, "manual");
         for (Integer pageNum : model.plotsOnPages.keySet()) {
-            for (Plot plot : model.plotsOnPages.get(pageNum)) {
+            for (FigureCandidate plot : model.plotsOnPages.get(pageNum)) {
                 try {
                     PlotsWriter.writePlot(plot, outputDirectory, false);
                 } catch (FileNotFoundException ex) {
@@ -532,7 +532,7 @@ public class TestingSetDescriptor {
 
         for (Integer page : model.plotsOnPages.keySet()) {
             if (model.plotsOnPages.get(page) != null && model.plotsOnPages.get(page).size() > 0) {
-                Plot plot = model.plotsOnPages.get(page).get(0);
+                FigureCandidate plot = model.plotsOnPages.get(page).get(0);
                 setCurrentPlot(plot);
                 return;
             }

@@ -11,7 +11,7 @@ import invenio.pdf.core.PDFPageManager;
 import invenio.pdf.core.documentProcessing.PDFDocumentTools;
 import invenio.pdf.features.GraphicalAreasProvider;
 import invenio.pdf.features.PageLayoutProvider;
-import invenio.pdf.features.Plot;
+import invenio.pdf.features.FigureCandidate;
 import invenio.pdf.features.Plots;
 import invenio.pdf.features.PlotsProvider;
 import invenio.pdf.features.TextAreasProvider;
@@ -71,7 +71,7 @@ public class ExtractorInterface {
         this.openFileLabel.setText("The file currently open in the editor: " + this.openFileName);
     }
 
-    private TabItem createPdfPage(String title, PDFPageManager opManager, java.util.List<Plot> plots) throws FeatureNotPresentException, Exception {
+    private TabItem createPdfPage(String title, PDFPageManager opManager, java.util.List<FigureCandidate> plots) throws FeatureNotPresentException, Exception {
         TabItem pageTab = new TabItem(this.pdfPagesTabFolder, SWT.NONE);
         PdfPageComposite content = new PdfPageComposite(this.pdfPagesTabFolder, opManager, plots);
         pageTab.setControl(content);

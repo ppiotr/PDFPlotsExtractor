@@ -8,7 +8,7 @@ import invenio.common.Images;
 import invenio.common.Pair;
 import invenio.pdf.core.PDFDocumentManager;
 import invenio.pdf.core.PDFPageManager;
-import invenio.pdf.features.Plot;
+import invenio.pdf.features.FigureCandidate;
 import invenio.pdf.features.PlotsExtractorTools;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
@@ -46,11 +46,11 @@ public class EvaluateDocument {
 
         public PDFDocumentManager documentManager; // the main document manager
         public PDFPageManager<Object> currentPage;
-        public Plot currentPlot;
-        public TreeMap<Integer, LinkedList<Plot>> plotsOnPages;
+        public FigureCandidate currentPlot;
+        public TreeMap<Integer, LinkedList<FigureCandidate>> plotsOnPages;
 
         public Model() {
-            this.plotsOnPages = new TreeMap<Integer, LinkedList<Plot>>();
+            this.plotsOnPages = new TreeMap<Integer, LinkedList<FigureCandidate>>();
             this.documentManager = null;
             this.currentPage = null;
             this.currentPlot = null;
@@ -62,7 +62,7 @@ public class EvaluateDocument {
 
         public int getTotalNumberOfPlots() {
             int res = 0;
-            for (LinkedList<Plot> plots : this.plotsOnPages.values()) {
+            for (LinkedList<FigureCandidate> plots : this.plotsOnPages.values()) {
                 res += plots.size();
             }
             return res;
@@ -91,8 +91,8 @@ public class EvaluateDocument {
      * reading correct meta-data (plots positions) from the manually annotated directory
      * @param inputDirectory
      */
-    private HashMap<Integer, LinkedList<Plot>> loadCorrectMetadataFromDirectory(File inputDirectory) {
-        HashMap<Integer, LinkedList<Plot>> plotsOnPages = new HashMap<Integer, LinkedList<Plot>>();
+    private HashMap<Integer, LinkedList<FigureCandidate>> loadCorrectMetadataFromDirectory(File inputDirectory) {
+        HashMap<Integer, LinkedList<FigureCandidate>> plotsOnPages = new HashMap<Integer, LinkedList<FigureCandidate>>();
 
         File[] plotMetadataFiles = inputDirectory.listFiles(new FileFilter() {
 
@@ -106,12 +106,12 @@ public class EvaluateDocument {
         for (File plotFile : plotMetadataFiles) {
             try {
                 // reading metadata of one plot
-                Plot plot = PlotsExtractorTools.readPlotMetadata(plotFile).get(0);
+                FigureCandidate plot = PlotsExtractorTools.readPlotMetadata(plotFile).get(0);
                 int pageNum = plot.getPageNumber();
 
                 //plot.setPageManager(model.documentManager.getPage(pageNum));
                 if (!plotsOnPages.containsKey(pageNum)) {
-                    plotsOnPages.put(pageNum, new LinkedList<Plot>());
+                    plotsOnPages.put(pageNum, new LinkedList<FigureCandidate>());
                 }
                 plotsOnPages.get(pageNum).add(plot);
             } catch (Exception ex) {
@@ -203,11 +203,11 @@ public class EvaluateDocument {
         for (File plotFile : plotMetadataFiles) {
             try {
                 // reading metadata of one plot
-                Plot plot = PlotsExtractorTools.readPlotMetadata(plotFile).get(0);
+                FigureCandidate plot = PlotsExtractorTools.readPlotMetadata(plotFile).get(0);
                 int pageNum = plot.getPageNumber();
                 plot.setPageManager(model.documentManager.getPage(pageNum));
                 if (!model.plotsOnPages.containsKey(pageNum)) {
-                    model.plotsOnPages.put(pageNum, new LinkedList<Plot>());
+                    model.plotsOnPages.put(pageNum, new LinkedList<FigureCandidate>());
                 }
                 model.plotsOnPages.get(pageNum).add(plot);
             } catch (Exception ex) {
@@ -220,9 +220,9 @@ public class EvaluateDocument {
 
     }
 
-    private int countPlots(Map<Integer, LinkedList<Plot>> plots) {
+    private int countPlots(Map<Integer, LinkedList<FigureCandidate>> plots) {
         int numPlots = 0;
-        for (LinkedList<Plot> plist : plots.values()) {
+        for (LinkedList<FigureCandidate> plist : plots.values()) {
             numPlots += plist.size();
         }
         return numPlots;
@@ -293,7 +293,7 @@ public class EvaluateDocument {
      * @param pageImage - image of the page within which plots sit
      * @return
      */
-    private double plotsDistance(Plot p1, Plot p2) {
+    private double plotsDistance(FigureCandidate p1, FigureCandidate p2) {
         // calculate the intersection
         Rectangle r1 = p1.getBoundary();
         Rectangle r2 = p2.getBoundary();
@@ -326,7 +326,7 @@ public class EvaluateDocument {
      * @param detected
      * @return
      */
-    private Pair<Pair<Integer, Integer>, List<Double>> evaluatePage(List<Plot> correct, List<Plot> detected, int pageNumber) {
+    private Pair<Pair<Integer, Integer>, List<Double>> evaluatePage(List<FigureCandidate> correct, List<FigureCandidate> detected, int pageNumber) {
         if (correct == null) {
             int incorrectly = 0;
             if (detected != null) {
@@ -354,20 +354,20 @@ public class EvaluateDocument {
 
         WritableRaster imData = model.getRenderedPageImage(model.documentManager.getPage(pageNumber)).getRaster();
 
-        for (Plot plot : correct) {
+        for (FigureCandidate plot : correct) {
             plot.setBoundary(stripRectangle(plot.getBoundary(), imData));
         }
 
-        for (Plot plot : detected) {
+        for (FigureCandidate plot : detected) {
             plot.setBoundary(stripRectangle(plot.getBoundary(), imData));
         }
 
         // matching plots with plots
 
-        TreeSet<Pair<Pair<Plot, Plot>, Double>> distances = new TreeSet<Pair<Pair<Plot, Plot>, Double>>(new Comparator<Pair<Pair<Plot, Plot>, Double>>() {
+        TreeSet<Pair<Pair<FigureCandidate, FigureCandidate>, Double>> distances = new TreeSet<Pair<Pair<FigureCandidate, FigureCandidate>, Double>>(new Comparator<Pair<Pair<FigureCandidate, FigureCandidate>, Double>>() {
 
             @Override
-            public int compare(Pair<Pair<Plot, Plot>, Double> t, Pair<Pair<Plot, Plot>, Double> t1) {
+            public int compare(Pair<Pair<FigureCandidate, FigureCandidate>, Double> t, Pair<Pair<FigureCandidate, FigureCandidate>, Double> t1) {
                 if (t.second == t1.second) {
                     return 0;
                 }
@@ -380,18 +380,18 @@ public class EvaluateDocument {
 
 
         // matching step -> calculating distance for every possible pair
-        for (Plot cPlot : correct) {
-            for (Plot dPlot : detected) {
-                distances.add(new Pair<Pair<Plot, Plot>, Double>(new Pair<Plot, Plot>(cPlot, dPlot), plotsDistance(cPlot, dPlot)));
+        for (FigureCandidate cPlot : correct) {
+            for (FigureCandidate dPlot : detected) {
+                distances.add(new Pair<Pair<FigureCandidate, FigureCandidate>, Double>(new Pair<FigureCandidate, FigureCandidate>(cPlot, dPlot), plotsDistance(cPlot, dPlot)));
             }
         }
-        HashSet<Plot> usedPlots = new HashSet<Plot>(); // plots that have been already matched
+        HashSet<FigureCandidate> usedPlots = new HashSet<FigureCandidate>(); // plots that have been already matched
         //List<Pair<Pair<Plot, Plot>, Double>> matched = new LinkedList<Pair<Pair<Plot, Plot>, Double>>();
 
         LinkedList<Double> result = new LinkedList<Double>();
         
         // iterating in the order of increasing distances... the treeset is sorted!
-        for (Pair<Pair<Plot, Plot>, Double> possible : distances) {
+        for (Pair<Pair<FigureCandidate, FigureCandidate>, Double> possible : distances) {
             if (possible.second < 1.0 && !usedPlots.contains(possible.first.first) && !usedPlots.contains(possible.first.second)) {
                 usedPlots.add(possible.first.first);
                 usedPlots.add(possible.first.second);
@@ -404,13 +404,13 @@ public class EvaluateDocument {
 
         // calculating the numebr of plots that have not been detected
 
-        for (Plot p: correct){
+        for (FigureCandidate p: correct){
             if (!usedPlots.contains(p)){
                 skipped++;
             }
         }
 
-        for (Plot p: detected){
+        for (FigureCandidate p: detected){
             if (!usedPlots.contains(p)){
                 detectedIncorrectly++;
             }
@@ -423,7 +423,7 @@ public class EvaluateDocument {
     }
 
     public void run(String[] args) {
-        HashMap<Integer, LinkedList<Plot>> correctPlots =
+        HashMap<Integer, LinkedList<FigureCandidate>> correctPlots =
                 loadCorrectMetadataFromDirectory(new File(args[0]));
         int numCorrectPlots = countPlots(correctPlots);
         loadDetectedDataFromDirectory(new File(args[1]));
@@ -439,8 +439,8 @@ public class EvaluateDocument {
         // now evaluating for every page
         for (int pageNum = 0; pageNum < model.getTotalNumberOfPages(); pageNum++) {
 
-            List<Plot> cPlots = correctPlots.get(pageNum);
-            List<Plot> dPlots = model.plotsOnPages.get(pageNum);
+            List<FigureCandidate> cPlots = correctPlots.get(pageNum);
+            List<FigureCandidate> dPlots = model.plotsOnPages.get(pageNum);
             int nd = (dPlots == null) ? 0 : dPlots.size();
             int nc = (cPlots == null) ? 0 : cPlots.size();
 

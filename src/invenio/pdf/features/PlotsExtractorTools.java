@@ -65,7 +65,7 @@ public class PlotsExtractorTools {
         }
     }
 
-    public static void annotateImage(Graphics2D graphics, List<Plot> plots,
+    public static void annotateImage(Graphics2D graphics, List<FigureCandidate> plots,
             TextAreas textAreas, PageLayout layout, List<Operation> operations, List<PDFObject> pdfObjects) {
         // annotate image with plot information
         graphics.setTransform(AffineTransform.getRotateInstance(0));
@@ -75,7 +75,7 @@ public class PlotsExtractorTools {
 
         if (plots != null) {
             graphics.setColor(Color.blue);
-            for (Plot plot : plots) {
+            for (FigureCandidate plot : plots) {
                 Rectangle boundary = plot.getBoundary();
                 graphics.drawRect((int) boundary.getX(), (int) boundary.getY(),
                         (int) boundary.getWidth(), (int) boundary.getHeight());
@@ -161,7 +161,7 @@ public class PlotsExtractorTools {
         return new Rectangle(x, y, width, height);
     }
 
-    private static void readPlotLocationFromXmlElement(Element locationElement, Plot plot) {
+    private static void readPlotLocationFromXmlElement(Element locationElement, FigureCandidate plot) {
 
         Element pdfNode = (Element) locationElement.getElementsByTagName("pdf").item(0);
         Element scaleNode = (Element) locationElement.getElementsByTagName("scale").item(0);
@@ -174,7 +174,7 @@ public class PlotsExtractorTools {
         plot.setPageNumber(Integer.parseInt(pageNumberNode.getFirstChild().getNodeValue().trim()));
     }
 
-    private static void readPlotCaptionFromXmlElements(Element captionElement, Plot plot) {
+    private static void readPlotCaptionFromXmlElements(Element captionElement, FigureCandidate plot) {
         Element coordElement = (Element) captionElement.getElementsByTagName("coordinates").item(0);
         Element textElement = (Element) captionElement.getElementsByTagName("captionText").item(0);
 
@@ -187,8 +187,8 @@ public class PlotsExtractorTools {
         }
     }
 
-    private static Plot readPlotFromXmlElement(Element plotElement) {
-        Plot result = new Plot();
+    private static FigureCandidate readPlotFromXmlElement(Element plotElement) {
+        FigureCandidate result = new FigureCandidate();
         // here we assume the correctness
 
         Element idNode = (Element) plotElement.getElementsByTagName("identifier").item(0);
@@ -213,8 +213,8 @@ public class PlotsExtractorTools {
      *
      * @return
      */
-    public static List<Plot> readPlotMetadata(File plotFile) throws Exception {
-        LinkedList<Plot> result = new LinkedList<Plot>();
+    public static List<FigureCandidate> readPlotMetadata(File plotFile) throws Exception {
+        LinkedList<FigureCandidate> result = new LinkedList<FigureCandidate>();
         DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
         Document doc = docBuilder.parse(plotFile);

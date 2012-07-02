@@ -23,7 +23,7 @@ import java.util.List;
  *      - list of references from inside the text
  * @author piotr
  */
-public class Plot {
+public class FigureCandidate {
 
     private Rectangle boundary; // The boundary inside the rendered page
     private Rectangle pageBoundary; // The boundary of the rendered page
@@ -42,7 +42,7 @@ public class Plot {
     /**
      * A default constructor - creates a plot descriptor holding empty information
      */
-    public Plot() {
+    public FigureCandidate() {
         this.references = new ArrayList<String>();
         this.caption = new FigureCaption();
         this.boundary = new Rectangle(0, 0, 0, 0);

@@ -10,7 +10,7 @@ import invenio.pdf.core.FeatureNotPresentException;
 import invenio.pdf.core.Operation;
 import invenio.pdf.core.PDFPageManager;
 import invenio.pdf.features.PageLayout;
-import invenio.pdf.features.Plot;
+import invenio.pdf.features.FigureCandidate;
 import invenio.pdf.features.PlotsExtractorTools;
 import invenio.pdf.features.TextAreas;
 import java.awt.Graphics2D;
@@ -109,7 +109,7 @@ public class PdfPageComposite extends Composite {
         return null;
     }
 
-    public PdfPageComposite(TabFolder folder, PDFPageManager<Object> opManager, List<Plot> plots) throws FeatureNotPresentException, Exception {
+    public PdfPageComposite(TabFolder folder, PDFPageManager<Object> opManager, List<FigureCandidate> plots) throws FeatureNotPresentException, Exception {
         super(folder, SWT.NONE);
         this.operationsManager = opManager;
         GridLayout pageLayout = new GridLayout();

@@ -11,7 +11,7 @@ import java.awt.Rectangle;
  * @author piotr
  */
 public class FigureCaption {
-    public String text; // the text of the caption
+    public String text = ""; // the text of the caption
     public Rectangle boundary; // boundary inside of a page rectangle
     public boolean isTable; // Does this caption describe table ? 
     public String figureIdentifier; // Figure identifier derieved from the caption

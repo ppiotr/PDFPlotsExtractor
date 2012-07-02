@@ -20,22 +20,22 @@ import org.w3c.dom.Element;
 public class Plots implements IPDFDocumentFeature {
 
     public static final String featureName = "Plots";
-    public ArrayList<List<Plot>> plots;
+    public ArrayList<List<FigureCandidate>> plots;
     // pageNum -> list of Plots
 
     public Plots() {
-        this.plots = new ArrayList<List<Plot>>();
+        this.plots = new ArrayList<List<FigureCandidate>>();
     }
 
     /** Return an unstructured list of all plots of a given document
      *  we do not return plot candidates
      *
      */
-    public List<Plot> getPlots() {
-        LinkedList<Plot> result = new LinkedList<Plot>();
-        for (List<Plot> partialList : this.plots) {
-            for (Plot plot : partialList) {
-                if (plot.isApproved) {
+    public List<FigureCandidate> getToplevelPlots() {
+        LinkedList<FigureCandidate> result = new LinkedList<FigureCandidate>();
+        for (List<FigureCandidate> partialList : this.plots) {
+            for (FigureCandidate plot : partialList) {
+                if (plot.isApproved && plot.isToplevelPlot) {
                     result.add(plot);
                 }
             }
@@ -48,9 +48,9 @@ public class Plots implements IPDFDocumentFeature {
      * 
      * @return 
      */
-    public List<Plot> getPlotcandidates() {
-        LinkedList<Plot> result = new LinkedList<Plot>();
-        for (List<Plot> partialList : this.plots) {
+    public List<FigureCandidate> getPlotcandidates() {
+        LinkedList<FigureCandidate> result = new LinkedList<FigureCandidate>();
+        for (List<FigureCandidate> partialList : this.plots) {
             result.addAll(partialList);
         }
         return result;
@@ -59,14 +59,14 @@ public class Plots implements IPDFDocumentFeature {
     @Override
     public void saveToXml(Document document, Element rootElement) throws FileNotFoundException, Exception {
         // first flatten the array
-        LinkedList<Plot> toWrite = new LinkedList<Plot>();
-        for (List<Plot> partial : this.plots) {
+        LinkedList<FigureCandidate> toWrite = new LinkedList<FigureCandidate>();
+        for (List<FigureCandidate> partial : this.plots) {
             toWrite.addAll(partial);
         }
         PlotsWriter.writePlotsMetadata(document, rootElement, toWrite);
     }
 
-    public List<Plot> getPlotCandidatesByPage(int pageNum) {
+    public List<FigureCandidate> getPlotCandidatesByPage(int pageNum) {
         return this.plots.get(pageNum);
     }
 }
