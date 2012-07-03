@@ -37,7 +37,7 @@ public class FigureCandidate {
     
     private static int identifierFactory = 0;
     
-    public Boolean isApproved = false;
+    public Boolean isApproved = true;
     public Boolean isToplevelPlot = true;
     /**
      * A default constructor - creates a plot descriptor holding empty information

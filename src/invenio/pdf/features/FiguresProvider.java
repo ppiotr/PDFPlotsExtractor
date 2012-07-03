@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
  *
  * @author piotr
  */
-public class PlotsProvider implements IPDFDocumentFeatureProvider {
+public class FiguresProvider implements IPDFDocumentFeatureProvider {
 
     private static String getPlotIdFromCaption(String caption) {
         //TODO: implement using regular expressions
@@ -40,11 +40,11 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
     }
 
     @Override
-    public Plots calculateFeature(PDFDocumentManager docManager) throws FeatureNotPresentException, Exception {
+    public Figure calculateFeature(PDFDocumentManager docManager) throws FeatureNotPresentException, Exception {
         // gathering all the plot descriptors from all the pages and generaing one collection
-        Plots result = new Plots();
+        Figure result = new Figure();
         for (int pageNum = 0; pageNum < docManager.getPagesNumber(); ++pageNum) {
-            result.plots.add(getPlotsFromPage(docManager.getPage(pageNum)));
+            result.figures.add(getFiguresFromPage(docManager.getPage(pageNum)));
         }
 
         HashMap<Integer, LinkedList<FigureCaption>> captions = getAllCaptions(docManager);
@@ -53,7 +53,7 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
          *  At this moment we do not support captions appearing on a different page than the figure itself, 
          *  but such situations happen in rare cases. 
          */
-        PlotsProvider.matchPlotsWithCaptions(docManager, result, captions);
+        FiguresProvider.matchPlotsWithCaptions(docManager, result, captions);
 
 
         // Now we are left with some unmatched captions.... we should further investigate this
@@ -86,7 +86,7 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
 
     @Override
     public String getProvidedFeatureName() {
-        return Plots.featureName;
+        return Figure.featureName;
     }
 
     /** Class used durign matching captions with figure candidates
@@ -105,23 +105,29 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
 
     private static abstract class CaptionMatcherGeneric {
 
-        List<DisplayedOperation> accumulator = new LinkedList<DisplayedOperation>();
+        HashMap<Rectangle, DisplayedOperation> accumulator = new HashMap<Rectangle, DisplayedOperation>();
         Rectangle accumulatorBoundary = null;
-        List<FigureCandidate> figuresAccumulator = new LinkedList<FigureCandidate>();
+        HashMap<Rectangle, FigureCandidate> figuresAccumulator = new HashMap<Rectangle, FigureCandidate>();
 
         public abstract int getNextNumber(int num, TreeSet<Integer> yCoordinates);
 
         public abstract int updateReferenceY(FigureCandidate figure, int referenceY);
 
+        public abstract boolean stopByAcceptanceMargin(int referenceY, int curY, double toleranceMargin);
+
         public void process(FigureCaption caption, double toleranceMargin,
                 TreeSet<Integer> yCoordinates, IntervalTree<PageRegion> spatialMgrY) {
-            int curY = caption.boundary.y;
-            int referenceY = caption.boundary.y;
+            int curY = this.getInitialY(caption);
+            int referenceY = curY;
+            
             boolean stop = false;
 
-            while (!stop && Math.abs(referenceY - curY) < toleranceMargin && yCoordinates.first() != curY) {
-                LinkedList<DisplayedOperation> tmpAccumulator = new LinkedList<DisplayedOperation>();
-                LinkedList<FigureCandidate> tmpPlotAccumulator = new LinkedList<FigureCandidate>();
+            LinkedList<DisplayedOperation> tmpAccumulator = new LinkedList<DisplayedOperation>();
+            LinkedList<FigureCandidate> tmpFiguresAccumulator = new LinkedList<FigureCandidate>();
+
+            
+            while (!stop && !this.stopByAcceptanceMargin(referenceY, curY, toleranceMargin) && !this.stopByLastOperation(yCoordinates, curY)) {
+                //while (!stop && Math.abs(referenceY - curY) < toleranceMargin && yCoordinates.first() != curY) {
 
                 int newY = this.getNextNumber(curY, yCoordinates);
                 boolean ignoreTmpAcc = false;
@@ -152,7 +158,7 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
                                 ignoreTmpAcc = true;
                                 break;
                             } else {
-                                tmpPlotAccumulator.add(region.figureCandidate);
+                                tmpFiguresAccumulator.add(region.figureCandidate);
                             }
 
                         }
@@ -161,8 +167,8 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
 
                 }
 
-                if (!ignoreTmpAcc) {
-                    // include in global accumulator
+                if (!ignoreTmpAcc && !tmpFiguresAccumulator.isEmpty()) {
+                    // include in global accumulator ... only if we did ntot block explicitly and there are some cached figures
                     // we mark all plots from the accumulator as approved
                     for (DisplayedOperation op : tmpAccumulator) {
 
@@ -172,19 +178,27 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
                         } else {
                             accumulatorBoundary = accumulatorBoundary.union(op.getBoundary());
                         }
-                        accumulator.add(op);
+                        accumulator.put(op.getBoundary(), op);
 
                     }
 
-                    for (FigureCandidate figure : tmpPlotAccumulator) {
+                    for (FigureCandidate figure : tmpFiguresAccumulator) {
                         figure.isApproved = true;
-                        figuresAccumulator.add(figure);
+                        figuresAccumulator.put(figure.getBoundary(), figure);
                         referenceY = this.updateReferenceY(figure, referenceY);
                     }
+
+                    tmpAccumulator = new LinkedList<DisplayedOperation>();
+                    tmpFiguresAccumulator = new LinkedList<FigureCandidate>();
                 }
                 curY = newY;
             }
+
         }
+
+        public abstract int getInitialY(FigureCaption caption);
+
+        public abstract boolean stopByLastOperation(TreeSet<Integer> yCoordinates, int curY);
     }
 
     private static class CaptionMatcherUp extends CaptionMatcherGeneric {
@@ -198,18 +212,48 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
         public int updateReferenceY(FigureCandidate figure, int referenceY) {
             return Math.min(referenceY, figure.getBoundary().y);
         }
+
+        @Override
+        public boolean stopByAcceptanceMargin(int referenceY, int curY, double toleranceMargin) {
+            return referenceY - curY > toleranceMargin;
+        }
+
+        @Override
+        public int getInitialY(FigureCaption caption) {
+            return caption.boundary.y;
+        }
+
+        @Override
+        public boolean stopByLastOperation(TreeSet<Integer> yCoordinates, int curY) {
+            return yCoordinates.first() == curY;
+        }
     }
 
     private static class CaptionMatcherDown extends CaptionMatcherGeneric {
 
         @Override
-        public int getNextNumber(int num, TreeSet<Integer> yCoordinates) {
-            return yCoordinates.higher(num);
+        public int getNextNumber(int num, TreeSet<Integer> yCoordinates) {           
+            return yCoordinates.higher(num);        
         }
 
         @Override
         public int updateReferenceY(FigureCandidate figure, int referenceY) {
             return Math.max(referenceY, figure.getBoundary().y + figure.getBoundary().height);
+        }
+
+        @Override
+        public boolean stopByAcceptanceMargin(int referenceY, int curY, double toleranceMargin) {
+            return curY - referenceY > toleranceMargin;
+        }
+
+        @Override
+        public int getInitialY(FigureCaption caption) {
+            return caption.boundary.y + caption.boundary.height;
+        }
+
+        @Override
+        public boolean stopByLastOperation(TreeSet<Integer> yCoordinates, int curY) {
+            return yCoordinates.last() == curY;
         }
     }
 
@@ -237,7 +281,7 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
      */
     private static void matchPlotsWithCaptions(
             PDFDocumentManager docManager,
-            Plots plots,
+            Figure plots,
             HashMap<Integer, LinkedList<FigureCaption>> captions)
             throws FeatureNotPresentException, Exception {
         for (int pageNum = 0; pageNum < docManager.getPagesNumber(); ++pageNum) {
@@ -252,12 +296,8 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
             TextAreas textAreas =
                     (TextAreas) pageManager.getPageFeature(TextAreas.featureName);
 
-            List<FigureCandidate> figureCandidates = plots.getPlotCandidatesByPage(pageNum);
+            List<FigureCandidate> figureCandidates = plots.getFigureCandidatesByPage(pageNum);
 
-
-//            IntervalTree<PageRegion> spatialMgrX = new IntervalTree<PageRegion>(
-//                    pageManager.getPageBoundary().x - 2,
-//                    pageManager.getPageBoundary().x + pageManager.getPageBoundary().width + 2);
 
             IntervalTree<PageRegion> spatialMgrY = new IntervalTree<PageRegion>(
                     pageManager.getPageBoundary().y - 2,
@@ -352,13 +392,14 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
                     FigureCandidate selectedFigure = null;
 
                     System.out.println("Merging resulting figures");
+
                     if (matcher.figuresAccumulator.size() > 1) {
                         // there are many figure candidates - we create super-figure which will contain all the sub-figures and additional operations
                         selectedFigure = new FigureCandidate();
                         selectedFigure.setId(getPlotIdFromCaption("dupa"));
                         selectedFigure.setPageManager(pageManager);
                         Rectangle boundary = null;
-                        for (FigureCandidate figureCandidate : matcher.figuresAccumulator) {
+                        for (FigureCandidate figureCandidate : matcher.figuresAccumulator.values()) {
                             figureCandidate.isToplevelPlot = false;
                             selectedFigure.addOperations(figureCandidate.getOperations());
                             if (boundary == null) {
@@ -369,24 +410,27 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
                         }
 
                         selectedFigure.setBoundary(boundary);
-                        plots.plots.get(pageNum).add(selectedFigure);
+                        plots.figures.get(pageNum).add(selectedFigure);
 
                     } else {
                         // there is only one figure candidate - we simply add operation to it                     
-                        selectedFigure = matcher.figuresAccumulator.get(0);
+                        selectedFigure = matcher.figuresAccumulator.values().iterator().next();
                     }
 
 
-                    for (Operation op : matcher.accumulator) {
+                    for (Operation op : matcher.accumulator.values()) {
                         selectedFigure.addOperation(op);
 
                     }
-                    
-                    Rectangle newBoundary = selectedFigure.getBoundary().union(matcher.accumulatorBoundary);
-                    selectedFigure.setBoundary(newBoundary);
+
+                    if (matcher.accumulatorBoundary != null) {
+                        Rectangle newBoundary = selectedFigure.getBoundary().union(matcher.accumulatorBoundary);
+                        selectedFigure.setBoundary(newBoundary);
+                    }
                     // now assigning caption to the elected figure
-                    
+
                     selectedFigure.setCaption(caption);
+                    caption.alreadyMatched = true;
                 }
             }
 
@@ -443,7 +487,7 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
      * @param manager
      * @return List of plot descriptors
      */
-    public static List<FigureCandidate> getPlotsFromPage(PDFPageManager manager) throws FeatureNotPresentException, Exception {
+    public static List<FigureCandidate> getFiguresFromPage(PDFPageManager manager) throws FeatureNotPresentException, Exception {
 
         // first we generate algorithm parameters depending on the page parameters
         //TODO: extend this
@@ -467,14 +511,14 @@ public class PlotsProvider implements IPDFDocumentFeatureProvider {
 
         areas = graphicalAreas.areas;
         areas = ExtractorGeometryTools.shrinkRectangleMap(areas, margins[0], margins[1]);
-        areas = PlotHeuristics.removeIncorrectGraphicalRegions(areas);
-        areas = PlotHeuristics.includeTextParts(areas, manager);
+        areas = FigureHeuristics.removeIncorrectGraphicalRegions(areas);
+        areas = FigureHeuristics.includeTextParts(areas, manager);
 
         // at this moment we should know unusd areas
 
-        List<FigureCandidate> plots = PlotsProvider.areasToPlots(areas, manager);
+        List<FigureCandidate> plots = FiguresProvider.areasToPlots(areas, manager);
 
-        PlotHeuristics.removeFalsePlots(plots, manager); // removals from this stage can be reverted !
+        FigureHeuristics.removeFalsePlots(plots, manager); // removals from this stage can be reverted !
 
         // we are done with plot images -> creating plot structures for every
         // selected region

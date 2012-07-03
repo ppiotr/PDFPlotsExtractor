@@ -23,10 +23,10 @@ import invenio.pdf.features.DocumentWriter;
 import invenio.pdf.features.GraphicalAreasProvider;
 import invenio.pdf.features.PageLayout;
 import invenio.pdf.features.PageLayoutProvider;
-import invenio.pdf.features.Plots;
-import invenio.pdf.features.PlotsExtractorTools;
-import invenio.pdf.features.PlotsProvider;
-import invenio.pdf.features.PlotsWriter;
+import invenio.pdf.features.Figure;
+import invenio.pdf.features.FiguresExtractorTools;
+import invenio.pdf.features.FiguresProvider;
+import invenio.pdf.features.FiguresWriter;
 import invenio.pdf.features.TextAreas;
 import invenio.pdf.features.TextAreasProvider;
 import java.awt.Graphics2D;
@@ -67,7 +67,7 @@ public class PlotsExtractorCli {
         ExtractorParameters parameters = ExtractorParameters.getExtractorParameters();
 
         // writing annotated pages of the document
-        Plots plots = (Plots) document.getDocumentFeature(Plots.featureName);
+        Figure plots = (Figure) document.getDocumentFeature(Figure.featureName);
 
         for (int i = 0; i < document.getPagesNumber(); ++i) {
             PDFPageManager<PDPage> pageMgr = document.getPage(i);
@@ -79,8 +79,8 @@ public class PlotsExtractorCli {
                 BufferedImage img2 = new BufferedImage(img.getWidth(), img.getHeight(), img.getType());
                 img2.getGraphics().drawImage(img, 0, 0, null);
 
-                PlotsExtractorTools.annotateImage((Graphics2D) img2.getGraphics(),
-                        plots.plots.get(i),
+                FiguresExtractorTools.annotateImage((Graphics2D) img2.getGraphics(),
+                        plots.figures.get(i),
                         (TextAreas) pageMgr.getPageFeature(TextAreas.featureName),
                         (PageLayout) pageMgr.getPageFeature(PageLayout.featureName),
                         null, null);
@@ -97,7 +97,7 @@ public class PlotsExtractorCli {
                 for (int layoutNum = 0; layoutNum < pageLayout.areas.size(); ++layoutNum) {
                     BufferedImage layout_img = new BufferedImage(img.getWidth(), img.getHeight(), img.getType());
                     layout_img.getGraphics().drawImage(img, 0, 0, null);
-                    PlotsExtractorTools.annotateWithLayout((Graphics2D) layout_img.getGraphics(), pageLayout, layoutNum);
+                    FiguresExtractorTools.annotateWithLayout((Graphics2D) layout_img.getGraphics(), pageLayout, layoutNum);
                     Images.writeImageToFile(layout_img, new File(outputDirectory.getPath(), "layout" + i + "_" + layoutNum + ".png"));
                 }
 
@@ -109,7 +109,7 @@ public class PlotsExtractorCli {
 
                 BufferedImage pre_layout_img = new BufferedImage(img.getWidth(), img.getHeight(), img.getType());
                 pre_layout_img.getGraphics().drawImage(img, 0, 0, null);
-                PlotsExtractorTools.annotateWithRectangles((Graphics2D) pre_layout_img.getGraphics(), preliminaryColumns);
+                FiguresExtractorTools.annotateWithRectangles((Graphics2D) pre_layout_img.getGraphics(), preliminaryColumns);
                 Images.writeImageToFile(pre_layout_img, new File(outputDirectory.getPath(), "preliminary_layout" + i + ".png"));
 
                 /* verifying that rectangles are not intersecting !! */
@@ -124,7 +124,7 @@ public class PlotsExtractorCli {
                             
                             BufferedImage int_layout_img = new BufferedImage(img.getWidth(), img.getHeight(), img.getType());
                             int_layout_img.getGraphics().drawImage(img, 0, 0, null);
-                            PlotsExtractorTools.annotateWithEmptyRectangles((Graphics2D) int_layout_img.getGraphics(), intRecs);
+                            FiguresExtractorTools.annotateWithEmptyRectangles((Graphics2D) int_layout_img.getGraphics(), intRecs);
                             Images.writeImageToFile(int_layout_img, new File(outputDirectory.getPath(), "preliminary_layout_" + i +"intersection_" + int_num +".png"));
                             int_num++;
                         }
@@ -168,7 +168,7 @@ public class PlotsExtractorCli {
 
                 operationsDumpFile.close();
 
-                PlotsExtractorTools.annotateImage((Graphics2D) img3.getGraphics(),
+                FiguresExtractorTools.annotateImage((Graphics2D) img3.getGraphics(),
                         null,
                         null,
                         null, graphicalOperations, null);
@@ -187,7 +187,7 @@ public class PlotsExtractorCli {
                 Images.writeImageToFile(img4, pdfObjectsFile);
 */
                 BufferedImage img40 = Images.copyBufferedImage(img);
-                PlotsExtractorTools.annotateImage((Graphics2D) img40.getGraphics(),
+                FiguresExtractorTools.annotateImage((Graphics2D) img40.getGraphics(),
                         null,
                         null,
                         null, pageMgr.getOperations(), null);
@@ -243,21 +243,21 @@ public class PlotsExtractorCli {
             }
         }
 
-        PlotsWriter.writePlots(document, outputDirectory, true);
+        FiguresWriter.writePlots(document, outputDirectory, true);
         File annotatedTextFile = new File(outputDirectory.getPath(), "annotatedText.json");
         AnnotatedTextWriter.writeStructuredTextAsJSON(annotatedTextFile, document);
 
         // writing the global metadata of all the plots collectively
         File completemetadataFile = new File(outputDirectory.getPath(), "completeMetadata.xml");
 
-        PlotsWriter.writePlotsMetadataToFile(plots.getToplevelPlots(), completemetadataFile);
+        FiguresWriter.writePlotsMetadataToFile(plots.getToplevelPlots(), completemetadataFile);
 
         File extractorOutputFile = new File(outputDirectory.getPath(), "description.xml");
         DocumentWriter.writeDocumentToFile(document, extractorOutputFile);
 
         File extractorJSONOutputFile = new File(outputDirectory.getPath(), "extracted.json");
 
-        PlotsWriter.writePlotsMetadataToFileJSON(plots.getToplevelPlots(), extractorJSONOutputFile);
+        FiguresWriter.writePlotsMetadataToFileJSON(plots.getToplevelPlots(), extractorJSONOutputFile);
         //writeDocumentToFileJSON(document, extractorJSONOutputFile);
     }
 
@@ -278,7 +278,7 @@ public class PlotsExtractorCli {
         PDFPageManager.registerFeatureProvider(new TextAreasProvider());
         PDFPageManager.registerFeatureProvider(new PageLayoutProvider());
 
-        PDFDocumentManager.registerFeatureProvider(new PlotsProvider());
+        PDFDocumentManager.registerFeatureProvider(new FiguresProvider());
         File outputFolder;
 
 

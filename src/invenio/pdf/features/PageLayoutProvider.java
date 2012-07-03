@@ -11,7 +11,6 @@ import invenio.pdf.core.IPDFPageFeature;
 import invenio.pdf.core.IPDFPageFeatureProvider;
 import invenio.pdf.core.PDFPageManager;
 import java.awt.Rectangle;
-import java.awt.geom.Rectangle2D;
 import java.awt.image.Raster;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -20,9 +19,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Queue;
-import java.util.Stack;
 import java.util.TreeMap;
 
 /**

@@ -183,10 +183,6 @@ class ExtractorGraphics2D extends Graphics2D {
         Rectangle finalBoundingRectangle = new Rectangle((int) minX, (int) minY, (int) (maxX - minX), (int) (maxY - minY));
         // now clipping !
 
-        if (finalBoundingRectangle.x == 109 && finalBoundingRectangle.y == 840) {
-            System.out.println("ZONK");
-
-        }
         this.operationsManager.extendCurrentOperationBoundary(finalBoundingRectangle);
     }
 

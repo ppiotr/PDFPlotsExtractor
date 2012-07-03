@@ -12,8 +12,8 @@ import invenio.pdf.core.documentProcessing.PDFDocumentTools;
 import invenio.pdf.features.GraphicalAreasProvider;
 import invenio.pdf.features.PageLayoutProvider;
 import invenio.pdf.features.FigureCandidate;
-import invenio.pdf.features.Plots;
-import invenio.pdf.features.PlotsProvider;
+import invenio.pdf.features.Figure;
+import invenio.pdf.features.FiguresProvider;
 import invenio.pdf.features.TextAreasProvider;
 import java.io.File;
 import java.io.IOException;
@@ -84,9 +84,9 @@ public class ExtractorInterface {
 
         this.openFileName = f.getPath();
         this.updateOpenFileLabel();
-        Plots plots = (Plots) manager.getDocumentFeature(Plots.featureName);
+        Figure plots = (Figure) manager.getDocumentFeature(Figure.featureName);
         for (int page = 0; page < manager.getPagesNumber(); page++) {
-            TabItem tabPage = createPdfPage("Page " + (page + 1), manager.getPage(page), plots.plots.get(page));
+            TabItem tabPage = createPdfPage("Page " + (page + 1), manager.getPage(page), plots.figures.get(page));
         }
     }
 
@@ -114,7 +114,7 @@ public class ExtractorInterface {
         PDFPageManager.registerFeatureProvider(new GraphicalAreasProvider());
         PDFPageManager.registerFeatureProvider(new TextAreasProvider());
         PDFPageManager.registerFeatureProvider(new PageLayoutProvider());
-        PDFDocumentManager.registerFeatureProvider(new PlotsProvider());
+        PDFDocumentManager.registerFeatureProvider(new FiguresProvider());
 
         ExtractorInterface exInterface = new ExtractorInterface();
 

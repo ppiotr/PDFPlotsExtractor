@@ -126,7 +126,18 @@ class PDFPageOperationsManager {
     }
 
     public Rectangle getOperationBoundary(CSOperation op) {
-        return this.operationBoundaries.get(op); // will return null if key is not present
+        Rectangle opb = this.operationBoundaries.get(op);
+        if (opb == null || (opb.width > 0 && opb.height > 0)) {
+            return opb;
+        }
+        // we assure at least 1 of height/width 
+        if (opb.width == 0) {
+            opb.width = 1;
+        }
+        if (opb.height == 0) {
+            opb.height = 1;
+        }
+        return opb; // will return null if key is not present
     }
 
     public void extendCurrentOperationBoundary(Rectangle rec) {

@@ -9,8 +9,8 @@ import invenio.common.Images;
 import invenio.pdf.core.PDFDocumentManager;
 import invenio.pdf.core.PDFPageManager;
 import invenio.pdf.features.FigureCandidate;
-import invenio.pdf.features.PlotsExtractorTools;
-import invenio.pdf.features.PlotsWriter;
+import invenio.pdf.features.FiguresExtractorTools;
+import invenio.pdf.features.FiguresWriter;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
@@ -213,7 +213,7 @@ public class TestingSetDescriptor {
         for (File plotFile : plotMetadataFiles) {
             try {
                 // reading metadata of one plot
-                FigureCandidate plot = PlotsExtractorTools.readPlotMetadata(plotFile).get(0);
+                FigureCandidate plot = FiguresExtractorTools.readPlotMetadata(plotFile).get(0);
                 int pageNum = plot.getPageNumber();
                 plot.setPageManager(model.documentManager.getPage(pageNum));
                 if (!model.plotsOnPages.containsKey(pageNum)) {
@@ -510,7 +510,7 @@ public class TestingSetDescriptor {
         for (Integer pageNum : model.plotsOnPages.keySet()) {
             for (FigureCandidate plot : model.plotsOnPages.get(pageNum)) {
                 try {
-                    PlotsWriter.writePlot(plot, outputDirectory, false);
+                    FiguresWriter.writePlot(plot, outputDirectory, false);
                 } catch (FileNotFoundException ex) {
                     System.out.println("ERROR: Filesystem error");
                 } catch (Exception ex) {

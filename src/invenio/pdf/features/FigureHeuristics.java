@@ -23,7 +23,7 @@ import java.util.Map;
  *  - including textual parts being part of a plot
  * @author piotr
  */
-public class PlotHeuristics {
+public class FigureHeuristics {
 
     public abstract class Predicate<T, S> {
 

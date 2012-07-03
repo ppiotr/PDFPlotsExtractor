@@ -23,7 +23,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-public class PlotsExtractorTools {
+public class FiguresExtractorTools {
     /** draw a number of rectangles on the canvas*/
     public static void annotateWithEmptyRectangles(Graphics2D graphics, List<Rectangle> rectangles) {
         graphics.setTransform(AffineTransform.getRotateInstance(0));

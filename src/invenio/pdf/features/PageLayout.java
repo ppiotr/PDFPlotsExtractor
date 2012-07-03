@@ -83,6 +83,7 @@ public class PageLayout implements IPDFPageFeature {
         }
         return onTheRight;
     }
+
     /**
      *  Returns page areas lying on the top of a given area
      * @param areaNum number of the area to be tested
@@ -120,6 +121,7 @@ public class PageLayout implements IPDFPageFeature {
         }
         return onTheBottom;
     }
+
     /**
      * Returns the area that fits the most
      * @return
@@ -127,9 +129,17 @@ public class PageLayout implements IPDFPageFeature {
     public int getSingleBestIntersectingArea(Rectangle srcRec) {
         int maximalArea = -1;
         int maximalIntersection = 0; // maximal intersection area
-
-        Set<Integer> intersecting = getIntersectingAreas(srcRec);
-
+        Rectangle rec = new Rectangle(srcRec);
+        if (rec.width == 0){
+            rec.width = 1;
+        
+        }
+        if (rec.height == 0){
+            rec.height = 1;
+        }
+        
+        Set<Integer> intersecting = getIntersectingAreas(rec);
+     
         for (int areaNum : intersecting) {
             // for every intersecting area, calculate the intersection area and
             // compare to the previous maximum
@@ -140,7 +150,7 @@ public class PageLayout implements IPDFPageFeature {
                 currentIntersection += (added > 0) ? added : -added;
             }
 
-            if (currentIntersection > maximalIntersection) {
+            if (currentIntersection >= maximalIntersection) {
                 // we want to update the area intersecting the most
                 maximalArea = areaNum;
                 maximalIntersection = currentIntersection;

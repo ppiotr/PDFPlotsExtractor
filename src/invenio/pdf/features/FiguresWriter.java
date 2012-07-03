@@ -41,15 +41,13 @@ import org.w3c.dom.Element;
  * A class allowing to write plots together with meta-data into files
  * @author piotr
  */
-public class PlotsWriter {
+public class FiguresWriter {
 
     public static void writePlots(PDFDocumentManager document, File outputDirectory, boolean saveAttachments)
             throws FeatureNotPresentException, Exception {
-        Plots plots = (Plots) document.getDocumentFeature(Plots.featureName);
-        for (List<FigureCandidate> pagePlots : plots.plots) {
-            for (FigureCandidate plot : pagePlots) {
-                writePlot(plot, outputDirectory, saveAttachments);
-            }
+        Figure plots = (Figure) document.getDocumentFeature(Figure.featureName);
+        for (FigureCandidate figure : plots.getToplevelPlots()) {
+            writePlot(figure, outputDirectory, saveAttachments);
         }
     }
 
@@ -61,9 +59,6 @@ public class PlotsWriter {
             outputDirectory.mkdir();
         }
 
-        if (plot.getBoundary().width > 600){
-            System.out.println("DUPA");
-        }
         setFileNames(plot, outputDirectory);
         writePlotMetadataToFileJSON(plot);
         writePlotMetadataToFile(plot);
@@ -214,7 +209,7 @@ public class PlotsWriter {
 
     public static void writePlotMetadata(Document document, Element containerElement, FigureCandidate plot)
             throws FileNotFoundException, Exception {
-        
+
         ExtractorParameters parameters = ExtractorParameters.getExtractorParameters();
         Element rootElement = document.createElement("plot");
         containerElement.appendChild(rootElement);

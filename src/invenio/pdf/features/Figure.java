@@ -17,14 +17,14 @@ import org.w3c.dom.Element;
  *  A class allowing to manage plots together with plot candidates 
  * @author piotr
  */
-public class Plots implements IPDFDocumentFeature {
+public class Figure implements IPDFDocumentFeature {
 
-    public static final String featureName = "Plots";
-    public ArrayList<List<FigureCandidate>> plots;
+    public static final String featureName = "Figures";
+    public ArrayList<List<FigureCandidate>> figures;
     // pageNum -> list of Plots
 
-    public Plots() {
-        this.plots = new ArrayList<List<FigureCandidate>>();
+    public Figure() {
+        this.figures = new ArrayList<List<FigureCandidate>>();
     }
 
     /** Return an unstructured list of all plots of a given document
@@ -33,7 +33,7 @@ public class Plots implements IPDFDocumentFeature {
      */
     public List<FigureCandidate> getToplevelPlots() {
         LinkedList<FigureCandidate> result = new LinkedList<FigureCandidate>();
-        for (List<FigureCandidate> partialList : this.plots) {
+        for (List<FigureCandidate> partialList : this.figures) {
             for (FigureCandidate plot : partialList) {
                 if (plot.isApproved && plot.isToplevelPlot) {
                     result.add(plot);
@@ -50,7 +50,7 @@ public class Plots implements IPDFDocumentFeature {
      */
     public List<FigureCandidate> getPlotcandidates() {
         LinkedList<FigureCandidate> result = new LinkedList<FigureCandidate>();
-        for (List<FigureCandidate> partialList : this.plots) {
+        for (List<FigureCandidate> partialList : this.figures) {
             result.addAll(partialList);
         }
         return result;
@@ -59,14 +59,18 @@ public class Plots implements IPDFDocumentFeature {
     @Override
     public void saveToXml(Document document, Element rootElement) throws FileNotFoundException, Exception {
         // first flatten the array
-        LinkedList<FigureCandidate> toWrite = new LinkedList<FigureCandidate>();
+        /**LinkedList<FigureCandidate> toWrite = new LinkedList<FigureCandidate>();
+        
         for (List<FigureCandidate> partial : this.plots) {
             toWrite.addAll(partial);
         }
-        PlotsWriter.writePlotsMetadata(document, rootElement, toWrite);
+        */
+        List<FigureCandidate> toWrite = this.getToplevelPlots();
+        
+        FiguresWriter.writePlotsMetadata(document, rootElement, toWrite);
     }
 
-    public List<FigureCandidate> getPlotCandidatesByPage(int pageNum) {
-        return this.plots.get(pageNum);
+    public List<FigureCandidate> getFigureCandidatesByPage(int pageNum) {
+        return this.figures.get(pageNum);
     }
 }

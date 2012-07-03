@@ -9,7 +9,7 @@ import invenio.common.Pair;
 import invenio.pdf.core.PDFDocumentManager;
 import invenio.pdf.core.PDFPageManager;
 import invenio.pdf.features.FigureCandidate;
-import invenio.pdf.features.PlotsExtractorTools;
+import invenio.pdf.features.FiguresExtractorTools;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
@@ -106,7 +106,7 @@ public class EvaluateDocument {
         for (File plotFile : plotMetadataFiles) {
             try {
                 // reading metadata of one plot
-                FigureCandidate plot = PlotsExtractorTools.readPlotMetadata(plotFile).get(0);
+                FigureCandidate plot = FiguresExtractorTools.readPlotMetadata(plotFile).get(0);
                 int pageNum = plot.getPageNumber();
 
                 //plot.setPageManager(model.documentManager.getPage(pageNum));
@@ -203,7 +203,7 @@ public class EvaluateDocument {
         for (File plotFile : plotMetadataFiles) {
             try {
                 // reading metadata of one plot
-                FigureCandidate plot = PlotsExtractorTools.readPlotMetadata(plotFile).get(0);
+                FigureCandidate plot = FiguresExtractorTools.readPlotMetadata(plotFile).get(0);
                 int pageNum = plot.getPageNumber();
                 plot.setPageManager(model.documentManager.getPage(pageNum));
                 if (!model.plotsOnPages.containsKey(pageNum)) {

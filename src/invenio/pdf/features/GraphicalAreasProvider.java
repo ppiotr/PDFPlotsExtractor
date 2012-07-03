@@ -53,6 +53,7 @@ public class GraphicalAreasProvider implements IPDFPageFeatureProvider {
                 Rectangle srcRec = dOp.getBoundary();
 
                 int bestIntersectingArea = pageLayout.getSingleBestIntersectingArea(srcRec);
+                
                 if (bestIntersectingArea >= 0) {
                     Rectangle rec = new Rectangle((int) srcRec.getX(), (int) srcRec.getY(),
                             (int) srcRec.getWidth(), (int) srcRec.getHeight());

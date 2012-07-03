@@ -11,7 +11,7 @@ import invenio.pdf.core.Operation;
 import invenio.pdf.core.PDFPageManager;
 import invenio.pdf.features.PageLayout;
 import invenio.pdf.features.FigureCandidate;
-import invenio.pdf.features.PlotsExtractorTools;
+import invenio.pdf.features.FiguresExtractorTools;
 import invenio.pdf.features.TextAreas;
 import java.awt.Graphics2D;
 
@@ -123,7 +123,7 @@ public class PdfPageComposite extends Composite {
 
         TextAreas tAreas = (TextAreas) opManager.getPageFeature(TextAreas.featureName);
         PageLayout pdfPageLayout = (PageLayout) opManager.getPageFeature(PageLayout.featureName);
-        PlotsExtractorTools.annotateImage((Graphics2D) pageImage.getGraphics(), plots, tAreas, pdfPageLayout, null, null);
+        FiguresExtractorTools.annotateImage((Graphics2D) pageImage.getGraphics(), plots, tAreas, pdfPageLayout, null, null);
         // saving a copy of the rendered image
 
         //TODO: This is obsolete ... but so is the entire GUI
