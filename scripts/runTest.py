@@ -1059,8 +1059,9 @@ def perform_processing_controller(parameters, results, stat_data):
         """consume a single ProcessingResult object ... uncompress to the output directory and """
         output_dir = result.original_params[1]
         #make sure that teh output dir is there
-        makedirs(output_dir)
 
+        makedirs(output_dir)
+        print "Processing result output_dir: %s filename: %s " % (output_dir, result.fileName)
 
         f = os.popen("tar -zxf %s -C %s --strip-components=1" % ( result.fileName, output_dir))
         f.read()
