@@ -11,7 +11,6 @@ import invenio.pdf.core.DisplayedOperation;
 import invenio.pdf.core.ExtractorLogger;
 import invenio.pdf.core.ExtractorParameters;
 import invenio.pdf.core.FeatureNotPresentException;
-import invenio.pdf.core.GraphicalOperation;
 import invenio.pdf.core.IPDFDocumentFeatureProvider;
 import invenio.pdf.core.Operation;
 import invenio.pdf.core.PDFDocumentManager;
@@ -558,7 +557,7 @@ public class FiguresProvider implements IPDFDocumentFeatureProvider {
         ExtractorLogger.logMessage(2, "Processing a potential caption : " + candidate);
 
 
-        Pattern p = Pattern.compile("(figure|fig\\.|fig|plot|image|img.|img|table|tab.|tab)([^:]{1,5}+):");
+        Pattern p = Pattern.compile("(figure|fig\\.|fig|plot|image|img.|img|table|tab.|tab)([^a-z]*([A-Z]|:|-|—|.))");
         Matcher m = p.matcher(prepared);
 
         if (m.lookingAt()) {
