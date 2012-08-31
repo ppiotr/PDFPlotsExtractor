@@ -259,6 +259,22 @@ public class PlotsExtractorCli {
 
         FiguresWriter.writePlotsMetadataToFileJSON(plots.getToplevelPlots(), extractorJSONOutputFile);
         //writeDocumentToFileJSON(document, extractorJSONOutputFile);
+        
+        
+        /*Generating rectangles of text operations*/
+        System.out.println("{");
+        for (PDFPageManager<PDPage> page: document.getPages()){
+            System.out.println(page.getPageNumber() + " : {");
+            
+            for (Operation o: page.getTextOperations()){
+                TextOperation to = (TextOperation) o;
+                Rectangle bd = to.getBoundary();
+                System.out.println("(" + bd.x + ", " + bd.y + ", " + bd.width + ", " + bd.height + ") : \"\"\"" + to.getText() + "\"\"\", ");            
+            }
+            
+            System.out.println("}");
+        }
+        System.out.println("}");
     }
 
     /** Setup paths to the configuration file based on the execution path */
