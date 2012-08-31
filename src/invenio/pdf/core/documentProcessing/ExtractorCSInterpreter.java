@@ -5,8 +5,7 @@ import de.intarsys.cwt.environment.IGraphicsContext;
 import de.intarsys.pdf.content.CSException;
 import de.intarsys.pdf.content.CSOperation;
 import de.intarsys.pdf.platform.cwt.rendering.CSPlatformRenderer;
-import invenio.pdf.core.PDFObjects.PDFObject;
-import java.util.LinkedList;
+
 
 /**
  * An implementation of the jPod CSPlatformRenderer - a class responsible for
@@ -34,16 +33,21 @@ import java.util.LinkedList;
 class ExtractorCSInterpreter extends CSPlatformRenderer {
 
     private PDFPageOperationsManager operationsManager;
+    private int recursionDepth;
 
     public ExtractorCSInterpreter(Map paramOptions, IGraphicsContext igc, PDFPageOperationsManager opManager) {
         super(paramOptions, igc);
         this.operationsManager = opManager;
+        this.recursionDepth = 0;
     }
 
     //// We override the operation processing so that it uses the operations manager
     @Override
     protected void process(CSOperation operation) throws CSException {
-        this.operationsManager.setCurrentOperation(operation);
+        // The recursion depth allows us to deal with the primary 
+        // operations (not for example introduced by type3 fonts)
+        if (this.recursionDepth == 0)
+            this.operationsManager.setCurrentOperation(operation);
 
         /*
         try {
@@ -53,9 +57,13 @@ class ExtractorCSInterpreter extends CSPlatformRenderer {
         }
          * 
          */
-
+        
+        this.recursionDepth++;
+        
         super.process(operation);
-
+        
+        this.recursionDepth--;
+        if (this.recursionDepth == 0)
         this.operationsManager.unsetCurrentOperation();
     }
 

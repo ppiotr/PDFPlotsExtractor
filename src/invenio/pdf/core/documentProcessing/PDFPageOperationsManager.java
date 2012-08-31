@@ -83,6 +83,9 @@ class PDFPageOperationsManager {
         /**
          * Add an operation to the set of processed operations
          */
+        //System.out.print("   operands : ");
+        //System.out.println(op.getOperand(0).asString().stringValue());
+                
         this.operations.add(op);
     }
 
@@ -160,7 +163,7 @@ class PDFPageOperationsManager {
 
     public void addTextOperation(CSOperation op) {
         /**
-         * Mark an operation as a tree operation
+         * Mark an operation as a text operation
          */
         this.textOperations.add(op);
     }

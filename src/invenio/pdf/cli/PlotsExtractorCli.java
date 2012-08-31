@@ -157,10 +157,7 @@ public class PlotsExtractorCli {
                     if (op instanceof GraphicalOperation) {
                         ps.print(" graphical");
                         GraphicalOperation go = (GraphicalOperation) op;
-                        if (pageMgr.getPageNumber() == 3 && go.getBoundary().x < 300 && go.getBoundary().y < 505) {
-                            //System.out.println("our operation");
-                            ps.print("    <---------------");
-                        }
+                      
                         graphicalOperations.add(op);
                     }
                     ps.println("");

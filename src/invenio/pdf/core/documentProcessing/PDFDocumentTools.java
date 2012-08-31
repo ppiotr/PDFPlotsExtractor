@@ -119,8 +119,6 @@ public class PDFDocumentTools {
             PDFGeometryTools.adjustTransform(pageTx, page);
             textExtractor.setDeviceTransform(pageTx);
 
-
-
             if (content != null) {
                 // we inject our own implementation of the renderer -> before performing an operation, it is
                 // marked as currently performed. In such a way, out graphics device will be able to detect the operation

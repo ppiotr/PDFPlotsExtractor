@@ -1,13 +1,11 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package invenio.pdf.core.documentProcessing;
 
 import de.intarsys.pdf.content.CSDeviceBasedInterpreter;
 import de.intarsys.pdf.content.CSException;
 import de.intarsys.pdf.content.CSOperation;
 import de.intarsys.pdf.content.text.CSTextExtractor;
+import java.awt.Rectangle;
 import java.util.Map;
 
 /**
@@ -49,6 +47,10 @@ class ExtractorCSTextInterpreter extends CSDeviceBasedInterpreter {
             // mark current operation as a text operation
             this.operationsManager.setOperationTextIndices(operation, new int[]{initialIndex, finalIndex});
             this.operationsManager.addTextOperation(operation);
+            Rectangle r = this.operationsManager.getOperationBoundary(operation);
+            if (r == null){
+                System.out.println("Empty boundary ... something wrong, text detected but no boundary");
+            }
         }
 
     }
