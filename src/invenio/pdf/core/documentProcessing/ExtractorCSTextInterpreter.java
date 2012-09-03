@@ -47,10 +47,10 @@ class ExtractorCSTextInterpreter extends CSDeviceBasedInterpreter {
             // mark current operation as a text operation
             this.operationsManager.setOperationTextIndices(operation, new int[]{initialIndex, finalIndex});
             this.operationsManager.addTextOperation(operation);
-            Rectangle r = this.operationsManager.getOperationBoundary(operation);
-            if (r == null){
-                System.out.println("Empty boundary ... something wrong, text detected but no boundary");
-            }
+//            Rectangle r = this.operationsManager.getOperationBoundary(operation);
+//            if (r == null){
+//                System.out.println("Empty boundary ... something wrong, text detected but no boundary");
+//            }
         }
 
     }

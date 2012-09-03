@@ -140,12 +140,17 @@ public class PDFDocumentTools {
                 result.setInternalPage(page);
                 //result.setPDFObjects(renderer.getObjects());
             }
+            System.gc();
+
             return result;
 
         } finally {
             if (graphics != null) {
                 graphics.dispose();
+
             }
+            System.gc();
+
         }
     }
 
@@ -156,7 +161,7 @@ public class PDFDocumentTools {
 
         PDPageTree pages = doc.getPageTree();
         PDPage page = pages.getFirstPage();
-
+        System.out.println("Reading operations from pages");
         int pageNum = 0;
         while (page != null) {
             PDFPageManager currentPageManager = getOperationsFromPage(page);
@@ -165,8 +170,9 @@ public class PDFDocumentTools {
             currentPageManager.setDocumentManager(documentManager);
             page = page.getNextPage();
             pageNum++;
+            System.out.println(pageNum);
         }
-
+        System.out.println("...finished");
         return documentManager;
     }
 
