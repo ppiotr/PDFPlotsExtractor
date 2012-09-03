@@ -32,6 +32,7 @@ class PDFPageOperationsManager {
     private CSOperation currentOperation; // currently performed operation
     private HashMap<CSOperation, Rectangle> operationBoundaries; // Boundries of areas affected by PS operations
     private HashSet<CSOperation> textOperations; // operations drawing the text
+    private HashSet<CSOperation> enforcedGraphicalOperations;
     private List<CSOperation> operations; // operations drawing the text
     //   private HashMap<CSOperation, List<String>> renderingMethods; // Methods
     // called in order to execute an operation
@@ -50,6 +51,8 @@ class PDFPageOperationsManager {
         this.currentOperation = null;
         this.operationBoundaries = new HashMap<CSOperation, Rectangle>();
         this.textOperations = new HashSet<CSOperation>();
+        this.enforcedGraphicalOperations = new HashSet<CSOperation>();
+        
         //     this.renderingMethods = new HashMap<CSOperation, List<String>>();
         this.operations = new ArrayList<CSOperation>();
         this.pageBoundary = pgBound;
@@ -212,8 +215,16 @@ class PDFPageOperationsManager {
         return result;
     }
 
+    public boolean isEnforcedGraphicalOperation(CSOperation op){
+        return this.enforcedGraphicalOperations.contains(op);
+    }
+    
+    public void enforceGraphicalOperation(CSOperation op){
+        this.enforcedGraphicalOperations.add(op);
+    }
+    
     private boolean isTextOperation(CSOperation op) {
-        return this.textOperations.contains(op);
+        return this.textOperations.contains(op) && (!this.isEnforcedGraphicalOperation(op));
     }
 
     public boolean isGraphicalOperation(CSOperation op) {

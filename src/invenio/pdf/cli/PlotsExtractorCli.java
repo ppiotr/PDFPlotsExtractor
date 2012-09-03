@@ -241,8 +241,8 @@ public class PlotsExtractorCli {
         }
 
         FiguresWriter.writePlots(document, outputDirectory, true);
-        File annotatedTextFile = new File(outputDirectory.getPath(), "annotatedText.json");
-        AnnotatedTextWriter.writeStructuredTextAsJSON(annotatedTextFile, document);
+        File annotatedTextFile = new File(outputDirectory.getPath(), "annotatedText.py");
+        AnnotatedTextWriter.writeStructuredTextAsPython(annotatedTextFile, document);
 
         // writing the global metadata of all the plots collectively
         File completemetadataFile = new File(outputDirectory.getPath(), "completeMetadata.xml");
@@ -259,19 +259,19 @@ public class PlotsExtractorCli {
         
         
         /*Generating rectangles of text operations*/
-        System.out.println("{");
-        for (PDFPageManager<PDPage> page: document.getPages()){
-            System.out.println(page.getPageNumber() + " : {");
-            
-            for (Operation o: page.getTextOperations()){
-                TextOperation to = (TextOperation) o;
-                Rectangle bd = to.getBoundary();
-                System.out.println("(" + bd.x + ", " + bd.y + ", " + bd.width + ", " + bd.height + ") : \"\"\"" + to.getText() + "\"\"\", ");            
-            }
-            
-            System.out.println("}");
-        }
-        System.out.println("}");
+//        System.out.println("{");
+//        for (PDFPageManager<PDPage> page: document.getPages()){
+//            System.out.println(page.getPageNumber() + " : {");
+//            
+//            for (Operation o: page.getTextOperations()){
+//                TextOperation to = (TextOperation) o;
+//                Rectangle bd = to.getBoundary();
+//                System.out.println("(" + bd.x + ", " + bd.y + ", " + bd.width + ", " + bd.height + ") : \"\"\"" + to.getText() + "\"\"\", ");            
+//            }
+//            
+//            System.out.println("}");
+//        }
+//        System.out.println("}");
     }
 
     /** Setup paths to the configuration file based on the execution path */

@@ -20,15 +20,18 @@ class ExtractorCSTextInterpreter extends CSDeviceBasedInterpreter {
 
     protected PDFPageOperationsManager operationsManager;
     protected CSTextExtractor extractor;
+    private int recurrenceDepth;
 
     public ExtractorCSTextInterpreter(Map paramOptions, CSTextExtractor device, PDFPageOperationsManager manager) {
         super(paramOptions, device);
         this.operationsManager = manager;
         this.extractor = device;
+        this.recurrenceDepth = 0;
     }
 
     @Override
     protected void process(CSOperation operation) throws CSException {
+        this.recurrenceDepth++;
         int initialIndex = extractor.getContent().length();
 
         //TODO: This is an ugly hack to avoid the library error
@@ -43,14 +46,13 @@ class ExtractorCSTextInterpreter extends CSDeviceBasedInterpreter {
             // throw new Exception("Ugly workaround exception !");
         }
         int finalIndex = extractor.getContent().length();
-        if (initialIndex != finalIndex){
+        this.recurrenceDepth--;
+        
+        if (initialIndex != finalIndex && this.recurrenceDepth == 0){
             // mark current operation as a text operation
             this.operationsManager.setOperationTextIndices(operation, new int[]{initialIndex, finalIndex});
             this.operationsManager.addTextOperation(operation);
-//            Rectangle r = this.operationsManager.getOperationBoundary(operation);
-//            if (r == null){
-//                System.out.println("Empty boundary ... something wrong, text detected but no boundary");
-//            }
+
         }
 
     }

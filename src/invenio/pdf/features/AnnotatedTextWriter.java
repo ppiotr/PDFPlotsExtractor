@@ -47,7 +47,7 @@ public class AnnotatedTextWriter {
         return in;
     }
 
-    private static String getJSONRectangle(Rectangle rec){
+    private static String getJSONRectangle(Rectangle rec) {
         String result = "{\n";
         result += "   x: " + rec.x + ",\n";
         result += "   y: " + rec.y + ",\n";
@@ -55,6 +55,42 @@ public class AnnotatedTextWriter {
         result += "   height: " + rec.height + "\n";
         result += "}\n";
         return result;
+    }
+    private static String escapePythonString(String s){
+        return s.replace("\"","\\\"");
+    }
+    
+    public static void writeStructuredTextAsPython(File outputFile,
+            PDFDocumentManager pdfDoc)
+            throws FileNotFoundException {
+        PrintStream outputStream = new PrintStream(outputFile);
+        outputStream.print("{");
+        for (int pageNum = 0; pageNum < pdfDoc.getPagesNumber(); ++pageNum) {
+            PDFPageManager pageManager = pdfDoc.getPage(pageNum);
+            Set<Operation> operations = (Set<Operation>) pageManager.getTextOperations();
+            outputStream.print(pageNum + " : {");
+
+            boolean notFirst = false;
+            for (Operation operation : operations) {
+                TextOperation op = (TextOperation) operation;
+                if (!op.getText().isEmpty()) {
+                    if (notFirst) {
+                        outputStream.print(", ");
+                    } else {
+                        notFirst = true;
+                    }
+
+                    Rectangle r = op.getBoundary();
+                    outputStream.print("(" + r.x + ", " + r.y + ", " + r.width + ", " + r.height + "):\"\"\"" + AnnotatedTextWriter.escapePythonString(op.getText()) + "\"\"\"");
+                }
+            }
+            outputStream.print("}");
+            if (pageNum == (pdfDoc.getPagesNumber() - 1)) {
+                outputStream.print(",");
+            }
+        }
+        outputStream.print("}");
+        outputStream.close();
     }
 
     /**
@@ -83,7 +119,7 @@ public class AnnotatedTextWriter {
             boolean notFirst = false;
             for (Operation operation : operations) {
                 TextOperation op = (TextOperation) operation;
-                if (notFirst){
+                if (notFirst) {
                     outputStream.print(", ");
                 } else {
                     notFirst = true;
@@ -119,55 +155,6 @@ public class AnnotatedTextWriter {
 
         Element rootElement = document.createElement("plot");
         plotsCollectionElement.appendChild(rootElement);
-
-//        // plot identifier
-//
-//        appendElementWithTextNode(document, rootElement, "identifier", plot.getId());
-//
-//        //        ps.println("identifier= " + plot.getId());
-//
-//        // plot  image files
-//        appendElementWithTextNode(document, rootElement, "png", plot.getFile("png").getAbsolutePath());
-//        appendElementWithTextNode(document, rootElement, "svg", plot.getFile("svg").getAbsolutePath());
-//
-//        // location of the source
-//
-//        Element locationElement = document.createElement("location");
-//        rootElement.appendChild(locationElement);
-//        // main document file
-//        appendElementWithTextNode(document, locationElement, "pdf", plot.getPageManager().getDocumentManager().getSourceFileName());
-//        // document scale
-//        appendElementWithTextNode(document, locationElement, "scale", "" + ExtractorParameters.getExtractorParameters().getPageScale());
-//        // current page resulution
-//        Rectangle pb = plot.getPageManager().getPageBoundary();
-//        if (pb != null) {
-//            Element pageResolution = document.createElement("pageResolution");
-//
-//            locationElement.appendChild(pageResolution);
-//            appendElementWithTextNode(document, pageResolution, "width", "" + pb.width);
-//            appendElementWithTextNode(document, pageResolution, "height", "" + pb.height);
-//        }
-//        // main document page (indexed from 0)
-//        appendElementWithTextNode(document, locationElement, "pageNumber", "" + plot.getPageManager().getPageNumber());
-//
-//        // coordinates in the main document
-//        appendRectangle(document, locationElement, "pageCoordinates", plot.getBoundary());
-//
-//
-//
-//
-//        Element captionEl = document.createElement("caption");
-//        rootElement.appendChild(captionEl);
-//        // caption coordinates
-//        appendRectangle(document, captionEl, "coordinates", plot.getCaptionBoundary());
-//        // caption text
-//        appendElementWithTextNode(document, captionEl, "captionText", "" + plot.getCaption());
-//        // caption image
-//        appendElementWithTextNode(document, rootElement, "captionImage", plot.getFile("captionImage").getAbsolutePath());
-//        // debug image
-//        appendElementWithTextNode(document, rootElement, "annotatedImage", plot.getFile("annotatedImage").getAbsolutePath());
-//
-//        // saving the output into a file
 
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
         Transformer transformer = transformerFactory.newTransformer();

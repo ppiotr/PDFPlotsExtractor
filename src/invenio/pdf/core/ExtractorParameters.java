@@ -128,7 +128,7 @@ public class ExtractorParameters extends Properties {
 
         //this.setProperty("minimal_column_height", "0.25"); // minimally 1/4 of the page for a column
 
-       // this.setProperty("generate_debug_information", "true");
+        //this.setProperty("generate_debug_information", "true");
         this.setProperty("generate_debug_information", "false");
         this.setProperty("generate_plot_provenance", "true");
         this.setProperty("generate_svg", "true");
