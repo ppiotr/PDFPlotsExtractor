@@ -5,7 +5,6 @@ import de.intarsys.cwt.environment.IGraphicsContext;
 import de.intarsys.pdf.content.CSException;
 import de.intarsys.pdf.content.CSOperation;
 import de.intarsys.pdf.platform.cwt.rendering.CSPlatformRenderer;
-import java.util.HashSet;
 
 /**
  * An implementation of the jPod CSPlatformRenderer - a class responsible for
@@ -34,33 +33,23 @@ class ExtractorCSInterpreter extends CSPlatformRenderer {
 
     private PDFPageOperationsManager operationsManager;
     private int recursionDepth;
-    private HashSet<String> graphicalOperators;
+    private OperationTools operationTools;
 
     public ExtractorCSInterpreter(Map paramOptions, IGraphicsContext igc, PDFPageOperationsManager opManager) {
         super(paramOptions, igc);
         this.operationsManager = opManager;
-        this.graphicalOperators = new HashSet<String>();
 
         this.recursionDepth = 0;
+        this.operationTools = OperationTools.getInstance();
 
-
-        // building a collection of all graphical operators
-        String[] graphicalOperatorsArray = {"m", "l", "c", "v", "y", "h", "re", "s", "S", "f","F","f*","B","B*","b","b*","n","BI","DI","EI", "Do"};
-        for (String op : graphicalOperatorsArray) {
-            this.graphicalOperators.add(op);
-        }
     }
 
-    private boolean isGraphicalOperation(CSOperation op) {
-        String operator = op.getOperator().toString();
-        return this.graphicalOperators.contains(operator);
-    }
     //// We override the operation processing so that it uses the operations manager
 
     @Override
     protected void process(CSOperation operation) throws CSException {
 
-        if (this.isGraphicalOperation(operation)) {
+        if (this.operationTools.isGraphicalOperation(operation.getOperator().toString())) {
             // we do this especially in deeper recursion calls to make a top level operation graphical based on presence of a graphical operator !
             this.operationsManager.enforceGraphicalOperation(operation);
         }
@@ -78,12 +67,17 @@ class ExtractorCSInterpreter extends CSPlatformRenderer {
         }
          * 
          */
-
-        this.recursionDepth++;
+        boolean isOperationNonrecursive = this.operationTools.isTextOperation(operation.getOperator().toString());
+        if (isOperationNonrecursive) {
+            this.recursionDepth++;
+        }
 
         super.process(operation);
-
-        this.recursionDepth--;
+        
+        if (isOperationNonrecursive) {
+            this.recursionDepth--;
+        }
+        
         if (this.recursionDepth == 0) {
             this.operationsManager.unsetCurrentOperation();
         }

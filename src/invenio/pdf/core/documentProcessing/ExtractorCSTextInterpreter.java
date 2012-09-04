@@ -1,4 +1,3 @@
-
 package invenio.pdf.core.documentProcessing;
 
 import de.intarsys.pdf.content.CSDeviceBasedInterpreter;
@@ -21,34 +20,42 @@ class ExtractorCSTextInterpreter extends CSDeviceBasedInterpreter {
     protected PDFPageOperationsManager operationsManager;
     protected CSTextExtractor extractor;
     private int recurrenceDepth;
+    private OperationTools operationTools;
 
     public ExtractorCSTextInterpreter(Map paramOptions, CSTextExtractor device, PDFPageOperationsManager manager) {
         super(paramOptions, device);
         this.operationsManager = manager;
         this.extractor = device;
         this.recurrenceDepth = 0;
+        this.operationTools = OperationTools.getInstance();
     }
 
     @Override
     protected void process(CSOperation operation) throws CSException {
-        this.recurrenceDepth++;
+        boolean isOperationNonrecursive = this.operationTools.isTextOperation(operation.getOperator().toString());
+        if (isOperationNonrecursive) {
+            this.recurrenceDepth++;
+        }
+
+
         int initialIndex = extractor.getContent().length();
 
         //TODO: This is an ugly hack to avoid the library error
         // This should be fixed in the jPod library and then try{}catch should be removed
         // bug report: https://sourceforge.net/tracker/?func=detail&aid=3103823&group_id=203731&atid=986772
-        
+
         try {
             super.process(operation);
         } catch (CSException e) {
             // oops ... error but we have to continue !
-        } catch (Exception e){
+        } catch (Exception e) {
             // throw new Exception("Ugly workaround exception !");
         }
         int finalIndex = extractor.getContent().length();
-        this.recurrenceDepth--;
-        
-        if (initialIndex != finalIndex && this.recurrenceDepth == 0){
+        if (isOperationNonrecursive) {
+            this.recurrenceDepth--;
+        }
+        if (initialIndex != finalIndex && this.recurrenceDepth == 0) {
             // mark current operation as a text operation
             this.operationsManager.setOperationTextIndices(operation, new int[]{initialIndex, finalIndex});
             this.operationsManager.addTextOperation(operation);

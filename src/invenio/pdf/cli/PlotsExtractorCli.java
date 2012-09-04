@@ -171,18 +171,7 @@ public class PlotsExtractorCli {
                         null, graphicalOperations, null);
                 File graphicalAnnotatedFile = new File(outputDirectory.getPath(), "graphical_output" + i + ".png");
                 Images.writeImageToFile(img3, graphicalAnnotatedFile);
-                /*
-                // annotating with detected PDFObjects
-                BufferedImage img4 = Images.copyBufferedImage(img);
-                PlotsExtractorTools.annotateImage((Graphics2D) img4.getGraphics(),
-                        null,
-                        null,
-                        null, null, pageMgr.getPDFObjects());
-                
-                
-                File pdfObjectsFile = new File(outputDirectory.getPath(), "pdfobjects_output" + i + ".png");
-                Images.writeImageToFile(img4, pdfObjectsFile);
-*/
+
                 BufferedImage img40 = Images.copyBufferedImage(img);
                 FiguresExtractorTools.annotateImage((Graphics2D) img40.getGraphics(),
                         null,
@@ -202,41 +191,6 @@ public class PlotsExtractorCli {
                         }
                     }
                 }
-
-                /*
-                System.out.println("Statistics about objects stored in the PDF");
-                // now dealing with operations ..
-                for (PDFObject object : pageMgr.getPDFObjects()) {
-                    if (object instanceof PDFPathObject) {
-                        System.out.print("PATH            ");
-                    }
-                    if (object instanceof PDFClippingPathObject) {
-                        System.out.print("CLIPPING        ");
-                    }
-                    if (object instanceof PDFTextObject) {
-                        System.out.print("TEXT            ");
-                    }
-                    if (object instanceof PDFPageDescriptionObject) {
-                        System.out.print("PAGE DESCRIPTION");
-                    }
-                    if (object instanceof PDFExternalObject) {
-                        System.out.print("EXTERNAL        ");
-                    }
-                    if (object instanceof PDFInlineImageObject) {
-                        System.out.print("INLINE          ");
-                    }
-                    if (object instanceof PDFShadingObject) {
-                        System.out.print("SHADING         ");
-                    }
-
-                    System.out.print("(" + object.getOperations().size() + ") ");
-                    Rectangle bd = object.getBoundary();
-                    if (bd != null) {
-                        System.out.print("(" + bd.x + ", " + bd.y + ", " + bd.width + ", " + bd.height + ")");
-                    }
-
-                    System.out.println("");
-                }*/
             }
         }
 
@@ -255,23 +209,7 @@ public class PlotsExtractorCli {
         File extractorJSONOutputFile = new File(outputDirectory.getPath(), "extracted.json");
 
         FiguresWriter.writePlotsMetadataToFileJSON(plots.getToplevelPlots(), extractorJSONOutputFile);
-        //writeDocumentToFileJSON(document, extractorJSONOutputFile);
-        
-        
-        /*Generating rectangles of text operations*/
-//        System.out.println("{");
-//        for (PDFPageManager<PDPage> page: document.getPages()){
-//            System.out.println(page.getPageNumber() + " : {");
-//            
-//            for (Operation o: page.getTextOperations()){
-//                TextOperation to = (TextOperation) o;
-//                Rectangle bd = to.getBoundary();
-//                System.out.println("(" + bd.x + ", " + bd.y + ", " + bd.width + ", " + bd.height + ") : \"\"\"" + to.getText() + "\"\"\", ");            
-//            }
-//            
-//            System.out.println("}");
-//        }
-//        System.out.println("}");
+
     }
 
     /** Setup paths to the configuration file based on the execution path */
