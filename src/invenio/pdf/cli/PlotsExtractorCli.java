@@ -24,7 +24,7 @@ import invenio.pdf.features.DocumentWriter;
 import invenio.pdf.features.GraphicalAreasProvider;
 import invenio.pdf.features.PageLayout;
 import invenio.pdf.features.PageLayoutProvider;
-import invenio.pdf.features.Figure;
+import invenio.pdf.features.Figures;
 import invenio.pdf.features.FiguresExtractorTools;
 import invenio.pdf.features.FiguresProvider;
 import invenio.pdf.features.FiguresWriter;
@@ -70,7 +70,7 @@ public class PlotsExtractorCli {
         ExtractorParameters parameters = ExtractorParameters.getExtractorParameters();
 
         // writing annotated pages of the document
-        Figure plots = (Figure) document.getDocumentFeature(Figure.featureName);
+        Figures figures = (Figures) document.getDocumentFeature(Figures.featureName);
 
         for (int i = 0; i < document.getPagesNumber(); ++i) {
             PDFPageManager<PDPage> pageMgr = document.getPage(i);
@@ -83,7 +83,7 @@ public class PlotsExtractorCli {
                 img2.getGraphics().drawImage(img, 0, 0, null);
 
                 FiguresExtractorTools.annotateImage((Graphics2D) img2.getGraphics(),
-                        plots.figures.get(i),
+                        figures.figures.get(i),
                         (TextAreas) pageMgr.getPageFeature(TextAreas.featureName),
                         (PageLayout) pageMgr.getPageFeature(PageLayout.featureName),
                         null, null);
@@ -196,23 +196,30 @@ public class PlotsExtractorCli {
                 }
             }
         }
+        if (parameters.shouldProduceOutput()) {
+            FiguresWriter.writePlots(document, outputDirectory, true);
+            File annotatedTextFile = new File(outputDirectory.getPath(), "annotatedText.py");
+            AnnotatedTextWriter.writeStructuredTextAsPython(annotatedTextFile, document);
 
-        FiguresWriter.writePlots(document, outputDirectory, true);
-        File annotatedTextFile = new File(outputDirectory.getPath(), "annotatedText.py");
-        AnnotatedTextWriter.writeStructuredTextAsPython(annotatedTextFile, document);
+            // writing the global metadata of all the plots collectively
+            File completemetadataFile = new File(outputDirectory.getPath(), "completeMetadata.xml");
 
-        // writing the global metadata of all the plots collectively
-        File completemetadataFile = new File(outputDirectory.getPath(), "completeMetadata.xml");
+            FiguresWriter.writePlotsMetadataToFile(figures.getToplevelPlots(), completemetadataFile);
 
-        FiguresWriter.writePlotsMetadataToFile(plots.getToplevelPlots(), completemetadataFile);
+            File extractorOutputFile = new File(outputDirectory.getPath(), "description.xml");
+            DocumentWriter.writeDocumentToFile(document, extractorOutputFile);
 
-        File extractorOutputFile = new File(outputDirectory.getPath(), "description.xml");
-        DocumentWriter.writeDocumentToFile(document, extractorOutputFile);
+            File extractorJSONOutputFile = new File(outputDirectory.getPath(), "extracted.json");
 
-        File extractorJSONOutputFile = new File(outputDirectory.getPath(), "extracted.json");
-
-        FiguresWriter.writePlotsMetadataToFileJSON(plots.getToplevelPlots(), extractorJSONOutputFile);
-
+            FiguresWriter.writePlotsMetadataToFileJSON(figures.getToplevelPlots(), extractorJSONOutputFile);
+        }
+        Integer numberOfFigures = figures.getToplevelPlots().size();
+        System.out.println("Number of extracted plots: " + numberOfFigures.toString());
+        File figuresNumberFile = new File(outputDirectory.getPath(), "numberOfFigures.txt");
+        FileOutputStream fos = new FileOutputStream(figuresNumberFile);
+        
+        fos.write(numberOfFigures.toString().getBytes());
+        fos.close();
     }
 
     /** Setup paths to the configuration file based on the execution path */
@@ -225,8 +232,9 @@ public class PlotsExtractorCli {
             PlotsExtractorCli.class.getProtectionDomain().getCodeSource().getLocation().getPath() + "extractor.conf",};
         System.out.println("Searching for the configuration file:");
         for (String path : possibleLocations) {
-            if (path == null)
+            if (path == null) {
                 continue;
+            }
             File f = new File(path);
             System.out.print("   " + path + "  ...");
 
@@ -270,8 +278,8 @@ public class PlotsExtractorCli {
                     keywordArguments.put("configfile", argVal.second);
                     usedArg = true;
                 }
-                
-                if (!usedArg){
+
+                if (!usedArg) {
                     return null;
                 }
 
@@ -279,11 +287,11 @@ public class PlotsExtractorCli {
         }
 
         //now transforming free arguments into keyword arguments
-        if (freeArguments.size() < 1 || freeArguments.size() > 2){
+        if (freeArguments.size() < 1 || freeArguments.size() > 2) {
             return null;
         }
         keywordArguments.put("input", freeArguments.get(0));
-        if (freeArguments.size() > 1){
+        if (freeArguments.size() > 1) {
             keywordArguments.put("output", freeArguments.get(1));
         }
         return keywordArguments;
@@ -296,14 +304,13 @@ public class PlotsExtractorCli {
         System.out.println("");
         System.out.println("Options:");
         System.out.println("    --configfile=FILENAME | -cfilename   read configuration from a given file");
-        
+
     }
-    
-    
+
     public static void main(String[] args) throws IOException, COSLoadException {
         // registering all the necessary PDF document features
         HashMap<String, String> parsedArguments = parseArguments(args);
-        if (parsedArguments == null){
+        if (parsedArguments == null) {
             usage();
             return;
         }
@@ -318,7 +325,7 @@ public class PlotsExtractorCli {
 
 
         /** Saving extractor parameters to file... to see the format */
-        if (!parsedArguments.containsKey("configfile")){
+        if (!parsedArguments.containsKey("configfile")) {
             ExtractorParameters par = ExtractorParameters.getExtractorParameters();
             OutputStream ost = new ByteArrayOutputStream(10000);
             par.store(ost, "This is a comments string");
@@ -372,6 +379,4 @@ public class PlotsExtractorCli {
         }
         return result;
     }
-
-    
 }

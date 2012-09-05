@@ -123,6 +123,7 @@ public class ExtractorParameters extends Properties {
         this.setProperty("minimal_figure_operations_number", "10"); // miniminal number of operations inside of a figure ... unless external graphics
         this.setProperty("minimal_figure_graphical_operations_number", "4");
         this.setProperty("minimal_figure_graphical_operations_fraction", "0.10");
+        this.setProperty("produce_output", "false");
 
         //this.setProperty("minimal_column_height", "0.25"); // minimally 1/4 of the page for a column
 
@@ -357,5 +358,14 @@ public class ExtractorParameters extends Properties {
      */
     public double getMaximalInclusionHeight() {
         return Double.parseDouble(this.getProperty("maximal_inclusion_height"));
+    }
+    
+    /**
+     * Determines if any output files should be written (useful for testing jjust the number of extractions
+     * @return 
+     */
+    public boolean shouldProduceOutput(){
+        return Boolean.parseBoolean(this.getProperty("produce_output"));
+
     }
 }

@@ -375,8 +375,6 @@ def execute_track(args, folder = None):
     @param folder Optional parameter indicating the place where execution parameters should be saved
     @type folder string
     """
-#    import rpdb2; rpdb2.start_embedded_debugger('password', fAllowRemote=False)
-#    print "Executing task: %s folder: %s" % (str(args), folder)
     print "Execution args: %s folder: %s" % (str(args), str(folder))
     results = {}
 
@@ -427,20 +425,16 @@ def execute_track(args, folder = None):
 
         time.sleep(CFG_SLEEP_INTERVAL)
         retcode = execution.poll()
- #       print "retcode: %s" % (str(retcode), )
 
     th_stderr.join()
     th_stdout.join()
     execution.wait()
     end_time = time.time()
 
-#    stdout, stderr = execution.communicate(None)
 
     results["memusage"] = "\n".join(memusage)
     results["max_memusage"] = "%i" % (VmPeakT, )
 
-#    results["stdout"] = stdout
-#    results["stderr"] = stderr
     results["stdout"] = "\n".join(stdout_list)
     results["stderr"] = "\n".join(stderr_list)
 
@@ -963,12 +957,16 @@ def read_number_of_figures_from_output_dir(directory):
     @rtype int
     @returns Number of detected figures
     """
-    files = os.listdir(directory)
-    num_fig = 0
-    for fname in files:
-        if re.match("plot[0-9]+\\.png", fname):
-            num_fig += 1
-    return num_fig
+    f = open(os.path.join(directory, "numberOfFigures.txt"), "r")
+    result = int(f.read())
+    f.close()
+    return result
+#    files = os.listdir(directory)
+#    num_fig = 0
+#    for fname in files:
+#        if re.match("plot[0-9]+\\.png", fname):
+#            num_fig += 1
+#    return num_fig
 
 def verify_results_correctness(options, current_file):
     """Verify that the results of the extraction are compliant

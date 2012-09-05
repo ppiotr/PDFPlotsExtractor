@@ -12,7 +12,7 @@ import invenio.pdf.core.documentProcessing.PDFDocumentTools;
 import invenio.pdf.features.GraphicalAreasProvider;
 import invenio.pdf.features.PageLayoutProvider;
 import invenio.pdf.features.FigureCandidate;
-import invenio.pdf.features.Figure;
+import invenio.pdf.features.Figures;
 import invenio.pdf.features.FiguresProvider;
 import invenio.pdf.features.TextAreasProvider;
 import java.io.File;
@@ -84,7 +84,7 @@ public class ExtractorInterface {
 
         this.openFileName = f.getPath();
         this.updateOpenFileLabel();
-        Figure plots = (Figure) manager.getDocumentFeature(Figure.featureName);
+        Figures plots = (Figures) manager.getDocumentFeature(Figures.featureName);
         for (int page = 0; page < manager.getPagesNumber(); page++) {
             TabItem tabPage = createPdfPage("Page " + (page + 1), manager.getPage(page), plots.figures.get(page));
         }

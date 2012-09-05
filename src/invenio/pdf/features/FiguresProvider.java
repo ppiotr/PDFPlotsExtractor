@@ -39,9 +39,9 @@ public class FiguresProvider implements IPDFDocumentFeatureProvider {
     }
 
     @Override
-    public Figure calculateFeature(PDFDocumentManager docManager) throws FeatureNotPresentException, Exception {
+    public Figures calculateFeature(PDFDocumentManager docManager) throws FeatureNotPresentException, Exception {
         // gathering all the plot descriptors from all the pages and generaing one collection
-        Figure result = new Figure();
+        Figures result = new Figures();
         for (int pageNum = 0; pageNum < docManager.getPagesNumber(); ++pageNum) {
             result.figures.add(getFiguresFromPage(docManager.getPage(pageNum)));
         }
@@ -85,7 +85,7 @@ public class FiguresProvider implements IPDFDocumentFeatureProvider {
 
     @Override
     public String getProvidedFeatureName() {
-        return Figure.featureName;
+        return Figures.featureName;
     }
 
     /** Class used durign matching captions with figure candidates
@@ -280,7 +280,7 @@ public class FiguresProvider implements IPDFDocumentFeatureProvider {
      */
     private static void matchPlotsWithCaptions(
             PDFDocumentManager docManager,
-            Figure plots,
+            Figures plots,
             HashMap<Integer, LinkedList<FigureCaption>> captions)
             throws FeatureNotPresentException, Exception {
         for (int pageNum = 0; pageNum < docManager.getPagesNumber(); ++pageNum) {

@@ -45,7 +45,7 @@ public class FiguresWriter {
 
     public static void writePlots(PDFDocumentManager document, File outputDirectory, boolean saveAttachments)
             throws FeatureNotPresentException, Exception {
-        Figure plots = (Figure) document.getDocumentFeature(Figure.featureName);
+        Figures plots = (Figures) document.getDocumentFeature(Figures.featureName);
         for (FigureCandidate figure : plots.getToplevelPlots()) {
             writePlot(figure, outputDirectory, saveAttachments);
         }
