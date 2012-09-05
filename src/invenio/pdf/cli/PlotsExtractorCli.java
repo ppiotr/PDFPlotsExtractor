@@ -7,6 +7,7 @@ package invenio.pdf.cli;
 import de.intarsys.pdf.parser.COSLoadException;
 import de.intarsys.pdf.pd.PDPage;
 import invenio.common.Images;
+import invenio.common.Pair;
 import invenio.pdf.core.DisplayedOperation;
 import invenio.pdf.core.ExtractorLogger;
 import invenio.pdf.core.ExtractorParameters;
@@ -39,6 +40,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
@@ -121,11 +124,11 @@ public class PlotsExtractorCli {
                             LinkedList<Rectangle> intRecs = new LinkedList<Rectangle>();
                             intRecs.add(r1);
                             intRecs.add(r2);
-                            
+
                             BufferedImage int_layout_img = new BufferedImage(img.getWidth(), img.getHeight(), img.getType());
                             int_layout_img.getGraphics().drawImage(img, 0, 0, null);
                             FiguresExtractorTools.annotateWithEmptyRectangles((Graphics2D) int_layout_img.getGraphics(), intRecs);
-                            Images.writeImageToFile(int_layout_img, new File(outputDirectory.getPath(), "preliminary_layout_" + i +"intersection_" + int_num +".png"));
+                            Images.writeImageToFile(int_layout_img, new File(outputDirectory.getPath(), "preliminary_layout_" + i + "intersection_" + int_num + ".png"));
                             int_num++;
                         }
                     }
@@ -157,7 +160,7 @@ public class PlotsExtractorCli {
                     if (op instanceof GraphicalOperation) {
                         ps.print(" graphical");
                         GraphicalOperation go = (GraphicalOperation) op;
-                      
+
                         graphicalOperations.add(op);
                     }
                     ps.println("");
@@ -213,17 +216,98 @@ public class PlotsExtractorCli {
     }
 
     /** Setup paths to the configuration file based on the execution path */
-    private static void setConfigurationFile() {
-        //TODO: Search for the configuration fiel in more locations
-        String fname = PlotsExtractorCli.class.getProtectionDomain().getCodeSource().getLocation().getPath() + "extractor.conf";
-        ExtractorParameters.registerConfigurationFile(fname);
+    private static void setConfigurationFile(String configPath) {
+        //TODO: Search for the configuration file in more locations
+        String[] possibleLocations = {
+            configPath,
+            "extractor.conf",
+            "/etc/extractor.conf",
+            PlotsExtractorCli.class.getProtectionDomain().getCodeSource().getLocation().getPath() + "extractor.conf",};
+        System.out.println("Searching for the configuration file:");
+        for (String path : possibleLocations) {
+            if (path == null)
+                continue;
+            File f = new File(path);
+            System.out.print("   " + path + "  ...");
 
+
+            if (f.exists()) {
+                ExtractorParameters.registerConfigurationFile(path);
+                System.out.println("found");
+                return;
+            }
+            System.out.println("missing");
+
+        }
+        System.out.println("Missing configuration file");
     }
 
+    public static Pair<String, String> parseSingleArg(String arg) {
+        if (arg.startsWith("--")) {
+            int endind = arg.indexOf("=");
+            return new Pair<String, String>(arg.substring(3, endind), arg.substring(endind + 1));
+        }
+        if (arg.startsWith("-")) {
+            return new Pair<String, String>(arg.substring(1, 2), arg.substring(2));
+        }
+
+        return null;
+    }
+
+    public static HashMap<String, String> parseArguments(String[] args) {
+        // arguents which are unassociated with any keyword
+        ArrayList<String> freeArguments = new ArrayList<String>();
+        // named arguments
+        HashMap<String, String> keywordArguments = new HashMap<String, String>();
+        // in python I would initialise inline dictionaries with valueless and requiring value parameters... in Java just too much code
+        for (String arg : args) {
+            Pair<String, String> argVal = parseSingleArg(arg);
+            boolean usedArg = false; // hack allowing elif: chain from python (
+            if (argVal == null) {
+                freeArguments.add(arg);
+            } else {
+                if (!usedArg && argVal.first.equals("c") || argVal.first.equals("configfile")) {
+                    keywordArguments.put("configfile", argVal.second);
+                    usedArg = true;
+                }
+                
+                if (!usedArg){
+                    return null;
+                }
+
+            }
+        }
+
+        //now transforming free arguments into keyword arguments
+        if (freeArguments.size() < 1 || freeArguments.size() > 2){
+            return null;
+        }
+        keywordArguments.put("input", freeArguments.get(0));
+        if (freeArguments.size() > 1){
+            keywordArguments.put("output", freeArguments.get(1));
+        }
+        return keywordArguments;
+    }
+
+    public static void usage() {
+        System.out.println("Invalid number of arguments");
+        System.out.println("Usage:");
+        System.out.println("   PDFExtractor pdffile|folder [output_folder] [options]");
+        System.out.println("");
+        System.out.println("Options:");
+        System.out.println("    --configfile=FILENAME | -cfilename   read configuration from a given file");
+        
+    }
+    
+    
     public static void main(String[] args) throws IOException, COSLoadException {
         // registering all the necessary PDF document features
-
-        setConfigurationFile();
+        HashMap<String, String> parsedArguments = parseArguments(args);
+        if (parsedArguments == null){
+            usage();
+            return;
+        }
+        setConfigurationFile(parsedArguments.get("configfile"));
 
         PDFPageManager.registerFeatureProvider(new GraphicalAreasProvider());
         PDFPageManager.registerFeatureProvider(new TextAreasProvider());
@@ -234,23 +318,17 @@ public class PlotsExtractorCli {
 
 
         /** Saving extractor parameters to file... to see the format */
-        ExtractorParameters par = ExtractorParameters.getExtractorParameters();
-        OutputStream ost = new ByteArrayOutputStream(10000);
-        par.store(ost, "This is a comments string");
-
-        System.out.println(PlotsExtractorCli.class.getProtectionDomain().getCodeSource().getLocation().getPath());
-
-
-        System.out.println(ost.toString());
-        if (args.length < 1 || args.length > 2) {
-            usage();
-            return;
+        if (!parsedArguments.containsKey("configfile")){
+            ExtractorParameters par = ExtractorParameters.getExtractorParameters();
+            OutputStream ost = new ByteArrayOutputStream(10000);
+            par.store(ost, "This is a comments string");
+            System.out.println(ost.toString());
         }
 
-        File input = new File(args[0]);
+        File input = new File(parsedArguments.get("input"));
 
-        if (args.length >= 2) {
-            outputFolder = new File(args[1]);
+        if (parsedArguments.containsKey("output")) {
+            outputFolder = new File(parsedArguments.get("output"));
         } else {
             if (input.isDirectory()) {
                 outputFolder = input;
@@ -295,9 +373,5 @@ public class PlotsExtractorCli {
         return result;
     }
 
-    public static void usage() {
-        System.out.println("Invalid number of arguments");
-        System.out.println("Usage:");
-        System.out.println("   PDFExtractor pdffile|folder [output_folder]");
-    }
+    
 }

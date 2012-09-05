@@ -138,9 +138,6 @@ public class ExtractorParameters extends Properties {
         this.setProperty("minimal_graphical_area_fraction", "0.15");
         this.setProperty("maximal_inclusion_height", "0.10");
         
-
-
-
     }
 
     public double getMinimalGraphicalAreaFraction() {

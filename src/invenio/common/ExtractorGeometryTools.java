@@ -95,4 +95,6 @@ public class ExtractorGeometryTools {
         int maxy = cropPoint(rec.y + rec.height, bd.y, bd.height);
         return new Rectangle(x, y, maxx - x, maxy - y);
     }
+
+    
 }

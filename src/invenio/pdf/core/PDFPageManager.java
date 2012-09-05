@@ -4,9 +4,11 @@
  */
 package invenio.pdf.core;
 
+import de.intarsys.pdf.pd.PDPage;
 import invenio.pdf.core.PDFObjects.PDFObject;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,14 +30,15 @@ public class PDFPageManager<InternalPageType> {
     private Set<Operation> graphicalOperations;
     private Set<Operation> transformationOperations;
     private Rectangle pageBoundary;
-    private BufferedImage renderedPage;
+    
+    WeakReference<BufferedImage> renderedPage; 
     private Map<String, IPDFPageFeature> pageFeatures;
     private int pageNumber;
     private String pageText;
     private InternalPageType internalPage; // internal representation of the page
     private PDFDocumentManager documentManager;
     private String rawImageFileName = "";
-    private LinkedList<PDFObject> pdfObjects;
+   // private LinkedList<PDFObject> pdfObjects;
 
     // at some point we might need a mapping operation -> index
     public PDFPageManager() {
@@ -45,6 +48,8 @@ public class PDFPageManager<InternalPageType> {
         this.transformationOperations = new HashSet<Operation>();
         this.pageFeatures = new HashMap<String, IPDFPageFeature>();
         this.internalPage = null;
+        this.renderedPage = null;
+
     }
 
     public void addTextOperation(TextOperation newOp) {
@@ -108,7 +113,17 @@ public class PDFPageManager<InternalPageType> {
      * @return
      */
     public BufferedImage getRenderedPage() {
-        return this.renderedPage;
+        BufferedImage result = null;
+        if (this.renderedPage != null){
+            result = this.renderedPage.get();
+        }
+        
+        if (this.renderedPage == null || this.renderedPage.get() == null){
+            result = PDFCommonTools.renderPDFPage((PDPage) this.internalPage);
+            this.renderedPage = new WeakReference<BufferedImage>(result);
+        } 
+        
+        return result;
     }
 
     /**
@@ -116,7 +131,8 @@ public class PDFPageManager<InternalPageType> {
      * @param rp
      */
     public void setRenderedPage(BufferedImage rp) {
-        this.renderedPage = rp;
+        
+        this.renderedPage = new WeakReference<BufferedImage>(rp);
     }
 
     /**
