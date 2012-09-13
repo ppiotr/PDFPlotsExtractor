@@ -57,7 +57,9 @@ public class AnnotatedTextWriter {
         return result;
     }
     private static String escapePythonString(String s){
-        return s.replace("\"","\\\"");
+        String tmp = s.replace("\\", "\\\\");
+        return tmp.replace("\"","\\\"");
+        
     }
     
     public static void writeStructuredTextAsPython(File outputFile,
@@ -70,22 +72,23 @@ public class AnnotatedTextWriter {
             Set<Operation> operations = (Set<Operation>) pageManager.getTextOperations();
             outputStream.print(pageNum + " : {");
 
-            boolean notFirst = false;
+            outputStream.print("\"resolution\" : {\"width\": " + pageManager.getPageBoundary().width + ", \"height\": " + pageManager.getPageBoundary().height + "},");
+            outputStream.print("\"boxes\": {");
+            boolean isFirst = true;
             for (Operation operation : operations) {
                 TextOperation op = (TextOperation) operation;
                 if (!op.getText().isEmpty()) {
-                    if (notFirst) {
-                        outputStream.print(", ");
+                    if (isFirst){
+                        isFirst= false;
                     } else {
-                        notFirst = true;
+                        outputStream.print(",");
                     }
-
                     Rectangle r = op.getBoundary();
                     outputStream.print("(" + r.x + ", " + r.y + ", " + r.width + ", " + r.height + "):\"\"\"" + AnnotatedTextWriter.escapePythonString(op.getText()) + "\"\"\"");
                 }
             }
-            outputStream.print("}");
-            if (pageNum == (pdfDoc.getPagesNumber() - 1)) {
+            outputStream.print("}}");
+            if (pageNum != (pdfDoc.getPagesNumber() - 1)) {
                 outputStream.print(",");
             }
         }

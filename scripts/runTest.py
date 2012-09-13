@@ -1128,10 +1128,6 @@ def worker_main(host, port, parameters):
         file_content = f.read()
         f.close()
 
-        # removing temporary directory
-#        f = os.popen("rm -Rf %s" % (temp_dir, ))
-#        f.read()
-#        f.close()
         return {"data": results, "params" : req.params }, tarfile
 
     # SOCK_STREAM == a TCP socket

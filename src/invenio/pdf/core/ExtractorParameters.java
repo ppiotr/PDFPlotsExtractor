@@ -123,7 +123,7 @@ public class ExtractorParameters extends Properties {
         this.setProperty("minimal_figure_operations_number", "10"); // miniminal number of operations inside of a figure ... unless external graphics
         this.setProperty("minimal_figure_graphical_operations_number", "4");
         this.setProperty("minimal_figure_graphical_operations_fraction", "0.10");
-        this.setProperty("produce_output", "false");
+        this.setProperty("produce_output", "true");
 
         //this.setProperty("minimal_column_height", "0.25"); // minimally 1/4 of the page for a column
 
