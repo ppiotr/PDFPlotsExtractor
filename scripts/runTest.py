@@ -527,6 +527,7 @@ def execute_track(args, folder = None):
 
     th_stderr.join()
     th_stdout.join()
+
     execution.wait()
     end_time = time.time()
 
@@ -544,13 +545,15 @@ def execute_track(args, folder = None):
     # optionally saving results
     if folder:
         # possibly creating all intermediate folders
-
         create_directories(folder)
-
         for key in results:
             fd = open(os.path.join(folder, key), "w")
             fd.write(results[key])
             fd.close()
+
+        machine_file = os.path.join(folder, "machine")
+        log_machine(machine_file)
+
     return results
 # executing prticular things
 
@@ -1329,10 +1332,7 @@ def main():
         # If we have correct data specified, we should verify the result
         if "descriptions_object" in parameters:
             processed_pages += 1
-            correctly_extracted,extracted_num, expected_num  = verify_results_correctness(parameters, res[0])
-
-            machine_file = os.path.join(res[0][1], "machine")
-            log_machine(machine_file)
+            correctly_extracted, extracted_num, expected_num  = verify_results_correctness(parameters, res[0])
 
             print "Returned %s %i %i\n" % (str(correctly_extracted), extracted_num, expected_num)
             if correctly_extracted:
