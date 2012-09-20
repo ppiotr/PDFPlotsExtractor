@@ -1,3 +1,4 @@
+#!/usr/bin/python
 #
 #  An algorithm trying to adjust parameters of the extractor one by one (unlike a genetic algorithm)
 #  We specify ranges and type (int, float) of all the parameters, order them in the importance order
@@ -22,8 +23,21 @@
 # so that the calculation can start from the prevois state
 import os
 import cPickle
+import subprocess
+import datetime
+import re
+
+
+# THE CONFIGURATION PART ... EDIT THIS TO CHANGE THE BEHAVIOUR
+
+manager_address = "localhost:12351"
+input_directory ='/home/piotr/Inspire/extraction_sandbox/small_sample'
+output_directory = '/home/piotr/Inspire/extraction_sandbox/output'
+descriptions_file = '/home/piotr/Inspire/extraction_sandbox/small_sample/figures.data.py'
+temp_dir = '/home/piotr/Inspire/extraction_sandbox/temp'
 
 optimisable_parameters = [
+    ["minimal_aspect_ratio", "float", 0.001, 1, 0.1],
     ["minimal_graphical_area_fraction", "float", 0, 1, 0.15],
     ["minimal_figure_width", "float", 0, 1, 0.15],
     ["minimal_column_width", "float", 0, 1, 0.25],
@@ -39,7 +53,6 @@ optimisable_parameters = [
     ["colour_emptiness_threshold", "integer", 0, 255, 10],
     ["minimal_figure_height", "float", 0, 0.5, 0.1],
     ["horizontal_graphical_margin", "float", 0, 1, 0.1],
-    ["minimal_aspect_ratio", "float", 0, 1, 0.1],
     ["horizontal_emptiness_radius", "float", 0, 0.1, 0.01],
     ["vertical_text_margin", "float", 0, 0.1, 0.005],
     ["horizontal_plot_text_margin", "float", 0, 0.1, 0.01],
@@ -57,6 +70,10 @@ ignored_arguments = [("generate_debug_information", "false"),
                      ("empty_pixel_colour_b","255")]
 
 
+
+# END OF THE CONFIGURATION SECTION
+
+
 def calculateQuality(precission, recall):
     pass
 
@@ -65,12 +82,62 @@ def formatConfiguration(parameters):
 
 def writeConfiguration(parameters, fileName):
     f = open(fileName, "w")
-    f.write(parameters)
+    f.write(formatConfiguration(parameters))
     f.close()
 
-def runTest(parameters, prefix=""):
+def getTimestampString():
+    n = datetime.datetime.now()
+    return ("%i_%i_%i_%i_%i_%i_%i") % (n.year, n.month, n.day, n.hour, n.minute, n.second, n.microsecond)
+
+def runTest(parameters, name):
     """Executes a single test and return the evaluation measure - pair recall, precission"""
-    return 0,0
+    config_fname = "./execution/%s_configfile" % (name, )
+    writeConfiguration(parameters, config_fname)
+    test_unique_name =  name
+    global manager_address
+    global input_directory
+    global output_directory
+    global descriptions_file
+    global temp_dir
+
+    exec_params = ['./runTest.py',
+                   '--controller=%s' % (manager_address,),
+                   '--directory=%s'% ( input_directory, ),
+                   '--output=%s'%(output_directory, ),
+                   '--test=%s' % (test_unique_name, ),
+                   '--description=%s' % (descriptions_file, ),
+                   "--temp=%s" % (temp_dir, ),
+                   "--config=%s" % (config_fname, )]
+
+
+    process = subprocess.Popen(exec_params, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+    print "waiting...",
+
+    results, err = process.communicate()
+
+
+#    results = process.stdout.read()
+
+#    print process.stderr.read()
+    print "finished"
+
+    # extracting information from the standard output
+    try:
+        expected = float(re.search("Expected figures: ([0-9]+)", results).groups()[0])
+        detected = float(re.search("Correctly detected figures: ([0-9]+)", results).groups()[0])
+        misdetected = float(re.search("Misdetected figures: ([0-9]+)", results).groups()[0])
+    except:
+        print "Incorrect output of the extraction process ! Make sure that the resources manager is running under the specified address: %s stderr: %s" % (results, err)
+        raise Exception("Unable to extract figures")
+
+    recall = detected / expected
+    precission = detected / (detected + misdetected)
+    print "expected: %s, extracted: %s, misextracted: %s ... precission: %s recall: %s" \
+        % (str(expected), str(detected), str(misdetected), str(precission), str(recall))
+    return recall, precission
+
+   #./runTest.py -c localhost:123498 -d /opt/ppraczyk/small_sample/ -o /opt/ppraczyk/small_sample_output/ --test=fourth_test -e /opt/ppraczyk/small_sample/figures.data.py --temp=/opt/ppraczyk/temp
+
 
 
 
@@ -104,8 +171,8 @@ class ProcessingState(object):
         self.resuming = False
         self.seq += 1
 
-        if not os.path.exists("./snapshots"):
-            os.mkdir("./snapshots")
+        if not os.path.exists("./execution"):
+            os.mkdir("./execution")
         f = open(self.get_file_path(), "w")
         f.write(cPickle.dumps(self))
         f.close()
@@ -115,12 +182,12 @@ class ProcessingState(object):
         """reading the newest snapshot"""
 
         try:
-            files = filter(lambda fname: fname.startswith("snapshot_"), os.listdir("./snapshots"))
+            files = filter(lambda fname: fname.endswith("_snapshot"), os.listdir("./execution"))
             files.sort(reverse = True)
             for file_name in files:
                 try:
                     print "Trying to load the saved state from the file %s" % (file_name, )
-                    f = open(os.path.join("./snapshots", file_name), "r")
+                    f = open(os.path.join("./execution", file_name), "r")
                     c = f.read()
                     f.close()
                     instance =  cPickle.loads(c)
@@ -133,17 +200,16 @@ class ProcessingState(object):
             # probably no snapshots directory ... exception can be thrown at this level
             pass
 
-
         # there is no newest file
-        print "No state to resume from. Starting from sctatch"
+        print "No state to resume from. Starting from scratch"
         return ProcessingState()
 
     def get_unique_name(self):
         """Returns a unuqie identifier allowing to order snapshots"""
-        return "snapshot_%0*d" % (5, self.seq,)
+        return "%0*d" % (5, self.seq,)
 
     def get_file_path(self):
-        return "./snapshots/%s" % (self.get_unique_name())
+        return "./execution/%s_snapshot" % (self.get_unique_name())
 
 def optimiseParameter(state, parameter, otherParameters):
     if not state.resuming:
@@ -152,8 +218,8 @@ def optimiseParameter(state, parameter, otherParameters):
         state.opt_ind = None
         state.min_rec, state.min_prec = -1, -1
         state.otherParameters = otherParameters
-
-
+#    from pydev import pydevd
+#    pydevd.settrace()
     print "*Beginning the optimisation of a new parameter %s of the type %s and values in the interval [%s, %s]" % (parameter[0], parameter[1], str(parameter[2]), str(parameter[3]))
 
     while state.recDepth <= 1:
@@ -163,20 +229,20 @@ def optimiseParameter(state, parameter, otherParameters):
 
             state.possibleValues = generateParameterValues(state.processing_param)
             state.val_ind = 0
-
         while state.val_ind < len(state.possibleValues):
-#            print ("***Testing the parameter value %s=%s" % (state.processing_param[0], state.possibleValues[state.val_ind])),
+            print ("***Testing the parameter value %s=%s" % (state.processing_param[0], state.possibleValues[state.val_ind])),
 
             # saving the state... entering the risky and long part of the execution
             state.save_to_file()
-            state.act_rec, state.act_prec = runTest(state.otherParameters + [(state.processing_param[0], str(state.possibleValues[state.val_ind]))])
+            test_name = "%s_%s" % (state.get_unique_name(), getTimestampString())
+            state.act_rec, state.act_prec = runTest(state.otherParameters + [(state.processing_param[0], str(state.possibleValues[state.val_ind]))], test_name)
+            print "finished tunning test"
 #            print "  recall=%s, precission=%s" % (str(state.act_rec), str(state.act_prec))
             if state.act_rec + state.act_prec > state.min_rec + state.min_prec:
                 state.opt_ind = state.val_ind
                 state.min_rec = state.act_rec
                 state.min_prec = state.act_prec
             state.val_ind += 1
-
         state.opt_val = state.possibleValues[state.opt_ind]
 
         # generating a new processing param

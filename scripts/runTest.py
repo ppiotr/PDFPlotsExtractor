@@ -22,6 +22,9 @@ from Queue import Queue
 import base64
 
 
+
+CFG_WAITING_IN_THE_QUEUE_TIMEOUT_IN_SECONDS = 10
+
 # Definitions for networked usage - distribution of the execution
 
 latest_md5 = "" # md5 hash of the latest version of JAR file
@@ -82,10 +85,10 @@ def recieve_data(request):
 
 
 class ProcessingResult(object):
-    def __init__(self, original_params, results, file_content=None, file_name=None, tempdir=None):
+    """encapsulates a result of processing together with the method for transfering over a socket"""
+    def __init__(self, original_data, results, file_content=None, file_name=None, tempdir=None, source_identifier="0"):
         if file_content:
             if tempdir:
-#                print "tempdir: " + str(tempdir)
                 fd, self.fileName = tempfile.mkstemp(suffix=".tgz", dir=tempdir)
             else:
                 fd, self.fileName = tempfile.mkstemp(suffix=".tgz")
@@ -94,30 +97,59 @@ class ProcessingResult(object):
         else:
             self.fileName = file_name
         self.results = results
-        self.original_params = original_params
+        self.original_data = original_data
+        self.source_identifier = source_identifier
+
 
     @classmethod
     def read_from_socket(self, soc, tempdir=None):
         results_s = recieve_data(soc)
         params_s = recieve_data(soc)
         content = recieve_data(soc)
-        return ProcessingResult(cPickle.loads(params_s), cPickle.loads(results_s), content, tempdir=tempdir)
+        source_identifier = recieve_data(soc)
+        return ProcessingResult(cPickle.loads(params_s), cPickle.loads(results_s), content, tempdir=tempdir, source_identifier = source_identifier)
 
     def send_over_socket(self, soc):
         send_data(soc, cPickle.dumps(self.results))
-        send_data(soc, cPickle.dumps(self.original_params))
+        send_data(soc, cPickle.dumps(self.original_data))
         f = open(self.fileName, "r")
         send_data(soc, f.read())
         f.close()
+        send_data(soc, self.source_identifier)
+
 
 class ProcessingRequest(object):
     """Stores a request to extract data from a file ... contains the PDF file and the parameters of the extractor"""
-    def __init__(self, params, file_name, input_content=None, input_file = None, folder=None, tempdir=None):
-        self.params = params
+    def __init__(self, original_data, file_name, input_content=None, input_file = None, folder=None, tempdir=None, config_file_name=None, config_content=None, source_identifier="0" ):
+        """
+        Creates an instance of ProcessingRequest.
+        One can specify either the content of the input file or its path.
+        @param original_data Data that will be returned back to the controller (useful to identify the dataset)
+        @type original_data
+
+        @param input_content
+        @type input_content
+        @param input_file
+        @type input_file
+        @param folder
+        @type folder
+        @param tempdir
+        @type tempdir
+        @param config_content
+        @type config_content
+
+        @param source_identifier identifier allowing to identify the source of the request (to avoid bad backards routing)
+        @type source_identifier string
+        """
+
+        self.source_identifier = source_identifier
+        self.original_data = original_data
         self.file_name = file_name
+        self.config_file_name = config_file_name
 
         if input_content:
-            self.hash = hashlib.md5(input_content).hexdigest()
+            #
+            self.hash = hashlib.md5(input_content).hexdigest() + base64.b64encode(str(original_data))
             if folder:
                 self.inputFileName = os.path.join(folder, file_name)
                 fd = open(self.inputFileName, "w")
@@ -135,13 +167,36 @@ class ProcessingRequest(object):
             self.hash = hashlib.md5(f.read()).hexdigest()
             f.close()
 
+        # if necessary, save the configuration
+
+        if config_content:
+            # we create a temporary configuration file and override the configuration
+            if tempdir:
+                fdl, config_fname = tempfile.mkstemp(suffix=".config", dir=tempdir)
+            else:
+                fdl, config_fname = tempfile.mkstemp(suffix=".config")
+            fd = os.fdopen(fdl, "w")
+            fd.write(config_content)
+            fd.close()
+            self.config_file_name = config_fname
+
+
 
     def send_over_socket(self, soc):
         """Read data of a request and send it over a socket"""
         f = open(self.inputFileName, "r")
         send_data(soc, self.file_name)
         send_data(soc, f.read())
-        send_data(soc, cPickle.dumps(self.params))
+        f.close()
+        send_data(soc, cPickle.dumps(self.original_data))
+        send_data(soc, self.source_identifier)
+        if self.config_file_name:
+            send_data(soc, "CONFIG")
+            f = open(self.config_file_name, "r")
+            send_data(soc, f.read())
+            f.close()
+        else:
+            send_data(soc, "NOCONF")
 
 
     @classmethod
@@ -149,8 +204,16 @@ class ProcessingRequest(object):
         """reads a request from a socket"""
         file_name = recieve_data(soc)
         file_data = recieve_data(soc)
-        request_ser = recieve_data(soc)
-        return ProcessingRequest(cPickle.loads(request_ser), file_name, input_content = file_data, folder = folder, tempdir=tempdir)
+        original_data = recieve_data(soc)
+        source_identifier = recieve_data(soc)
+        has_config = recieve_data(soc)
+        config_content = None
+        if has_config == "CONFIG":
+            config_content = recieve_data(soc)
+        return ProcessingRequest(cPickle.loads(original_data), file_name,
+                                 input_content = file_data, folder = folder,
+                                 tempdir=tempdir, config_content = config_content,
+                                 source_identifier = source_identifier)
 
 tasks_sem = Semaphore()
 tasks_in_processing = {} # which tasks are being currently processed "hash of the file" -> (ProcessingRequest(), number of workers)
@@ -162,11 +225,15 @@ class Worker():
         self.request = request
         self.parameters = parameters
 
-    def handle(self):
+    def _retrieve_relevant_request(self):
+        """Retrieves the first enququed request which is related to the current controller connection
+           If not present, elects one from already being processed. If nothing, waits.
+           @return the request
+           @returntype ProcessingRequest"""
+        global CFG_WAITING_IN_THE_QUEUE_TIMEOUT_IN_SECONDS
         while True:
             rq = None
             updated_stats = False
-
             try:
                 rq = requests_queue.get_nowait()
             except:
@@ -181,29 +248,48 @@ class Worker():
                     print "Resubmitting already submitted task"
                     print "Running tasks: " + str(tasks_in_processing)
                 tasks_sem.release()
-            if not rq: # wait in the queue !
-                rq = requests_queue.get()
+
+            if not rq: # wait in the queue ....  but not too long because maybe after a while we need to resubmit something
+                # A Scenario justifying the timeout in waiting:
+                # ... in the case when there are for instance 2 workers and initially no tasks. (both wait on the queue). #1 gets the task and starts processing (#2 waits ) ... #1 dies in pain so never returns the result and does not retry to take the task. #2 never stops waiting and never resubmits the task even if it should
+                try:
+                    rq = requests_queue.get(True, CFG_WAITING_IN_THE_QUEUE_TIMEOUT_IN_SECONDS)
+                except:
+                    # we waited long enough ! time to retry looking at already running tasks ... return to the beginning of next iteration
+                    continue
+
             if not updated_stats:
                 tasks_sem.acquire()
                 tasks_in_processing[rq.hash] = (rq, 1)
                 tasks_sem.release()
 
+            return rq
+
+    def handle(self):
+        global current_controller
+
+        while True:
+            rq = self._retrieve_relevant_request()
 
             self.update_jar_if_necessary()
             send_bytes(self.request, "CMD")
             rq.send_over_socket(self.request)
+
+            # done with sending request ... now waiting for the result
             tmpdir = None
             if "tempdir" in self.parameters:
                 tmpdir = self.parameters["tempdir"]
             res = ProcessingResult.read_from_socket(self.request, tempdir = self.parameters["tempdir"])
+
+
             tasks_sem.acquire()
             if rq.hash in tasks_in_processing:
-                del tasks_in_processing[rq.hash]
+                del tasks_in_processing[rq.hash] # we do not decrease the count ... just remove
             else: # in this case the request has already returned.... not enqueueing any result
                 res = None
             tasks_sem.release()
 
-            if res:
+            if res and res.source_identifier == current_controller.identifier:
                 results_queue.put(res)
 
 
@@ -218,10 +304,12 @@ class Worker():
         print "Worker disconnected"
 
 class Controller():
+
     def __init__(self, request, parameters):
         global current_controller
         self.request = request;
         self.parameters = parameters
+        self.identifier = str(random.random())
         current_controller = self
         finish = False
         # clearing all the results from the queue
@@ -231,16 +319,20 @@ class Controller():
                 results_queue.get_nowait()
             except:
                 finish=True
+
     def handle(self):
         global current_controller
         global latest_jar
         global latest_md5
 
-       # recieve JAR, recieve requests (REQ + reqiest)* recieve END
+        # recieve JAR, recieve requests (REQ + reqiest)* recieve END
         latest_jar = recieve_data(self.request)
         latest_md5 = recieve_data(self.request)
 
-        #hashlib.md5(latest_jar).hexdigest()
+        #Read requests form the controller, stamp them with the contrioller identifier and put into the queue ...
+        # the stamp will be used both when sending to workers and when recieving results, to determine if the
+        # request is relevant for teh current connection
+
         cmd = ""
         added_requests = 0
         while cmd != "END":
@@ -250,6 +342,7 @@ class Controller():
                 if "tempdir" in self.parameters:
                     tempdir = self.parameters["tempdir"]
                 req = ProcessingRequest.read_from_socket(self.request, tempdir=tempdir)
+                req.source_identifier = self.identifier
                 requests_queue.put(req)
                 added_requests += 1
 
@@ -260,10 +353,12 @@ class Controller():
         returned_results = 0
         while returned_results != added_requests:
             result = results_queue.get()
-            result.send_over_socket(self.request)
-            returned_results += 1
-            print "Returned result %i of %i" % (returned_results, added_requests)
-
+            if result.source_identifier == self.identifier:
+                result.send_over_socket(self.request)
+                returned_results += 1
+                print "Returned result %i of %i" % (returned_results, added_requests)
+            else:
+                print "Obtained a result from another controller ... dropping"
         current_controller = None
 
     def disconnect(self):
@@ -271,19 +366,21 @@ class Controller():
         current_controller = None
 
 
-class ClientRequestHandler(SocketServer.BaseRequestHandler ):
+class ManagerHandler(SocketServer.BaseRequestHandler ):
+    """Class used inside of the manager to handle requests coming from the controller"""
+
     def setup(self):
         client_type = recv_bytes(self.request, 1)
         self.algorithm = None
         if client_type == "W":
             print "Worker connected at " + str(self.client_address)
-            self.algorithm = Worker(self.request, ClientRequestHandler.parameters)
+            self.algorithm = Worker(self.request, ManagerHandler.parameters)
 
         elif client_type == "C":
             print "Controller connected at " + str(self.client_address)
             # we can have only a single controller !
             if not current_controller:
-                self.algorithm = Controller(self.request, ClientRequestHandler.parameters)
+                self.algorithm = Controller(self.request, ManagerHandler.parameters)
                 send_bytes(self.request, "ACK")
             else:
                 send_bytes(self.request, "RJC")
@@ -301,7 +398,7 @@ class ClientRequestHandler(SocketServer.BaseRequestHandler ):
             self.algorithm.disconnect()
     @classmethod
     def setParameters(self, params):
-        ClientRequestHandler.parameters = params
+        ManagerHandler.parameters = params
 
 # The usual definitions useful for processing
 #class Request
@@ -490,24 +587,18 @@ def retrieve_random_document(random_generator, test_folder):
 
 
 
-def extract_file(input_file, output_folder, parameters):
+def extract_file(input_file, output_folder, parameters, config_file = None):
     #here we have the syntax of calling the proper extractor !
     #TODO: include parameters in the command line construction
-    results = execute_track([EXTRACTOR_EXECUTABLE, input_file, output_folder], output_folder)
+    execution_params = [EXTRACTOR_EXECUTABLE, input_file, output_folder]
+
+    if config_file:
+        execution_params.append("--configfile=%s" % (config_file,))
+
+
+    results = execute_track(execution_params, output_folder)
     return results
 
-# this seems not to be used
-#def extract_single_record(rec_id, test_folder):
-#    folder = get_record_path(test_folder, rec_id)
-#    fulltext_path = folder + "/fulltext.pdf"
-#    results = execute_track([EXTRACTOR_EXECUTABLE, fulltext_path], folder)
-#    return results
-
-#def perform_single_test(random_generator, test_folder):
-#    # download random record from Inspire
-#    record_id = retrieve_random_document(random_generator, test_folder)
-#    result = extract_single_record(record_id, test_folder)
-#    return 0 if ("forced_exit" in result) else 1
 
 def include_in_statistics(parameters, input_id, result, internal_data=None):
     """Helps building statistics incrementally"""
@@ -770,6 +861,7 @@ Accepted options
   -e fname --description=fname   Specifies a file with description of data.
                                  Used to verify the correctness of the description.
   --temp=dir                     Specifies the temporary directory
+  --config=file                  Allows to specify the configuration file of the extractor
 
 Options allowing distributed execution on a cluster
 
@@ -796,7 +888,7 @@ def parse_input(arguments):
         res = getopt.getopt(arguments, "r:t:f:d:o:e:c:m:w:hspaz" ,
                             ["random=", "test=", "file=", "directory=",
                              "output=", "description=","help", "svg", "pages", "annotate",
-                             "operations", "controller=", "manager=", "worker=", "temp="])
+                             "operations", "controller=", "manager=", "worker=", "temp=", "config="])
     except:
         return None
 
@@ -810,6 +902,8 @@ def parse_input(arguments):
     options["annotated_operations"] = False
 
     for option in res[0]:
+        if option[0] in ("--config"):
+            options["config_file"] = option[1]
         if option[0] in ("--temp"):
             options["tempdir"] = option[1]
         if option[0] in ("-r", "--random"):
@@ -1041,8 +1135,10 @@ def perform_processing_controller(parameters, results, stat_data):
     def prepare_requests():
         res = []
         for entry in get_input_files(parameters):
-
-            res.append(ProcessingRequest(entry, os.path.split(entry[0])[1], input_file = entry[0], tempdir=parameters["tempdir"]))
+            config_file = None
+            if "config_file" in parameters:
+                config_file = parameters["config_file"]
+            res.append(ProcessingRequest(entry, os.path.split(entry[0])[1], input_file = entry[0], tempdir=parameters["tempdir"], config_file_name = config_file ))
         return res
 
     def makedirs(d):
@@ -1055,7 +1151,7 @@ def perform_processing_controller(parameters, results, stat_data):
 
     def process_result(result):
         """consume a single ProcessingResult object ... uncompress to the output directory and """
-        output_dir = result.original_params[1]
+        output_dir = result.original_data[1]
         #make sure that teh output dir is there
 
         makedirs(output_dir)
@@ -1065,7 +1161,7 @@ def perform_processing_controller(parameters, results, stat_data):
         f.read()
         f.close()
 
-        entry = result.original_params
+        entry = result.original_data
         res = result.results
         results.append((entry ,(parameters, entry[2], res, stat_data)))
 
@@ -1105,20 +1201,24 @@ def perform_processing_controller(parameters, results, stat_data):
 def resources_manager_main(port, parameters):
     print "Starting the resources manager server"
 
-    ClientRequestHandler.setParameters(parameters)
-    server = SocketServer.ThreadingTCPServer(('', port), ClientRequestHandler)
+
+    ManagerHandler.setParameters(parameters)
+    server = SocketServer.ThreadingTCPServer(('', port), ManagerHandler, bind_and_activate = False)
+    server.allow_reuse_address = True
+    server.daemon_threads = True
+    server.server_bind()
+    server.server_activate()
     server.serve_forever()
 
 def worker_main(host, port, parameters):
     def process_request(req, temp_dir):
         """process a single extraction request and return results"""
 
-        print "recieved request: args: %s file: %s " %( str(req.params), str(req.inputFileName))
+        print "recieved request: args: %s file: %s " %( str(req.original_data), str(req.inputFileName))
 
-        results = extract_file(req.inputFileName, os.path.join(temp_dir, "results"), req.params)
+        results = extract_file(req.inputFileName, os.path.join(temp_dir, "results"), req.original_data, req.config_file_name)
 
         # preparing compressed version of the temp
-
         tarfile = os.path.join(temp_dir, "results.tgz")
         f = os.popen("tar -czf %s -C %s results" % (tarfile, temp_dir))
         f.read()
@@ -1128,7 +1228,7 @@ def worker_main(host, port, parameters):
         file_content = f.read()
         f.close()
 
-        return {"data": results, "params" : req.params }, tarfile
+        return {"data": results, "original_data" : req.original_data }, tarfile
 
     # SOCK_STREAM == a TCP socket
     print "Started a worker connected to host %s at port %i" % (host, port)
@@ -1158,14 +1258,16 @@ def worker_main(host, port, parameters):
 
             request = ProcessingRequest.read_from_socket(sock, folder=temp_dir, tempdir=parameters["tempdir"])
             # now process command using the obtained data
+
             output_data, tarfile = process_request(request, temp_dir)
 
             # now send results file (compressed results folder)
             tempdir = None
             if "tempdir" in parameters:
                 tempdir = parameters["tempdir"]
+            print "creating processing result with an identifier %s of type %s" % (str(request.source_identifier), str(type(request.source_identifier)))
+            res = ProcessingResult(output_data["original_data"], output_data["data"], file_name = tarfile, tempdir = tempdir, source_identifier = request.source_identifier)
 
-            res = ProcessingResult(output_data["params"], output_data["data"], file_name = tarfile, tempdir = tempdir)
             res.send_over_socket(sock)
             print "FINISHED PROCESSINGFILE"
 
