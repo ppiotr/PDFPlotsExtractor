@@ -92,7 +92,10 @@ def getTimestampString():
 def runTest(parameters, name):
     """Executes a single test and return the evaluation measure - pair recall, precission"""
     config_fname = "./execution/%s_configfile" % (name, )
+    results_fname = "./execution/%s_results" % (name, )
+
     writeConfiguration(parameters, config_fname)
+
     test_unique_name =  name
     global manager_address
     global input_directory
@@ -134,6 +137,11 @@ def runTest(parameters, name):
     precission = detected / (detected + misdetected)
     print "expected: %s, extracted: %s, misextracted: %s ... precission: %s recall: %s" \
         % (str(expected), str(detected), str(misdetected), str(precission), str(recall))
+
+    f = open(results_fname, "w")
+    f.write("Obtained recall: %s precission: %s\n" % (str(recall), str(precission)))
+    f.write("stdout: %s\n\n\n-------------------------------------------------------------------------------------------------------------------------------------------\n\n\nstderr: %s" % (results, err))
+    f.close()
     return recall, precission
 
    #./runTest.py -c localhost:123498 -d /opt/ppraczyk/small_sample/ -o /opt/ppraczyk/small_sample_output/ --test=fourth_test -e /opt/ppraczyk/small_sample/figures.data.py --temp=/opt/ppraczyk/temp

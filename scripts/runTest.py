@@ -246,7 +246,6 @@ class Worker():
                     tasks_in_processing[items[0][0]] = (items[0][1][0], items[0][1][1] + 1)
                     updated_stats = True
                     print "Resubmitting already submitted task"
-                    print "Running tasks: " + str(tasks_in_processing)
                 tasks_sem.release()
 
             if not rq: # wait in the queue ....  but not too long because maybe after a while we need to resubmit something
@@ -1065,6 +1064,16 @@ def read_number_of_figures_from_output_dir(directory):
 #            num_fig += 1
 #    return num_fig
 
+def log_machine(fname):
+    """log name of the execution machine to the file"""
+    p = subprocess.Popen(["uname", "-a"], stdout = subprocess.PIPE)
+    stdout, stderr = p.communicate()
+
+    f = open(fname, "w")
+    f.write(stdout)
+    f.close()
+
+
 def verify_results_correctness(options, current_file):
     """Verify that the results of the extraction are compliant
     with the description provided at the input
@@ -1321,6 +1330,10 @@ def main():
         if "descriptions_object" in parameters:
             processed_pages += 1
             correctly_extracted,extracted_num, expected_num  = verify_results_correctness(parameters, res[0])
+
+            machine_file = os.path.join(res[0][1], "machine")
+            log_machine(machine_file)
+
             print "Returned %s %i %i\n" % (str(correctly_extracted), extracted_num, expected_num)
             if correctly_extracted:
                 correct_pages += 1
