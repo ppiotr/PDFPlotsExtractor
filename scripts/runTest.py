@@ -598,7 +598,7 @@ def extract_file(input_file, output_folder, parameters, config_file = None):
     execution_params = [EXTRACTOR_EXECUTABLE, input_file, output_folder]
 
     if config_file:
-        execution_params.append("--configfile=%s" % (config_file,))
+        execution_params.append("-c%s" % (config_file,))
 
 
     results = execute_track(execution_params, output_folder)
