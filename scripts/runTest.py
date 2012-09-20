@@ -557,7 +557,7 @@ def execute_track(args, folder = None):
     return results
 # executing prticular things
 
-EXTRACTOR_EXECUTABLE = "./run.sh"
+EXTRACTOR_INITIAL_PARAMETERS = ["java", "-cp", "PDFPlotsExtractor.jar:libs/*", "-Djava.awt.headless=true", "invenio.pdf.cli.PlotsExtractorCli"]
 
 def get_record_path(test_folder, rec_id):
     return os.path.join(test_folder, rec_id)
@@ -595,7 +595,7 @@ def retrieve_random_document(random_generator, test_folder):
 def extract_file(input_file, output_folder, parameters, config_file = None):
     #here we have the syntax of calling the proper extractor !
     #TODO: include parameters in the command line construction
-    execution_params = [EXTRACTOR_EXECUTABLE, input_file, output_folder]
+    execution_params = EXTRACTOR_INITIAL_PARAMETERS + [input_file, output_folder]
 
     if config_file:
         execution_params.append("-c%s" % (config_file,))
