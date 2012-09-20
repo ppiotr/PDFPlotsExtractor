@@ -30,7 +30,7 @@ import re
 
 # THE CONFIGURATION PART ... EDIT THIS TO CHANGE THE BEHAVIOUR
 
-manager_address = "localhost:12351"
+manager_address = "pcgssi0904.cern.ch:12345"
 input_directory ='/home/piotr/Inspire/extraction_sandbox/small_sample'
 output_directory = '/home/piotr/Inspire/extraction_sandbox/output'
 descriptions_file = '/home/piotr/Inspire/extraction_sandbox/small_sample/figures.data.py'

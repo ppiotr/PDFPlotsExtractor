@@ -289,8 +289,11 @@ class Worker():
                 res = None
             tasks_sem.release()
 
-            if res and res.source_identifier == current_controller.identifier:
-                results_queue.put(res)
+            if res:
+                if res.source_identifier == current_controller.identifier:
+                    results_queue.put(res)
+                else:
+                    print "obtained result, but with an incorrect identifier. Expected: %s but recieved %s" % (current_controller.identifier, res.source_identifier)
 
 
     def update_jar_if_necessary(self):
@@ -1265,11 +1268,12 @@ def worker_main(host, port, parameters):
             tempdir = None
             if "tempdir" in parameters:
                 tempdir = parameters["tempdir"]
+
             print "creating processing result with an identifier %s of type %s" % (str(request.source_identifier), str(type(request.source_identifier)))
             res = ProcessingResult(output_data["original_data"], output_data["data"], file_name = tarfile, tempdir = tempdir, source_identifier = request.source_identifier)
 
             res.send_over_socket(sock)
-            print "FINISHED PROCESSINGFILE"
+            print "FINISHED PROCESSING FILE"
 
 
     sock.close()
