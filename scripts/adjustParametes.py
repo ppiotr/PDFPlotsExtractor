@@ -30,7 +30,7 @@ import re
 
 # THE CONFIGURATION PART ... EDIT THIS TO CHANGE THE BEHAVIOUR
 
-manager_address = "localhost:12347"
+manager_address = "localhost:12351"
 input_directory ='/home/piotr/Inspire/extraction_sandbox/small_sample'
 output_directory = '/home/piotr/Inspire/extraction_sandbox/output'
 descriptions_file = '/home/piotr/Inspire/extraction_sandbox/small_sample/figures.data.py'
@@ -94,7 +94,6 @@ def runTest(parameters, name):
     config_fname = "./execution/%s_configfile" % (name, )
     writeConfiguration(parameters, config_fname)
     test_unique_name =  name
-    print "entering the execution"
     global manager_address
     global input_directory
     global output_directory
@@ -111,27 +110,30 @@ def runTest(parameters, name):
                    "--config=%s" % (config_fname, )]
 
 
-    print "starting execution ... "
     process = subprocess.Popen(exec_params, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-    print "waiting..."
+    print "waiting...",
 
     results, err = process.communicate()
 
-    print "finished waiting"
+
 #    results = process.stdout.read()
 
 #    print process.stderr.read()
     print "finished"
 
     # extracting information from the standard output
-
-    expected = float(re.search("Expected figures: ([0-9]+)", results).groups()[0])
-    detected = float(re.search("Correctly detected figures: ([0-9]+)", results).groups()[0])
-    misdetected = float(re.search("Misdetected figures: ([0-9]+)", results).groups()[0])
+    try:
+        expected = float(re.search("Expected figures: ([0-9]+)", results).groups()[0])
+        detected = float(re.search("Correctly detected figures: ([0-9]+)", results).groups()[0])
+        misdetected = float(re.search("Misdetected figures: ([0-9]+)", results).groups()[0])
+    except:
+        print "Incorrect output of the extraction process ! Make sure that the resources manager is running under the specified address: %s stderr: %s" % (results, err)
+        raise Exception("Unable to extract figures")
 
     recall = detected / expected
     precission = detected / (detected + misdetected)
-    print "expected: %s, extracted: %s, misextracted: %s ... precission: %s recall: %s" % (str(expected), str(detected), str(misdetected), str(precission), str(recall))
+    print "expected: %s, extracted: %s, misextracted: %s ... precission: %s recall: %s" \
+        % (str(expected), str(detected), str(misdetected), str(precission), str(recall))
     return recall, precission
 
    #./runTest.py -c localhost:123498 -d /opt/ppraczyk/small_sample/ -o /opt/ppraczyk/small_sample_output/ --test=fourth_test -e /opt/ppraczyk/small_sample/figures.data.py --temp=/opt/ppraczyk/temp
