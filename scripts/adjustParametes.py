@@ -133,8 +133,20 @@ def runTest(parameters, name):
         print "Incorrect output of the extraction process ! Make sure that the resources manager is running under the specified address: %s stderr: %s" % (results, err)
         raise Exception("Unable to extract figures")
 
-    recall = detected / expected
-    precission = detected / (detected + misdetected)
+    if expected == 0:
+        if detected == expected:
+            recall = 1
+        else:
+            recall = 0
+    else:
+        recall = detected / expected
+
+    if detected + misdetected == 0:
+        precission = 1
+    else:
+        precission = detected / (detected + misdetected)
+
+
     print "expected: %s, extracted: %s, misextracted: %s ... precission: %s recall: %s" \
         % (str(expected), str(detected), str(misdetected), str(precission), str(recall))
 
