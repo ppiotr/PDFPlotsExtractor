@@ -92,6 +92,7 @@ class ProcessingResult(object):
                 fd, self.fileName = tempfile.mkstemp(suffix=".tgz", dir=tempdir)
             else:
                 fd, self.fileName = tempfile.mkstemp(suffix=".tgz")
+
             os.write(fd, file_content)
             os.close(fd)
         else:
@@ -99,7 +100,6 @@ class ProcessingResult(object):
         self.results = results
         self.original_data = original_data
         self.source_identifier = source_identifier
-
 
     @classmethod
     def read_from_socket(self, soc, tempdir=None):
@@ -840,7 +840,7 @@ Accepted options
                                  will be retrieved from Inspire. They will be
                                  saved in subdirectories of the output directory
                                  and the extraction will be performed
-  -t test_name  --test test_name Specifies the name of the test
+  -t test_name  --test=test_name Specifies the name of the test
                                  (results will be written in subdirectories
                                  of this name)
 
@@ -907,9 +907,10 @@ def parse_input(arguments):
     options["annotated_operations"] = False
 
     for option in res[0]:
-        if option[0] in ("--config"):
+        if option[0] in ("--config", ):
             options["config_file"] = option[1]
-        if option[0] in ("--temp"):
+
+        if option[0] in ("--temp", ):
             options["tempdir"] = option[1]
         if option[0] in ("-r", "--random"):
             options["random"] = int(option[1])
@@ -985,12 +986,15 @@ def parse_input(arguments):
         if not os.path.exists(dirname):
             os.mkdir(dirname)
 
-        os.mkdir(os.path.join(dirname, "all"))
-        os.mkdir(os.path.join(dirname, "overdetected"))
-        os.mkdir(os.path.join(dirname, "overdetectedmany")) #overdetected with more than one misdetected figure
-        os.mkdir(os.path.join(dirname, "underdetected"))
-        os.mkdir(os.path.join(dirname, "underdetectedmany")) #underedetected with more than one figure missing
-
+        try:
+            os.mkdir(os.path.join(dirname, "all"))
+            os.mkdir(os.path.join(dirname, "overdetected"))
+            os.mkdir(os.path.join(dirname, "overdetectedmany")) #overdetected with more than one misdetected figure
+            os.mkdir(os.path.join(dirname, "underdetected"))
+            os.mkdir(os.path.join(dirname, "underdetectedmany")) #underedetected with more than one figure missing
+        except:
+            print "The test name you have specified has been already used, please specify a different name"
+            raise Exception("incorrect test name")
         options["review_dir"] = dirname
         options["review_dir_all"] = os.path.join(dirname, "all")
         options["review_dir_overdetected"] = os.path.join(dirname, "overdetected")
@@ -1153,6 +1157,7 @@ def perform_processing_controller(parameters, results, stat_data):
             config_file = None
             if "config_file" in parameters:
                 config_file = parameters["config_file"]
+            print "Creating a request with config file: %s" % (str(config_file), )
             res.append(ProcessingRequest(entry, os.path.split(entry[0])[1], input_file = entry[0], tempdir=parameters["tempdir"], config_file_name = config_file ))
         return res
 
@@ -1189,7 +1194,8 @@ def perform_processing_controller(parameters, results, stat_data):
     if recv_bytes(sock, 3) != "ACK":
         print "Connection to the resources manager refused..."
         sock.close()
-        return
+        raise Exception("Connection to the resources manager refused...")
+
     f = open(jar_file_path, "r")
     jar_content = f.read()
     f.close()
@@ -1292,7 +1298,11 @@ def worker_main(host, port, parameters):
     return reply
 
 def main():
-    parameters = parse_input(sys.argv[1:])
+    try:
+        parameters = parse_input(sys.argv[1:])
+    except:
+        sys.exit()
+
     if not parameters:
         usage()
         sys.exit()
@@ -1322,7 +1332,10 @@ def main():
 
     # the code for collecting results using
     if "be_controller" in parameters:
-        perform_processing_controller(parameters, results, stat_data)
+        try:
+            perform_processing_controller(parameters, results, stat_data)
+        except:
+            sys.exit()
     else:
         perform_processing_local(parameters, results, stat_data)
 

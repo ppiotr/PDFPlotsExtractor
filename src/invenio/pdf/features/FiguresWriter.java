@@ -288,7 +288,9 @@ public class FiguresWriter {
     public static void writePlotPng(FigureCandidate plot) throws IOException {
         Rectangle b = plot.getBoundary();
         if (plot.getPageManager().getRenderedPage() != null) {
-            Images.writeImageToFile(plot.getPageManager().getRenderedPage().getSubimage(b.x, b.y, b.width, b.height), plot.getFile("png"));
+            BufferedImage renderedPage = plot.getPageManager().getRenderedPage();
+            b = b.intersection(renderedPage.getRaster().getBounds());
+            Images.writeImageToFile(renderedPage.getSubimage(b.x, b.y, b.width, b.height), plot.getFile("png"));
         }
     }
 
