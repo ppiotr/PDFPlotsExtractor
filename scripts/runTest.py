@@ -1149,7 +1149,7 @@ def perform_processing_local(parameters, results, stat_data):
 
 def perform_processing_controller(parameters, results, stat_data):
     """Perfomrs extraction as a controller of the server farm"""
-    print "Running processing as controller"
+    print "Starting processing as a controller"
 
     def prepare_requests():
         res = []
@@ -1157,7 +1157,6 @@ def perform_processing_controller(parameters, results, stat_data):
             config_file = None
             if "config_file" in parameters:
                 config_file = parameters["config_file"]
-            print "Creating a request with config file: %s" % (str(config_file), )
             res.append(ProcessingRequest(entry, os.path.split(entry[0])[1], input_file = entry[0], tempdir=parameters["tempdir"], config_file_name = config_file ))
         return res
 
@@ -1340,27 +1339,29 @@ def main():
         perform_processing_local(parameters, results, stat_data)
 
     for res in results:
-        print str(res)
         stat_data = include_in_statistics(res[1][0], res[1][1], res[1][2], res[1][3])
         # If we have correct data specified, we should verify the result
         if "descriptions_object" in parameters:
             processed_pages += 1
-            correctly_extracted, extracted_num, expected_num  = verify_results_correctness(parameters, res[0])
-
-            print "Returned %s %i %i\n" % (str(correctly_extracted), extracted_num, expected_num)
-            if correctly_extracted:
-                correct_pages += 1
-
-            expected_figures += expected_num
-
-            df = (extracted_num - expected_num)
-
-            if df > 0:
-                icdetected_figures += df
-                cdetected_figures += expected_num
+            try:
+                correctly_extracted, extracted_num, expected_num  = verify_results_correctness(parameters, res[0])
+            except:
+                print "Error when processing results record"
             else:
-                cdetected_figures += extracted_num
-            prepare_for_review(parameters, res[0], extracted_num, expected_num)
+                print "Returned %s %i %i\n" % (str(correctly_extracted), extracted_num, expected_num)
+                if correctly_extracted:
+                    correct_pages += 1
+
+                expected_figures += expected_num
+
+                df = (extracted_num - expected_num)
+
+                if df > 0:
+                    icdetected_figures += df
+                    cdetected_figures += expected_num
+                else:
+                    cdetected_figures += extracted_num
+                prepare_for_review(parameters, res[0], extracted_num, expected_num)
 
 
 

@@ -852,12 +852,7 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
                 while (!bfsQueue.isEmpty()) {
                     int curRec = bfsQueue.getFirst();
                     bfsQueue.removeFirst();
-                    if (layoutElements.size() <= curRec || curRec < 0){
-                        System.out.println("ZONK");
-                        Rectangle get = layoutElements.get(curRec);
-                        System.out.println("ZONK");
-
-                    }
+                    
                     consistentArea.add(layoutElements.get(curRec));
                     if (areasConnections.containsKey(curRec)) {
                         for (int adjArea : areasConnections.get(curRec)) {
@@ -895,6 +890,11 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
      * @return
      */
     private boolean isValidSeparatorPositionV(Rectangle hSeparator, Rectangle moveUsing) {
+        if (hSeparator == null || moveUsing == null){
+            System.out.print("ZONK");
+        }
+            
+     
         return hSeparator.y >= moveUsing.y && hSeparator.y <= moveUsing.y + moveUsing.height;
     }
 
