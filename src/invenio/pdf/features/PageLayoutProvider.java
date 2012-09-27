@@ -157,6 +157,9 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
      * @return
      */
     private boolean isHorizontalSeparator(int x, int y, int width, Raster raster) {
+        if (y == 0 || y==raster.getHeight()){
+            return true;
+        }
         int er = (int) (this.verticalEmptinessRadius * raster.getHeight());
         int minOffset = (int) er / 2;
         int[] currentPixel = new int[3];
@@ -849,6 +852,12 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
                 while (!bfsQueue.isEmpty()) {
                     int curRec = bfsQueue.getFirst();
                     bfsQueue.removeFirst();
+                    if (layoutElements.size() <= curRec || curRec < 0){
+                        System.out.println("ZONK");
+                        Rectangle get = layoutElements.get(curRec);
+                        System.out.println("ZONK");
+
+                    }
                     consistentArea.add(layoutElements.get(curRec));
                     if (areasConnections.containsKey(curRec)) {
                         for (int adjArea : areasConnections.get(curRec)) {
