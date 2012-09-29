@@ -6,7 +6,6 @@ import java.util.Set;
 import de.intarsys.pdf.content.CSOperation;
 import invenio.pdf.core.ExtractorLogger;
 import invenio.pdf.core.GraphicalOperation;
-import invenio.pdf.core.PDFObjects.ContentStreamStateMachine;
 import invenio.pdf.core.PDFPageManager;
 import invenio.pdf.core.TextOperation;
 import invenio.pdf.core.TransformationOperation;

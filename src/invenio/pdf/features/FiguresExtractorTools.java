@@ -8,6 +8,7 @@ import invenio.pdf.core.PDFObjects.PDFObject;
 import invenio.pdf.core.PDFObjects.PDFPathObject;
 import invenio.pdf.core.PDFObjects.PDFTextObject;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.awt.Rectangle;
 import java.io.File;
 import java.util.LinkedList;
+import java.util.Random;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Document;
@@ -24,28 +26,52 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 public class FiguresExtractorTools {
+
     /** draw a number of rectangles on the canvas*/
+    private static Random random = null;
+
     public static void annotateWithEmptyRectangles(Graphics2D graphics, List<Rectangle> rectangles) {
         graphics.setTransform(AffineTransform.getRotateInstance(0));
         graphics.setPaintMode();
         graphics.setColor(Color.blue);
-        
+
         for (Rectangle bd : rectangles) {
             graphics.drawRect(bd.x, bd.y, bd.width - 1, bd.height - 1);
             graphics.drawRect(bd.x + 1, bd.y + 1, bd.width - 3, bd.height - 3);
         }
     }
+
     /** draw a number of rectangles on the canvas*/
     public static void annotateWithRectangles(Graphics2D graphics, List<Rectangle> rectangles) {
         graphics.setTransform(AffineTransform.getRotateInstance(0));
         graphics.setPaintMode();
-        graphics.setColor(Color.blue);
-        
-        for (Rectangle bd : rectangles) {
-            graphics.fillRect(bd.x, bd.y, bd.width - 1, bd.height - 1);
-            graphics.fillRect(bd.x + 1, bd.y + 1, bd.width - 3, bd.height - 3);
+
+
+        for (int rectInd = 0; rectInd < rectangles.size(); ++rectInd) {
+            Rectangle bd = rectangles.get(rectInd);
+            Color c = FiguresExtractorTools.getRandomColor();
+            graphics.setColor(c);
+            graphics.setFont(new Font("helvetica", 0, 40));
+
+            //graphics.fillRect(bd.x, bd.y, bd.width - 1, bd.height - 1);
+            graphics.fillRect(bd.x + 1, bd.y + 1, bd.width - 2, bd.height - 2);
+
+            graphics.setColor(new Color(c.getRed(), c.getGreen(), c.getBlue(), 255));
+
+            graphics.drawString(String.valueOf(rectInd), bd.x + Math.round(bd.width / 2), bd.y + Math.round(bd.height / 2));
         }
     }
+
+    private static Color getRandomColor() {
+        if (FiguresExtractorTools.random == null) {
+            FiguresExtractorTools.random = new Random();
+        }
+        int r = FiguresExtractorTools.random.nextInt(256);
+        int g = FiguresExtractorTools.random.nextInt(256);
+        int b = FiguresExtractorTools.random.nextInt(256);
+        return new Color(r, g, b, 100);
+    }
+
     /**
      * Annotate the canvas with single layout area
      * @param graphics
@@ -57,12 +83,30 @@ public class FiguresExtractorTools {
         graphics.setPaintMode();
         List<Rectangle> area = layout.areas.get(areaNum);
 
-        graphics.setColor(Color.black);
+        Color c = FiguresExtractorTools.getRandomColor();
+        graphics.setColor(c);
+        graphics.setFont(new Font("helvetica", 0, 40));
+
+        // we use temporary variables to calculate the center of the largest rectangle of the layout region
+        int maxVol = 0;
+        int centerX = 0;
+        int centerY = 0;
 
         for (Rectangle bd : area) {
-            graphics.fillRect(bd.x, bd.y, bd.width - 1, bd.height - 1);
-            graphics.fillRect(bd.x + 1, bd.y + 1, bd.width - 3, bd.height - 3);
+            //graphics.fillRect(bd.x, bd.y, bd.width - 1, bd.height - 1);
+            graphics.fillRect(bd.x + 1, bd.y + 1, bd.width - 2, bd.height - 2);
+            if (bd.width * bd.height > maxVol) {
+                maxVol = bd.width * bd.height;
+                centerX = bd.x + Math.round(bd.width / 2);
+                centerY = bd.y + Math.round(bd.height / 2);
+            }
         }
+
+        // now write the area number inside
+
+        graphics.setColor(new Color(c.getRed(), c.getGreen(), c.getBlue(), 255));
+
+        graphics.drawString(String.valueOf(areaNum), centerX, centerY);
     }
 
     public static void annotateImage(Graphics2D graphics, List<FigureCandidate> plots,
