@@ -20,7 +20,7 @@ import tempfile
 import cPickle
 from Queue import Queue
 import base64
-
+import shutil
 
 
 CFG_WAITING_IN_THE_QUEUE_TIMEOUT_IN_SECONDS = 10
@@ -95,8 +95,10 @@ class ProcessingResult(object):
 
             os.write(fd, file_content)
             os.close(fd)
+            self.usingTempFile = True
         else:
             self.fileName = file_name
+            self.usingTempFile = False
         self.results = results
         self.original_data = original_data
         self.source_identifier = source_identifier
@@ -116,6 +118,11 @@ class ProcessingResult(object):
         send_data(soc, f.read())
         f.close()
         send_data(soc, self.source_identifier)
+
+    def __del__(self):
+        if self.fileName and self.usingTempFile and os.path.exists(self.fileName):
+            os.remove(self.fileName)
+        self.fileName = None
 
 
 class ProcessingRequest(object):
@@ -161,26 +168,36 @@ class ProcessingRequest(object):
                 fd = os.fdopen(fdl, "w")
             fd.write(input_content)
             fd.close()
+            self.usingTempFile = True
         else:
             self.inputFileName = input_file
             f = open(input_file, "r")
             self.hash = hashlib.md5(f.read()).hexdigest()
             f.close()
+            self.usingTempFile = False
 
         # if necessary, save the configuration
-
+        self.usingTempFileConfig = False
         if config_content:
             # we create a temporary configuration file and override the configuration
             if tempdir:
                 fdl, config_fname = tempfile.mkstemp(suffix=".config", dir=tempdir)
             else:
                 fdl, config_fname = tempfile.mkstemp(suffix=".config")
+
+
             fd = os.fdopen(fdl, "w")
             fd.write(config_content)
             fd.close()
             self.config_file_name = config_fname
+            self.usingTempFileConfig = True
 
+    def __del__(self):
+        if self.usingTempFileConfig and os.path.exists(self.config_file_name):
+            os.remove(self.config_file_name)
 
+        if self.usingTempFile and os.path.exists(self.inputFileName):
+            os.remove(self.inputFileName)
 
     def send_over_socket(self, soc):
         """Read data of a request and send it over a socket"""
@@ -1239,7 +1256,17 @@ def worker_main(host, port, parameters):
         results = extract_file(req.inputFileName, os.path.join(temp_dir, "results"), req.original_data, req.config_file_name)
 
         # preparing compressed version of the temp
-        tarfile = os.path.join(temp_dir, "results.tgz")
+
+        if "tempdir" in parameters:
+            td = parameters["tempdir"]
+        else:
+            td = None
+
+        fd, fname = tempfile.mkstemp(dir=td, suffix=".tgz")
+        os.close(fd)
+        tarfile = fname
+#        tarfile = os.path.join(temp_dir, "results.tgz")
+
         f = os.popen("tar -czf %s -C %s results" % (tarfile, temp_dir))
         f.read()
         f.close
@@ -1272,7 +1299,7 @@ def worker_main(host, port, parameters):
             print "Recieving the input PDF file"
 
             if "tempdir" in parameters:
-                temp_dir = tempfile.mkdtemp(dir=parameters["tempdir"])
+                temp_dir = tempfile.mkdtemp(dir = parameters["tempdir"])
             else:
                 temp_dir = tempfile.mkdtemp()
 
@@ -1290,6 +1317,9 @@ def worker_main(host, port, parameters):
             res = ProcessingResult(output_data["original_data"], output_data["data"], file_name = tarfile, tempdir = tempdir, source_identifier = request.source_identifier)
 
             res.send_over_socket(sock)
+            shutil.rmtree(temp_dir)
+
+            os.remove(tarfile)
             print "FINISHED PROCESSING FILE"
 
 

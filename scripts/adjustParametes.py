@@ -21,6 +21,7 @@
 # When the program is called without arguments, the initialisation phase is executed, otherwise
 # state is restored from a presaved state (stored in a file) and the initialisation is skipped
 # so that the calculation can start from the prevois state
+
 import os
 import cPickle
 import subprocess
@@ -30,11 +31,14 @@ import re
 
 # THE CONFIGURATION PART ... EDIT THIS TO CHANGE THE BEHAVIOUR
 
-manager_address = "pcgssi0904.cern.ch:12345"
-input_directory ='/home/piotr/Inspire/extraction_sandbox/small_sample'
-output_directory = '/home/piotr/Inspire/extraction_sandbox/output'
-descriptions_file = '/home/piotr/Inspire/extraction_sandbox/small_sample/figures.data.py'
-temp_dir = '/home/piotr/Inspire/extraction_sandbox/temp'
+manager_address = "localhost:12345"
+input_directory ='/opt/ppraczyk/splited'
+output_directory = '/opt/ppraczyk/training_output'
+descriptions_file = '/opt/ppraczyk/splited/figures.data.py'
+temp_dir = '/opt/ppraczyk/temp'
+
+execution_state_dir  = '/opt/ppraczyk/training_execution_state'
+
 
 optimisable_parameters = [
     ["minimal_aspect_ratio", "float", 0.001, 1, 0.1],
@@ -91,8 +95,8 @@ def getTimestampString():
 
 def runTest(parameters, name):
     """Executes a single test and return the evaluation measure - pair recall, precission"""
-    config_fname = "./execution/%s_configfile" % (name, )
-    results_fname = "./execution/%s_results" % (name, )
+    config_fname = "%s/%s_configfile" % (execution_state_dir, name, )
+    results_fname = "%s/%s_results" % (execution_state_dir, name, )
 
     writeConfiguration(parameters, config_fname)
 
@@ -191,8 +195,8 @@ class ProcessingState(object):
         self.resuming = False
         self.seq += 1
 
-        if not os.path.exists("./execution"):
-            os.mkdir("./execution")
+        if not os.path.exists(execution_state_dir):
+            os.mkdir(execution_state_dir)
         f = open(self.get_file_path(), "w")
         f.write(cPickle.dumps(self))
         f.close()
@@ -202,12 +206,12 @@ class ProcessingState(object):
         """reading the newest snapshot"""
 
         try:
-            files = filter(lambda fname: fname.endswith("_snapshot"), os.listdir("./execution"))
+            files = filter(lambda fname: fname.endswith("_snapshot"), os.listdir(execution_state_dir))
             files.sort(reverse = True)
             for file_name in files:
                 try:
                     print "Trying to load the saved state from the file %s" % (file_name, )
-                    f = open(os.path.join("./execution", file_name), "r")
+                    f = open(os.path.join(execution_state_dir, file_name), "r")
                     c = f.read()
                     f.close()
                     instance =  cPickle.loads(c)
@@ -229,7 +233,7 @@ class ProcessingState(object):
         return "%0*d" % (5, self.seq,)
 
     def get_file_path(self):
-        return "./execution/%s_snapshot" % (self.get_unique_name())
+        return "%s/%s_snapshot" % (execution_state_dir, self.get_unique_name())
 
 def optimiseParameter(state, parameter, otherParameters):
     if not state.resuming:
