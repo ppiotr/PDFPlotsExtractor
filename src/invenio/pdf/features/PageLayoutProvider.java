@@ -4,14 +4,21 @@
  */
 package invenio.pdf.features;
 
+import invenio.common.Images;
 import invenio.common.Pair;
 import invenio.pdf.core.ExtractorParameters;
 import invenio.pdf.core.FeatureNotPresentException;
 import invenio.pdf.core.IPDFPageFeature;
 import invenio.pdf.core.IPDFPageFeatureProvider;
 import invenio.pdf.core.PDFPageManager;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
 import java.awt.image.Raster;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -19,6 +26,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.TreeMap;
 
 /**
@@ -157,7 +165,7 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
      * @return
      */
     private boolean isHorizontalSeparator(int x, int y, int width, Raster raster) {
-        if (y == 0 || y==raster.getHeight()){
+        if (y == 0 || y == raster.getHeight()) {
             return true;
         }
         int er = (int) (this.verticalEmptinessRadius * raster.getHeight());
@@ -678,157 +686,161 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
                 boolean succededWithMove = false;
                 int movedBy = 0;
 
-
-                while (isValidSeparatorPositionV(cSeparator, moveUsing)
-                        && !succededWithMove) {
-                    // while we are still adjacent to the same vertical separators as the original one
-                    cSeparator.y += separatorInc;
-                    succededWithMove = isHorizontalSeparator(cSeparator.x, cSeparator.y, cSeparator.width, raster);
-                    movedBy++;
-                }
-                // we have a separator of a limit of the movement -> in order to avoid potential empty space, we
-                // will move the separator as far as possible as long as it is a separator
-
-
-                while (isValidSeparatorPositionV(new Rectangle(cSeparator.x, cSeparator.y + separatorInc, cSeparator.width, 0),
-                        moveUsing)
-                        && isHorizontalSeparator(cSeparator.x, cSeparator.y + separatorInc,
-                        cSeparator.width, raster) && cSeparator.y + separatorInc < raster.getHeight()) {
-
-                    cSeparator.y += separatorInc;
-                    movedBy++;
-                }
-
-                if (cSeparator.y == raster.getHeight() - 1) {
-                    // if we are at the very bottom, we are interested in moving the separator one more
-                    // to go outside of the page
-                    ++cSeparator.y;
-                }
-                if (!succededWithMove) {
-                    // we are in the first invalid position -> we have to go back by one
-
-                    cSeparator.y -= separatorInc;
-                }
-
-                // retrieving the area that will be affected by the move
-                Integer shRectangleId = (moveDown ? lowerRectangles : upperRectangles).get(hSeparator);
-                //     Integer shRectangleId = moveDown ? hSeparators.get(hSeparator.y).get(hSeparator). : hSeparators.get(hSeparator.y).get(hSeparator).first;
-                Rectangle shRectangle = layoutElements.get(shRectangleId);
+                if (moveUsing == null) {
+                    // there is no possibility of moving ... we need to connect upper and lower areas
+                    connectAreas(areasConnections, lowerId, upperId);
+                } else {
+                    while (isValidSeparatorPositionV(cSeparator, moveUsing)
+                            && !succededWithMove) {
+                        // while we are still adjacent to the same vertical separators as the original one
+                        cSeparator.y += separatorInc;
+                        succededWithMove = isHorizontalSeparator(cSeparator.x, cSeparator.y, cSeparator.width, raster);
+                        movedBy++;
+                    }
+                    // we have a separator of a limit of the movement -> in order to avoid potential empty space, we
+                    // will move the separator as far as possible as long as it is a separator
 
 
+                    while (isValidSeparatorPositionV(new Rectangle(cSeparator.x, cSeparator.y + separatorInc, cSeparator.width, 0),
+                            moveUsing)
+                            && isHorizontalSeparator(cSeparator.x, cSeparator.y + separatorInc,
+                            cSeparator.width, raster) && cSeparator.y + separatorInc < raster.getHeight()) {
 
-                // We have treid to move as far as we could.... now we have to decide what to do next... divide areas, join ? 
+                        cSeparator.y += separatorInc;
+                        movedBy++;
+                    }
 
-                if (shRectangle.y == cSeparator.y || shRectangle.y + shRectangle.height == cSeparator.y) {
-                    // if we moved too far -> which means, the adjacent rectangle will be shrinked to zero
-                    // what about the borders ?! in this case there will be no lower area !
-
+                    if (cSeparator.y == raster.getHeight() - 1) {
+                        // if we are at the very bottom, we are interested in moving the separator one more
+                        // to go outside of the page
+                        ++cSeparator.y;
+                    }
                     if (!succededWithMove) {
-                        // TODO: This became a bit unefficient after verifying one assumption ... intervals data structure should be replaced ... probably the oriinal one without flattening could be perfect
-                        List<Integer> btmIds = new LinkedList<Integer>();
-                        List<Integer> uppIds = new LinkedList<Integer>();
+                        // we are in the first invalid position -> we have to go back by one
+
+                        cSeparator.y -= separatorInc;
+                    }
+
+                    // retrieving the area that will be affected by the move
+                    Integer shRectangleId = (moveDown ? lowerRectangles : upperRectangles).get(hSeparator);
+                    //     Integer shRectangleId = moveDown ? hSeparators.get(hSeparator.y).get(hSeparator). : hSeparators.get(hSeparator.y).get(hSeparator).first;
+                    Rectangle shRectangle = layoutElements.get(shRectangleId);
 
 
-                        // retrieve all separators from cSeparator
-                        List<Rectangle> seps = new LinkedList<Rectangle>();
 
-                        int last = cSeparator.x;
-                        while (last < cSeparator.x + cSeparator.width) {
-                            for (Rectangle separator : horizontalSeparators) {
-                                if (separator.x == last && separator.y == cSeparator.y) {
-                                    seps.add(separator);
-                                    last = separator.x + separator.width;
+                    // We have treid to move as far as we could.... now we have to decide what to do next... divide areas, join ? 
+
+                    if (shRectangle.y == cSeparator.y || shRectangle.y + shRectangle.height == cSeparator.y) {
+                        // if we moved too far -> which means, the adjacent rectangle will be shrinked to zero
+                        // what about the borders ?! in this case there will be no lower area !
+
+                        if (!succededWithMove) {
+                            // TODO: This became a bit unefficient after verifying one assumption ... intervals data structure should be replaced ... probably the oriinal one without flattening could be perfect
+                            List<Integer> btmIds = new LinkedList<Integer>();
+                            List<Integer> uppIds = new LinkedList<Integer>();
+
+
+                            // retrieve all separators from cSeparator
+                            List<Rectangle> seps = new LinkedList<Rectangle>();
+
+                            int last = cSeparator.x;
+                            while (last < cSeparator.x + cSeparator.width) {
+                                for (Rectangle separator : horizontalSeparators) {
+                                    if (separator.x == last && separator.y == cSeparator.y) {
+                                        seps.add(separator);
+                                        last = separator.x + separator.width;
+                                    }
                                 }
                             }
-                        }
 
-                        if (moveDown) {
-                            uppIds.add(upperRectangles.get(hSeparator));
-                            for (Rectangle s : seps) {
-                                btmIds.add(lowerRectangles.get(s));
+                            if (moveDown) {
+                                uppIds.add(upperRectangles.get(hSeparator));
+                                for (Rectangle s : seps) {
+                                    btmIds.add(lowerRectangles.get(s));
+                                }
+                            } else {
+                                btmIds.add(lowerRectangles.get(hSeparator));
+                                for (Rectangle s : seps) {
+                                    uppIds.add(upperRectangles.get(s));
+                                }
                             }
+
+                            //Integer btmRecId = (moveDown ? lowerRectangles.get(cSeparator) : lowerRectangles.get(hSeparator));
+                            //Integer uppRecId = (moveDown ? upperRectangles.get(hSeparator) : upperRectangles.get(cSeparator));
+
+                            for (int id1 : uppIds) {
+
+                                connectAreas(areasConnections, id1, shRectangleId);
+
+                            }
+                            for (int id1 : btmIds) {
+
+                                connectAreas(areasConnections, id1, shRectangleId);
+
+                            }
+
                         } else {
-                            btmIds.add(lowerRectangles.get(hSeparator));
-                            for (Rectangle s : seps) {
-                                uppIds.add(upperRectangles.get(s));
+                            // top/btm remains distinct -> only the shrinked rectangle gets attached to one of them
+                            Integer btmRecId = (moveDown ? lowerRectangles.get(cSeparator) : lowerRectangles.get(hSeparator));
+                            Integer uppRecId = (moveDown ? upperRectangles.get(hSeparator) : upperRectangles.get(cSeparator));
+                            connectAreas(areasConnections, shRectangleId, moveDown ? uppRecId : btmRecId);
+
+                        }
+                        // we do not want to process this separator again... it will appear once again
+                        bannedSeparators.add(cSeparator);
+                    } else {
+                        // we were sucessful with moving .. we are on a real separator !
+                        if (moveDown) {
+                            // create a new rectangle, attach it to the upper area and leave the bottom rectangle shrinked
+                            if (shRectangle.x == 378) {
+                                System.out.println("our suspicious rectangle");
                             }
-                        }
 
-                        //Integer btmRecId = (moveDown ? lowerRectangles.get(cSeparator) : lowerRectangles.get(hSeparator));
-                        //Integer uppRecId = (moveDown ? upperRectangles.get(hSeparator) : upperRectangles.get(cSeparator));
+                            Rectangle newShrinkedRectangle = new Rectangle(shRectangle.x, cSeparator.y, shRectangle.width, shRectangle.height - movedBy);
+                            Rectangle newRectangle = new Rectangle(shRectangle.x, shRectangle.y, shRectangle.width, movedBy);
 
-                        for (int id1 : uppIds) {
+                            int newId = newElemId;
+                            newElemId++;
+                            layoutElements.add(newId, newRectangle);
+                            layoutElements.set(shRectangleId, newShrinkedRectangle);
 
-                            connectAreas(areasConnections, id1, shRectangleId);
+                            upperRectangles.put(cSeparator, newId);
+                            lowerRectangles.put(cSeparator, shRectangleId);
 
-                        }
-                        for (int id1 : btmIds) {
+                            // updating existing informaions !
 
-                            connectAreas(areasConnections, id1, shRectangleId);
+                            lowerRectangles.put(hSeparator, newId);
 
-                        }
-
-                    } else {
-                        // top/btm remains distinct -> only the shrinked rectangle gets attached to one of them
-                        Integer btmRecId = (moveDown ? lowerRectangles.get(cSeparator) : lowerRectangles.get(hSeparator));
-                        Integer uppRecId = (moveDown ? upperRectangles.get(hSeparator) : upperRectangles.get(cSeparator));
-                        connectAreas(areasConnections, shRectangleId, moveDown ? uppRecId : btmRecId);
-
-                    }
-                    // we do not want to process this separator again... it will appear once again
-                    bannedSeparators.add(cSeparator);
-                } else {
-                    // we were sucessful with moving .. we are on a real separator !
-                    if (moveDown) {
-                        // create a new rectangle, attach it to the upper area and leave the bottom rectangle shrinked
-                        if (shRectangle.x == 378) {
-                            System.out.println("our suspicious rectangle");
-                        }
-
-                        Rectangle newShrinkedRectangle = new Rectangle(shRectangle.x, cSeparator.y, shRectangle.width, shRectangle.height - movedBy);
-                        Rectangle newRectangle = new Rectangle(shRectangle.x, shRectangle.y, shRectangle.width, movedBy);
-
-                        int newId = newElemId;
-                        newElemId++;
-                        layoutElements.add(newId, newRectangle);
-                        layoutElements.set(shRectangleId, newShrinkedRectangle);
-
-                        upperRectangles.put(cSeparator, newId);
-                        lowerRectangles.put(cSeparator, shRectangleId);
-
-                        // updating existing informaions !
-
-                        lowerRectangles.put(hSeparator, newId);
-
-                        // and now establishing the parental relation
-                        connectAreas(areasConnections, newId, upperRectangles.get(hSeparator));
-                        //  verify(layoutElements, lowerRectangles, upperRectangles, horizontalSeparators);
+                            // and now establishing the parental relation
+                            connectAreas(areasConnections, newId, upperRectangles.get(hSeparator));
+                            //  verify(layoutElements, lowerRectangles, upperRectangles, horizontalSeparators);
 
 
-                    } else {
-                        Rectangle newShrinkedRectangle = new Rectangle(shRectangle.x, shRectangle.y, shRectangle.width, shRectangle.height - movedBy);
-                        Rectangle newRectangle = new Rectangle(shRectangle.x, cSeparator.y, shRectangle.width, movedBy);
-                        int newId = newElemId;
-                        newElemId++;
-                        layoutElements.add(newId, newRectangle);
-                        layoutElements.set(shRectangleId, newShrinkedRectangle);
+                        } else {
+                            Rectangle newShrinkedRectangle = new Rectangle(shRectangle.x, shRectangle.y, shRectangle.width, shRectangle.height - movedBy);
+                            Rectangle newRectangle = new Rectangle(shRectangle.x, cSeparator.y, shRectangle.width, movedBy);
+                            int newId = newElemId;
+                            newElemId++;
+                            layoutElements.add(newId, newRectangle);
+                            layoutElements.set(shRectangleId, newShrinkedRectangle);
 
-                        upperRectangles.put(cSeparator, shRectangleId);
-                        lowerRectangles.put(cSeparator, newId);
+                            upperRectangles.put(cSeparator, shRectangleId);
+                            lowerRectangles.put(cSeparator, newId);
 
 //                        areaUpperSeparator.put(newId, cSeparator);
 //                        areaLowerSeparator.put(newId, hSeparator);
 
-                        // updating existing informaions !
+                            // updating existing informaions !
 
-                        upperRectangles.put(hSeparator, newId);
-                        //                       areaLowerSeparator.put(shRectangleId, cSeparator);
-                        // and finally establishing the parental relation
+                            upperRectangles.put(hSeparator, newId);
+                            //                       areaLowerSeparator.put(shRectangleId, cSeparator);
+                            // and finally establishing the parental relation
 
-                        connectAreas(areasConnections, newId, lowerRectangles.get(hSeparator));
-                        //  verify(layoutElements, lowerRectangles, upperRectangles, horizontalSeparators);
+                            connectAreas(areasConnections, newId, lowerRectangles.get(hSeparator));
+                            //  verify(layoutElements, lowerRectangles, upperRectangles, horizontalSeparators);
 
 
+                        }
                     }
                 }
             }
@@ -852,7 +864,7 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
                 while (!bfsQueue.isEmpty()) {
                     int curRec = bfsQueue.getFirst();
                     bfsQueue.removeFirst();
-                    
+
                     consistentArea.add(layoutElements.get(curRec));
                     if (areasConnections.containsKey(curRec)) {
                         for (int adjArea : areasConnections.get(curRec)) {
@@ -890,11 +902,11 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
      * @return
      */
     private boolean isValidSeparatorPositionV(Rectangle hSeparator, Rectangle moveUsing) {
-        if (hSeparator == null || moveUsing == null){
+        if (hSeparator == null || moveUsing == null) {
             System.out.print("ZONK");
         }
-            
-     
+
+
         return hSeparator.y >= moveUsing.y && hSeparator.y <= moveUsing.y + moveUsing.height;
     }
 
@@ -910,24 +922,24 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
         }
         TreeMap<Integer, List<Integer>> widths = new TreeMap<Integer, List<Integer>>();
         for (Rectangle rec : area) {
-            if (!widths.containsKey(rec.y)){
+            if (!widths.containsKey(rec.y)) {
                 widths.put(rec.y, new LinkedList<Integer>());
             }
-            if (!widths.containsKey(rec.y + rec.height)){
+            if (!widths.containsKey(rec.y + rec.height)) {
                 widths.put(rec.y + rec.height, new LinkedList<Integer>());
             }
-            
+
             widths.get(rec.y).add(rec.width);
             widths.get(rec.y + rec.height).add(-rec.width);
         }
-        
+
         int minWidth = Integer.MAX_VALUE;
-        int curWidth =0;
-        for (Integer val: widths.navigableKeySet()){
-            for (Integer delta: widths.get(val)){
+        int curWidth = 0;
+        for (Integer val : widths.navigableKeySet()) {
+            for (Integer delta : widths.get(val)) {
                 curWidth += delta;
             }
-            if (curWidth < minWidth && curWidth > 0){
+            if (curWidth < minWidth && curWidth > 0) {
                 minWidth = curWidth;
             }
         }
@@ -941,8 +953,8 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
     private int getTooNarrowArea(PageLayout layout, int pageWidth) {
         ExtractorParameters parameters = ExtractorParameters.getExtractorParameters();
         double width = parameters.getMinimalPageLayoutColumnWidth() * pageWidth;
-        for (int area=0; area < layout.areas.size(); ++area){
-            if (width > this.calculateLayoutAreaWidth(layout.areas.get(area))){
+        for (int area = 0; area < layout.areas.size(); ++area) {
+            if (width > this.calculateLayoutAreaWidth(layout.areas.get(area))) {
                 return area;
             }
         }
@@ -958,7 +970,7 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
      * @param layout
      * @return 
      */
-    public PageLayout unifyNarrowColumns(PageLayout layout,  Raster raster) {
+    public PageLayout unifyNarrowColumns(PageLayout layout, Raster raster) {
         int tooNarrowArea = getTooNarrowArea(layout, raster.getWidth());
         while (tooNarrowArea != -1) {
             //connect with the most promising left area
@@ -967,15 +979,15 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
             int maxArea = -1;
             HashSet<Integer> candidates = layout.getLeftAreas(tooNarrowArea);
             candidates.addAll(layout.getLeftAreas(tooNarrowArea));
-            for (int adjArea: candidates){
+            for (int adjArea : candidates) {
                 int tmpWidth = getCombinedAreaWidth(layout, adjArea, tooNarrowArea);
-                if (tmpWidth > newWidth){
+                if (tmpWidth > newWidth) {
                     maxArea = adjArea;
                     newWidth = tmpWidth;
                 }
             }
-            
-            if (newWidth == 0){
+
+            if (newWidth == 0) {
                 // we are very sorry but it is impossible to improve the situation... maybe the conditions are too strict
                 System.err.println("The requirement of having columns wide enough can not be satisfied. too narrow area: " + tooNarrowArea + " area width " + this.calculateLayoutAreaWidth(layout.areas.get(tooNarrowArea)));
                 break;
@@ -986,9 +998,9 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
             }
             tooNarrowArea = getTooNarrowArea(layout, raster.getWidth());
         }
-        
-        
-        
+
+
+
         // processing too low areas
         // TODO: this should be implemented if necessary
         return layout;
@@ -996,10 +1008,10 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
 
     private int getCombinedAreaWidth(PageLayout layout, int area1, int area2) {
         LinkedList<Rectangle> newCandidate = new LinkedList<Rectangle>();
-        for (Rectangle rec: layout.areas.get(area1)){
+        for (Rectangle rec : layout.areas.get(area1)) {
             newCandidate.add(rec);
         }
-        for (Rectangle rec: layout.areas.get(area2)){
+        for (Rectangle rec : layout.areas.get(area2)) {
             newCandidate.add(rec);
         }
         return this.calculateLayoutAreaWidth(newCandidate);
@@ -1013,6 +1025,33 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
         Raster raster = pageManager.getRenderedPage().getData();
         LinkedList<Rectangle> verticalSeparators = new LinkedList<Rectangle>();
         List<Rectangle> preliminaryColumns = getPageColumns(raster, verticalSeparators);
+
+        /**
+        //drop some debugging info
+        BufferedImage renderedPage = pageManager.getRenderedPage();
+        Graphics2D graphics = (Graphics2D) renderedPage.getGraphics();
+        graphics.setTransform(AffineTransform.getRotateInstance(0));
+        graphics.setPaintMode();
+        Random random = new Random();
+        for (int recInd = 0; recInd < preliminaryColumns.size(); ++recInd) {
+        Rectangle rec = preliminaryColumns.get(recInd);
+        int r = random.nextInt(256);
+        int g = random.nextInt(256);
+        int b = random.nextInt(256);
+        
+        Color c = new Color(r, g, b, 100);
+        graphics.setColor(c);
+        graphics.setFont(new Font("helvetica", 0, 40));
+        graphics.fillRect(rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2);
+        graphics.setColor(new Color(r, g, b, 255));
+        
+        graphics.drawString("" + recInd, rec.x + Math.round(rec.width / 2), rec.y + Math.round(rec.height / 2));
+        }
+        
+        File pdfOperations = new File("/tmp/", "samplelayout.png");
+        Images.writeImageToFile(renderedPage, pdfOperations);
+        //end of the debugging info
+         */
         PageLayout layout = fixHorizontalSeparators(preliminaryColumns, verticalSeparators, raster);
         layout = unifyNarrowColumns(layout, raster);
         return layout;
