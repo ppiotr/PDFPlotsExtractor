@@ -110,6 +110,7 @@ public class ExtractorParameters extends Properties {
         this.setProperty("horizontal_plot_text_margin", "0.01");
         this.setProperty("page_scale", "2");
         this.setProperty("minimal_margin_width", "0.3");
+        //this.setProperty("minimal_margin_width", "0");
         this.setProperty("horizontal_emptiness_radius", "0.01");
         this.setProperty("vertical_emptiness_radius", "0.005");
         this.setProperty("maximum_non_breaking_fraction", "0.005");

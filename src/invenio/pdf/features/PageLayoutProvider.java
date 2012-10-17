@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
+import org.apache.batik.ext.awt.image.SVGComposite.OutCompositeContext;
 
 /**
  *
@@ -119,7 +120,12 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
     private int emptinessDiameter;
 
     /** Initialises the emptiness data - calculate the required emptiness radius
+     *  
+     *  Methods maintaining and updating datastructures allowing a more efficient 
+     *  determination if a certain area inside of the page image is empty
+     *  we assume access for increasing x's
      */
+    
     private void emptinessInitialise(Raster r) {
         emptinessDiameter = (int) (this.horizontalEmptinessRadius * r.getWidth());
         emptinessRadius = (int) emptinessDiameter / 2;
@@ -136,9 +142,9 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
     private void emptinessDataMove(Raster r) {
         // moves the emptiness index by 1
         emptinessX++;
-        for (int y = 0; y < r.getHeight(); y++) {
-            emptinessCurrentPixel = r.getPixel(emptinessX, y, emptinessCurrentPixel);
-            if (isPixelEmpty(emptinessCurrentPixel)) {
+        for (int y = 0; y < r.getHeight(); y++) {  
+            
+            if (emptinessX >= r.getWidth() || isPixelEmpty(r.getPixel(emptinessX, y, emptinessCurrentPixel))) {
                 emptinessColumn[y]++;
             } else {
                 emptinessColumn[y] = 0;
@@ -147,6 +153,10 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
     }
 
     private boolean emptinessIsAreaEmpty(int x, int y, Raster raster) {
+        if (x >= raster.getWidth() || y>= raster.getHeight()){
+            return true; // areas outside of the page are empty regardless how far from filled area
+        }
+        
         int checkedX = x + emptinessRadius;
         while (emptinessX != checkedX) {
             emptinessDataMove(raster);
