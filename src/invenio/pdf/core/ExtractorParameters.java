@@ -140,6 +140,36 @@ public class ExtractorParameters extends Properties {
         this.setProperty("minimal_graphical_area_fraction", "0.15");
         this.setProperty("maximal_inclusion_height", "0.10");
         
+        
+        
+        
+        
+        ////// Setting parameters detected by the optimiser (they will override above which we save for the moment
+        
+        
+        this.setProperty("minimal_aspect_ratio","0.001");
+        this.setProperty("minimal_graphical_area_fraction", "0.54");
+        this.setProperty("minimal_figure_width", "0.15");
+        this.setProperty("minimal_column_width", "0.5");
+        this.setProperty("minimal_figure_operations_number", "10");
+        this.setProperty("minimal_vertical_separator_height", "0.28");
+        this.setProperty("minimal_figure_graphical_operations_fraction", "0.28");
+        this.setProperty("vertical_graphical_margin", "0.032");
+        this.setProperty("vertical_emptiness_radius", "0.006");
+        this.setProperty("maximum_non_breaking_fraction", "0.025");
+        this.setProperty("vertical_plot_text_margin", "0.00035");
+        this.setProperty("horizontal_text_margin", "0.23");
+        this.setProperty("minimal_margin_width", "0.0");
+        this.setProperty("colour_emptiness_threshold", "71");
+        this.setProperty("minimal_figure_height", "0.02");
+        this.setProperty("horizontal_graphical_margin", "0.96");
+        this.setProperty("horizontal_emptiness_radius", "0.012");
+        this.setProperty("vertical_text_margin", "0.004");
+        this.setProperty("horizontal_plot_text_margin", "0.004");
+        this.setProperty("minimal_figure_graphical_operations_number", "3");
+        this.setProperty("maximal_inclusion_height", "0.1");
+
+        
     }
 
     public double getMinimalGraphicalAreaFraction() {
