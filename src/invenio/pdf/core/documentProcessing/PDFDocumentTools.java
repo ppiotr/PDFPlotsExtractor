@@ -18,6 +18,7 @@ import de.intarsys.tools.locator.FileLocator;
 import invenio.pdf.core.ExtractorParameters;
 import invenio.pdf.core.PDFDocumentManager;
 import invenio.pdf.core.PDFPageManager;
+import invenio.pdf.features.CSSelectiveRenderer;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
@@ -29,18 +30,17 @@ import java.io.IOException;
 
 /**
  * The purpose of this class is to provide interface to a lower level PDF
- * library (in this implementation it is jPod, but could be easily replaced
- * by rewriting the functionality of this class).
+ * library (in this implementation it is jPod, but could be easily replaced by
+ * rewriting the functionality of this class).
  *
  * The only method visible to the external world reads the PDF document whose
  * URI has been specified as an argument, parses it and constructs an instance
  * of PDFPageManager describing the document.
  *
- * The purpose of this transformation is extracting informations useful from
- * the PDF extractor point of view rather than those interesting from the
- * rendering point of view, like native current coordinate-system transformation
- * matrix.
- * 
+ * The purpose of this transformation is extracting informations useful from the
+ * PDF extractor point of view rather than those interesting from the rendering
+ * point of view, like native current coordinate-system transformation matrix.
+ *
  * @author piotr
  */
 public class PDFDocumentTools {
@@ -48,6 +48,7 @@ public class PDFDocumentTools {
     /**
      * A method reading the PDF file and returning a corresponding
      * PDFDocumentManager
+     *
      * @param fileName path to the input file
      * @return PDFDocumentManager instance
      * @throws IOException
@@ -81,18 +82,14 @@ public class PDFDocumentTools {
                     (int) rect.getWidth() * parameters.getPageScale(),
                     (int) rect.getHeight() * parameters.getPageScale());
 
-            //Constructing the graphics context
             image = new BufferedImage((int) pageBoundary.getWidth(),
                     (int) pageBoundary.getHeight(), BufferedImage.TYPE_INT_RGB);
 
-//            Graphics2D g2 = (Graphics2D) image.getGraphics();
             Graphics2D g2 = (Graphics2D) image.createGraphics();
 
             //Our wrapper around the 2D device allowing to extract informations
             // about the device
-
             PDFPageOperationsManager opManager = new PDFPageOperationsManager(pageBoundary);
-
             ExtractorGraphics2D g2proxy = new ExtractorGraphics2D(g2, opManager, image);
 
             // now we use our wrapper in order to construct standard mechanisms
@@ -100,7 +97,6 @@ public class PDFDocumentTools {
 
             // setup user space
             AffineTransform imgTransform = graphics.getTransform();
-            //imgTransform.scale(sx, sy)
             imgTransform.scale(parameters.getPageScale(), -parameters.getPageScale());
             imgTransform.translate(-rect.getMinX(), -rect.getMaxY());
 
@@ -108,7 +104,6 @@ public class PDFDocumentTools {
             graphics.setBackgroundColor(Color.WHITE);
             graphics.fill(rect);
             CSContent content = page.getContentStream();
-            //CSOperation[] operations = content.getOperations();
 
             PDFPageManager<PDPage> result = new PDFPageManager<PDPage>();
             result.setInternalPage(page);
@@ -147,10 +142,8 @@ public class PDFDocumentTools {
         } finally {
             if (graphics != null) {
                 graphics.dispose();
-
             }
             System.gc();
-
         }
     }
 
@@ -207,6 +200,39 @@ public class PDFDocumentTools {
                 CSPlatformRenderer renderer = new CSPlatformRenderer(null, graphics);
                 renderer.process(content, page.getResources());
             }
+
+        } finally {
+            if (graphics != null) {
+                graphics.dispose();
+            }
+        }
+    }
+
+    public static void selectivelyRenderToCanvas(PDFPageManager pageManager, Graphics2D canvas, double scale, Rectangle2D clippingRec) {
+        // preparing a stucture that will allow us to quickly identify
+        // if a given operation should be rendered or not
+
+        PDFPageManager<PDPage> mgr = (PDFPageManager<PDPage>) pageManager;
+        PDPage page = mgr.getInternalPage();
+
+        /// now an almost regular rendering ... using our selective renderer
+
+        Rectangle2D rect = page.getCropBox().toNormalizedRectangle();
+
+        IGraphicsContext graphics = null;
+        try {
+            graphics = new CwtAwtGraphicsContext(canvas);
+            // setup user space
+            AffineTransform imgTransform = graphics.getTransform();
+
+            imgTransform.scale(scale, -scale);
+            imgTransform.translate(-rect.getMinX(), -rect.getMaxY());
+            graphics.setTransform(imgTransform);
+            graphics.setBackgroundColor(Color.WHITE);
+            graphics.fill(rect);
+
+            CSSelectiveRenderer renderer = new CSSelectiveRenderer(null, graphics);
+            renderer.process(mgr, true, clippingRec);
 
         } finally {
             if (graphics != null) {

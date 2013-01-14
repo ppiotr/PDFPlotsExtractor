@@ -9,13 +9,24 @@ import invenio.common.XmlTools;
 import invenio.pdf.core.ExtractorLogger;
 import invenio.pdf.core.ExtractorParameters;
 import invenio.pdf.core.FeatureNotPresentException;
+import invenio.pdf.core.Operation;
 import invenio.pdf.core.PDFDocumentManager;
+import invenio.pdf.core.TextOperation;
 import invenio.pdf.core.documentProcessing.PDFDocumentTools;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.font.FontRenderContext;
+import java.awt.font.LineMetrics;
+import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -26,12 +37,16 @@ import java.io.OutputStreamWriter;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.batik.svggen.SVGGraphics2DIOException;
 import org.json.JSONException;
 import org.w3c.dom.DOMImplementation;
 import org.apache.batik.dom.GenericDOMImplementation;
+import org.apache.batik.svggen.SVGGraphicContext;
 import org.apache.batik.svggen.SVGGraphics2D;
 import org.json.JSONWriter;
 import org.w3c.dom.Document;
@@ -39,6 +54,7 @@ import org.w3c.dom.Element;
 
 /**
  * A class allowing to write plots together with meta-data into files
+ *
  * @author piotr
  */
 public class FiguresWriter {
@@ -267,7 +283,8 @@ public class FiguresWriter {
                 plot.getFile("annotatedImage").getAbsolutePath());
     }
 
-    /** Prepare and write the image of an annotated plot
+    /**
+     * Prepare and write the image of an annotated plot
      *
      */
     public static void writePlotAnnotatedPage(FigureCandidate plot) throws Exception {
@@ -304,6 +321,19 @@ public class FiguresWriter {
         }
     }
 
+    private static String cleanString(String s) {
+        return s.toString();/*
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == ' ' || c == '(' || c == ')' || (c >= '0' && c <= '9') || c == '+' || c == '-' || c == '=' || c=='.') {
+                builder.append(c);
+            }
+
+        }
+        return builder.toString();*/
+    }
+
     public static void writePlotSvg(FigureCandidate plot) throws UnsupportedEncodingException, SVGGraphics2DIOException, FileNotFoundException, IOException {
         // Get a DOMImplementation.
         DOMImplementation domImpl =
@@ -315,20 +345,127 @@ public class FiguresWriter {
 
         // Create an instance of the SVG Generator.
         SVGGraphics2D svgGenerator = new SVGGraphics2D(document);
+
         // Ask the test to render into the SVG Graphics2D implementation.
 
         // paint
         ExtractorParameters params = ExtractorParameters.getExtractorParameters();
 
         Rectangle plotBd = plot.getBoundary();
+
+        //TODO: UCOMMENT to get regular plot size back
         svgGenerator.setClip(0, 0, (int) plotBd.getWidth(),
                 (int) plotBd.getHeight());
         svgGenerator.setTransform(AffineTransform.getTranslateInstance(-plotBd.getX(), -plotBd.getY()));
+
         svgGenerator.setSVGCanvasSize(new Dimension((int) plotBd.getWidth(),
                 (int) plotBd.getHeight()));
 
-        PDFDocumentTools.renderToCanvas(plot.getPageManager(), svgGenerator,
-                params.getPageScale());
+
+        // svgGenerator.setSVGCanvasSize(new Dimension((int) (4 * plotBd.getWidth()),
+        //        (int) (4 * plotBd.getHeight())));
+
+        // this should make us generate text elements instead of paths
+        svgGenerator.setUnsupportedAttributes(null);
+
+        PDFDocumentTools.selectivelyRenderToCanvas(plot.getPageManager(), svgGenerator,
+                params.getPageScale(), plotBd.getBounds2D());
+
+
+        for (Iterator it = plot.getPageManager().getTextOperations().iterator(); it.hasNext();) {
+            TextOperation op = (TextOperation) it.next();
+            AffineTransform effectiveTransform = plot.getPageManager().getEffectiveTransform(op.getOriginalOperation());
+            Rectangle boundary = new Rectangle(Math.round(op.getBoundary().x), Math.round(op.getBoundary().y), Math.round(op.getBoundary().width), Math.round(op.getBoundary().height));
+
+            if (!boundary.intersects(plotBd)) {
+                continue;
+            }
+
+            svgGenerator.setTransform(AffineTransform.getTranslateInstance(-plotBd.getX(), -plotBd.getY()));
+            //svgGenerator.setTransform(AffineTransform.getTranslateInstance(0, 0));
+            if (false && effectiveTransform != null) {
+                System.out.println("Effective transformation present for this operation! operation: " + op.getOriginalOperation().getOperator().toString());
+
+
+                /*
+                 * now we have to modify the boundary ... push it through the
+                 * inverted transformation. In the cases of n*90deg rotations,
+                 * everything will be fine, unfortunately a more fine-grained
+                 * method would be necessary to deal with arbitrary rotations
+                 * .... but we care more about the data then about the
+                 * appearance, so this should be fine
+                 *
+                 * .. arbitrary rotations may be broken as we always extend the
+                 * boundary to a rectangle... which is not inversible
+                 */
+
+                AffineTransform ef = AffineTransform.getTranslateInstance(-plotBd.getX(), -plotBd.getY());
+
+                AffineTransform inverted = new AffineTransform(effectiveTransform);
+
+                ef.concatenate(effectiveTransform);
+                svgGenerator.setTransform(ef);
+                try {
+                    inverted.invert();
+                    Shape transformedRect = inverted.createTransformedShape(boundary);
+                    boundary = transformedRect.getBounds();
+                    svgGenerator.setColor(new Color(200, 100, 100, 100));
+                    svgGenerator.drawRect(boundary.x, boundary.y, boundary.width, boundary.height);
+
+                } catch (NoninvertibleTransformException ex) {
+                    System.out.println("Encountered uninversible affine transformation");
+                }
+
+            } else {
+                System.out.println("Missing effective transformation for this text operation ! operation: " + op.getOriginalOperation().getOperator().toString());
+            }
+
+            //painting the expected box
+            svgGenerator.setColor(new Color(200, 100, 100, 100));
+           // svgGenerator.fill(boundary);
+
+
+            String textToDraw = cleanString(op.getText());
+
+            if (textToDraw.length() > 0) {
+                svgGenerator.setTransform(AffineTransform.getTranslateInstance(0, 0));
+                Graphics2D g = svgGenerator;
+                Point2D loc = new Point2D.Double(0, 0);
+                Font font = new Font("Arial", Font.PLAIN, 12);
+                FontRenderContext frc = g.getFontRenderContext();
+                TextLayout layout;
+                layout = new TextLayout(textToDraw, font, frc);
+
+                Rectangle2D fb = layout.getBounds();
+                g.setColor(new Color(100, 200, 100, 100));
+                fb.setRect(fb.getX() + loc.getX(),
+                        fb.getY() + loc.getY(),
+                        fb.getWidth(),
+                        fb.getHeight());
+
+
+                // now fix transforms to match the expected rectangle
+                AffineTransform tr = AffineTransform.getTranslateInstance(0, 0);
+                tr.concatenate(AffineTransform.getTranslateInstance(-plotBd.getX(), -plotBd.getY()));
+                tr.concatenate(AffineTransform.getTranslateInstance(boundary.x, boundary.y));
+                tr.concatenate(AffineTransform.getScaleInstance(boundary.getWidth() / fb.getWidth(), boundary.getHeight() / fb.getHeight()));
+
+                tr.concatenate(AffineTransform.getTranslateInstance(-fb.getX(), -fb.getY()));
+
+                svgGenerator.setTransform(tr);
+
+
+
+                g.draw(fb);
+
+                g.setColor(Color.BLACK);
+               // layout.draw(g, 0, 0);
+                svgGenerator.setFont(font);
+                svgGenerator.drawString(textToDraw, 0, 0);
+            }
+        }
+
+
 
         // Finally, stream out SVG to the standard output using
         // UTF-8 encoding.
@@ -342,6 +479,7 @@ public class FiguresWriter {
 
     /**
      * Calculates names of files where the plot should be saved
+     *
      * @param plot
      */
     public static void setFileNames(FigureCandidate plot, File outputDirectory) {

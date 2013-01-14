@@ -1,5 +1,6 @@
 package invenio.pdf.core.documentProcessing;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -20,9 +21,7 @@ public class OperationTools {
 
     private HashSet<String> arrayToSet(String[] array) {
         HashSet<String> result = new HashSet<String>();
-        for (String element : array) {
-            result.add(element);
-        }
+        result.addAll(Arrays.asList(array));
         return result;
     }
 

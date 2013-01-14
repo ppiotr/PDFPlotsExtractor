@@ -59,14 +59,6 @@ class ExtractorCSInterpreter extends CSPlatformRenderer {
             this.operationsManager.setCurrentOperation(operation);
         }
 
-        /*
-        try {
-        this.operationsManager.contentStreamStateMachine.process(operation);
-        } catch (Exception ex) {
-        System.out.println("Something went wrong with parsing the stream of operations. " + ex.getMessage());
-        }
-         * 
-         */
         boolean isOperationNonrecursive = this.operationTools.isTextOperation(operation.getOperator().toString());
         if (isOperationNonrecursive) {
             this.recursionDepth++;
@@ -82,14 +74,4 @@ class ExtractorCSInterpreter extends CSPlatformRenderer {
             this.operationsManager.unsetCurrentOperation();
         }
     }
-    /**
-     * Returns a stream of higher level objects
-     * @return
-     */
-    /*
-    public LinkedList<PDFObject> getObjects(){
-    return this.operationsManager.contentStreamStateMachine.getObjects();
-    }
-     * 
-     */
 }

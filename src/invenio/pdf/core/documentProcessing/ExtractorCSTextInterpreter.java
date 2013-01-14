@@ -59,7 +59,6 @@ class ExtractorCSTextInterpreter extends CSDeviceBasedInterpreter {
             // mark current operation as a text operation
             this.operationsManager.setOperationTextIndices(operation, new int[]{initialIndex, finalIndex});
             this.operationsManager.addTextOperation(operation);
-
         }
 
     }

@@ -34,6 +34,7 @@ public class Images {
             System.out.println("Error: Can not read the image file");
             return null;
         }
+        
     }
 
     /**

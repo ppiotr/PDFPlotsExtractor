@@ -4,15 +4,15 @@
  */
 package invenio.pdf.core;
 
+import de.intarsys.pdf.content.CSOperation;
 import de.intarsys.pdf.pd.PDPage;
-import invenio.pdf.core.PDFObjects.PDFObject;
 import java.awt.Rectangle;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -20,7 +20,7 @@ import java.util.Set;
 /**
  * Call managing one PDF document page and giving access to PDF operations
  * constituting it.
- * 
+ *
  * @author piotr
  */
 public class PDFPageManager<InternalPageType> {
@@ -30,16 +30,17 @@ public class PDFPageManager<InternalPageType> {
     private Set<Operation> graphicalOperations;
     private Set<Operation> transformationOperations;
     private Rectangle pageBoundary;
-    
-    WeakReference<BufferedImage> renderedPage; 
+    WeakReference<BufferedImage> renderedPage;
     private Map<String, IPDFPageFeature> pageFeatures;
     private int pageNumber;
     private String pageText;
     private InternalPageType internalPage; // internal representation of the page
     private PDFDocumentManager documentManager;
     private String rawImageFileName = "";
-   // private LinkedList<PDFObject> pdfObjects;
-
+    // private LinkedList<PDFObject> pdfObjects;
+    private final HashMap<CSOperation, Operation> operationsMap;
+    private final HashMap<CSOperation, AffineTransform> effectiveTransforms;
+    
     // at some point we might need a mapping operation -> index
     public PDFPageManager() {
         this.operations = new ArrayList<Operation>();
@@ -49,7 +50,8 @@ public class PDFPageManager<InternalPageType> {
         this.pageFeatures = new HashMap<String, IPDFPageFeature>();
         this.internalPage = null;
         this.renderedPage = null;
-
+        this.operationsMap = new HashMap<CSOperation, Operation>();
+        this.effectiveTransforms = new HashMap<CSOperation, AffineTransform>();
     }
 
     public void addTextOperation(TextOperation newOp) {
@@ -59,6 +61,7 @@ public class PDFPageManager<InternalPageType> {
 
     public void addOperation(Operation newOp) {
         this.operations.add(newOp);
+        this.operationsMap.put(newOp.getOriginalOperation(), newOp);
     }
 
     public List<Operation> getOperations() {
@@ -76,8 +79,18 @@ public class PDFPageManager<InternalPageType> {
     }
 
     /**
-     * Returns a set of all teh graphical operations
-     * 
+     * Returns the higher level operation by the provided low level operation
+     *
+     * @param op
+     * @return
+     */
+    public Operation getHigherLevelOperation(CSOperation op) {
+        return this.operationsMap.get(op);
+    }
+
+    /**
+     * Returns a set of all the graphical operations
+     *
      * @return
      */
     public Set<Operation> getGraphicalOperations() {
@@ -86,6 +99,7 @@ public class PDFPageManager<InternalPageType> {
 
     /**
      * Returns the rectangle bounding the page inside its coordinates system
+     *
      * @return
      */
     public Rectangle getPageBoundary() {
@@ -94,6 +108,7 @@ public class PDFPageManager<InternalPageType> {
 
     /**
      * Sets the rectangle that defines page boundary in its coordinates system
+     *
      * @param bd
      */
     public void setPageBoundary(Rectangle bd) {
@@ -102,6 +117,7 @@ public class PDFPageManager<InternalPageType> {
 
     /**
      * Returns a set of all the text-related operations
+     *
      * @return
      */
     public Set<Operation> getTextOperations() {
@@ -110,35 +126,38 @@ public class PDFPageManager<InternalPageType> {
 
     /**
      * Returns teh rendered version of the page
+     *
      * @return
      */
     public BufferedImage getRenderedPage() {
         BufferedImage result = null;
-        if (this.renderedPage != null){
+        if (this.renderedPage != null) {
             result = this.renderedPage.get();
         }
-        
-        if (this.renderedPage == null || this.renderedPage.get() == null){
+
+        if (this.renderedPage == null || this.renderedPage.get() == null) {
             result = PDFCommonTools.renderPDFPage((PDPage) this.internalPage);
             this.renderedPage = new WeakReference<BufferedImage>(result);
-        } 
-        
+        }
+
         return result;
     }
 
     /**
      * Sets the image being a rendered representation of the page
+     *
      * @param rp
      */
     public void setRenderedPage(BufferedImage rp) {
-        
+
         this.renderedPage = new WeakReference<BufferedImage>(rp);
     }
 
     /**
-     * Sets the page number inside the document.
-     * The page number is not the one that is visible (sometimes numbering varies),
-     * but rather an offset (starting from 0) from the beginning of the PDF file
+     * Sets the page number inside the document. The page number is not the one
+     * that is visible (sometimes numbering varies), but rather an offset
+     * (starting from 0) from the beginning of the PDF file
+     *
      * @param num
      */
     public void setPageNumber(int num) {
@@ -147,6 +166,7 @@ public class PDFPageManager<InternalPageType> {
 
     /**
      * Sets the text representation of the page
+     *
      * @param t
      */
     public void setPageText(String t) {
@@ -155,6 +175,7 @@ public class PDFPageManager<InternalPageType> {
 
     /**
      * Returns the text representation of the page
+     *
      * @return
      */
     public String getPageText() {
@@ -206,26 +227,34 @@ public class PDFPageManager<InternalPageType> {
         this.documentManager = manager;
     }
 
-    /** sets the file name of the image of raw, unannotated page
-     * 
+    /**
+     * sets the file name of the image of raw, unannotated page
+     *
      * @param n the file name
      */
     public void setRawFileName(String n) {
         this.rawImageFileName = n;
     }
 
-    public String getRawFileName(){
+    public String getRawFileName() {
         return this.rawImageFileName;
     }
 
     /*
-    public void setPDFObjects(LinkedList<PDFObject> objects) {
-        this.pdfObjects = objects;
-    }
+     public void setPDFObjects(LinkedList<PDFObject> objects) {
+     this.pdfObjects = objects;
+     }
 
-    public LinkedList<PDFObject> getPDFObjects(){
-        return this.pdfObjects;
-    }
+     public LinkedList<PDFObject> getPDFObjects(){
+     return this.pdfObjects;
+     }
      * 
      */
+    public void setEffectiveTransform(CSOperation op, AffineTransform at){
+        this.effectiveTransforms.put(op, at);
+    }
+    
+    public AffineTransform getEffectiveTransform(CSOperation op){
+        return this.effectiveTransforms.get(op);
+    }
 }

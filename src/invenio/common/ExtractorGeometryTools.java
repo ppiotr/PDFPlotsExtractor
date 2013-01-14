@@ -5,6 +5,8 @@
 package invenio.common;
 
 import java.awt.Rectangle;
+import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -95,6 +97,22 @@ public class ExtractorGeometryTools {
         int maxy = cropPoint(rec.y + rec.height, bd.y, bd.height);
         return new Rectangle(x, y, maxx - x, maxy - y);
     }
-
+    /**
+     * Preapre a Point2D instace for display
+     * @param point
+     * @return 
+     */
+    public static String pointToString(Point2D point){
+        return "(" + point.getX() + ", " + point.getY() + ")";              
+    }
+    
+    /**
+     * Prepare a Line2D for the display
+     * @param line
+     * @return 
+     */
+    public static String lineToString(Line2D line){
+        return "(" + pointToString(line.getP1()) + ", " + pointToString(line.getP2()) + ")";
+    }
     
 }
