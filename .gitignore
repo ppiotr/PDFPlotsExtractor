@@ -1,4 +1,8 @@
 /build/
 /nbproject/private/
 /dist/
-/testingdata/806070.pdf.extracted/
+/target/
+/sampledata/*.extracted
+/sampledata/special_cases_after_new_caption_matching/*.extracted
+*~
+

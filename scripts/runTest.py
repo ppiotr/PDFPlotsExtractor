@@ -573,8 +573,10 @@ def execute_track(args, folder = None):
 
     return results
 # executing prticular things
+DEPS = "../target/dependency/*"
+JAR = "../target/PDFPlotsExtraction-1.0-SNAPSHOT.jar"
 
-EXTRACTOR_INITIAL_PARAMETERS = ["java", "-cp", "PDFPlotsExtractor.jar:libs/*", "-Djava.awt.headless=true", "invenio.pdf.cli.PlotsExtractorCli"]
+EXTRACTOR_INITIAL_PARAMETERS = ["java", "-cp", JAR+":"+DEPS, "-Djava.awt.headless=true", "invenio.pdf.cli.PlotsExtractorCli"]
 
 def get_record_path(test_folder, rec_id):
     return os.path.join(test_folder, rec_id)
