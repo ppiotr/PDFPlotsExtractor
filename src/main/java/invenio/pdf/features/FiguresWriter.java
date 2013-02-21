@@ -118,8 +118,11 @@ public class FiguresWriter {
 
         w = w.key("sourceDocument").value(plot.getPageManager().
                 getDocumentManager().getSourceFileName());
-        w = w.key("caption").value(plot.getCaption());
-        w = w.key("captionFile").value(plot.getFile("captionImage").getAbsolutePath());
+        FigureCaption caption = plot.getCaption();
+        if (caption != null) {
+            w = w.key("caption").value(caption.text);
+            w = w.key("captionFile").value(plot.getFile("captionImage").getAbsolutePath());
+        }
         // writing the fiels section
         w = w.key("files");
         w = w.object();
@@ -264,8 +267,11 @@ public class FiguresWriter {
         XmlTools.appendRectangle(document, captionEl, "coordinates",
                 plot.getCaption().boundary);
         // caption text
-        XmlTools.appendElementWithTextNode(document, captionEl, "captionText",
-                "" + plot.getCaption());
+        FigureCaption caption = plot.getCaption();
+        if (caption != null) {
+            XmlTools.appendElementWithTextNode(document, captionEl, "captionText",
+                    caption.text);
+        }
         // caption image
         XmlTools.appendElementWithTextNode(document, rootElement,
                 "captionImage", plot.getFile("captionImage").getAbsolutePath());
@@ -315,15 +321,15 @@ public class FiguresWriter {
 
     private static String cleanString(String s) {
         return s.toString();/*
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
-            if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == ' ' || c == '(' || c == ')' || (c >= '0' && c <= '9') || c == '+' || c == '-' || c == '=' || c=='.') {
-                builder.append(c);
-            }
+         StringBuilder builder = new StringBuilder();
+         for (int i = 0; i < s.length(); i++) {
+         char c = s.charAt(i);
+         if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == ' ' || c == '(' || c == ')' || (c >= '0' && c <= '9') || c == '+' || c == '-' || c == '=' || c=='.') {
+         builder.append(c);
+         }
 
-        }
-        return builder.toString();*/
+         }
+         return builder.toString();*/
     }
 
     public static void writePlotSvg(FigureCandidate plot) throws UnsupportedEncodingException, SVGGraphics2DIOException, FileNotFoundException, IOException {
@@ -359,7 +365,7 @@ public class FiguresWriter {
 
         // this should make us generate text elements instead of paths
         //svgGenerator.setUnsupportedAttributes(null);
-        
+
 
         PDFDocumentTools.selectivelyRenderToCanvas(plot.getPageManager(), svgGenerator,
                 params.getPageScale(), plotBd.getBounds2D());
@@ -377,7 +383,7 @@ public class FiguresWriter {
 
             //painting the expected box
             svgGenerator.setColor(new Color(200, 100, 100, 100));
-           // svgGenerator.fill(boundary);
+            // svgGenerator.fill(boundary);
 
 
             String textToDraw = cleanString(op.getText());
@@ -406,12 +412,12 @@ public class FiguresWriter {
                 tr.concatenate(AffineTransform.getTranslateInstance(-fb.getX(), -fb.getY()));
 
                 svgGenerator.setTransform(tr);
-                
+
                 //g.setColor(new Color(100, 200, 100, 100));
                 //g.draw(fb);
 
                 g.setColor(Color.BLACK);
-               // layout.draw(g, 0, 0);
+                // layout.draw(g, 0, 0);
                 svgGenerator.setFont(font);
                 svgGenerator.drawString(textToDraw, 0, 0);
             }

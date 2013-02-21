@@ -5,4 +5,5 @@
 /sampledata/*.extracted
 /sampledata/special_cases_after_new_caption_matching/*.extracted
 *~
+*.png
 
