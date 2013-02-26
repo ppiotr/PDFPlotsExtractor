@@ -1,10 +1,10 @@
 package invenio.pdf.features;
 
-import invenio.pdf.core.ExtractorParameters;
 import invenio.common.ExtractorGeometryTools;
 import invenio.common.Pair;
 import invenio.common.SpatialClusterManager;
 import invenio.pdf.core.DisplayedOperation;
+import invenio.pdf.core.ExtractorParameters;
 import invenio.pdf.core.GraphicalOperation;
 import invenio.pdf.core.Operation;
 import invenio.pdf.core.PDFPageManager;

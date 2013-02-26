@@ -1,14 +1,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-  <groupId>ch.cern</groupId>
-  <artifactId>PDFPlotsExtractor</artifactId>
-  <version>1.0-SNAPSHOT</version>
-  <packaging>jar</packaging>
+    <groupId>ch.cern</groupId>
+    <artifactId>PDFPlotsExtractor</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
 
-  <name>PDFPlotsExtractor</name>
-  <url>http://maven.apache.org</url>
+    <name>PDFPlotsExtractor</name>
+    <url>http://maven.apache.org</url>
     <build>
         <plugins>
             <plugin>
@@ -24,61 +24,66 @@
         
     </build>
     <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
 
-  <dependencies>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>3.8.1</version>
-      <scope>test</scope>
-      <type>jar</type>
-    </dependency>
-    <dependency>
-      <groupId>de.intarsys.opensource</groupId>
-      <artifactId>jPod</artifactId>
-      <version>5.3</version>
-    </dependency>
-    <dependency>
-      <groupId>de.intarsys.opensource</groupId>
-      <artifactId>jPodFonts</artifactId>
-      <version>5.3</version>
-    </dependency>
-    <dependency>
-      <groupId>de.intarsys.opensource</groupId>
-      <artifactId>jPodRenderer</artifactId>
-      <version>5.3</version>
-    </dependency>
-    <dependency>
-      <groupId>batik</groupId>
-      <artifactId>batik-svggen</artifactId>
-      <version>1.6-1</version>
-    </dependency>
-    <dependency>
-      <groupId>org.json</groupId>
-      <artifactId>json</artifactId>
-      <version>20090211</version>
-    </dependency>
-    <dependency>
-      <groupId>avalon</groupId>
-      <artifactId>avalon-framework</artifactId>
-      <version>4.1.4</version>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse</groupId>
-      <artifactId>swt</artifactId>
-      <version>3.2.1-v3235e</version>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.swt</groupId>
-      <artifactId>jmx</artifactId>
-      <version>1.0.0-v20070510</version>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.swt.gtk.linux</groupId>
-      <artifactId>x86_64</artifactId>
-      <version>3.3.0-v3346</version>
-    </dependency>
-  </dependencies>
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>3.8.1</version>
+            <scope>test</scope>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>de.intarsys.opensource</groupId>
+            <artifactId>jPod</artifactId>
+            <version>5.3</version>
+        </dependency>
+        <dependency>
+            <groupId>de.intarsys.opensource</groupId>
+            <artifactId>jPodFonts</artifactId>
+            <version>5.3</version>
+        </dependency>
+        <dependency>
+            <groupId>de.intarsys.opensource</groupId>
+            <artifactId>jPodRenderer</artifactId>
+            <version>5.3</version>
+        </dependency>
+        <dependency>
+            <groupId>batik</groupId>
+            <artifactId>batik-svggen</artifactId>
+            <version>1.6-1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20090211</version>
+        </dependency>
+        <dependency>
+            <groupId>avalon</groupId>
+            <artifactId>avalon-framework</artifactId>
+            <version>4.1.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse</groupId>
+            <artifactId>swt</artifactId>
+            <version>3.2.1-v3235e</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.swt</groupId>
+            <artifactId>jmx</artifactId>
+            <version>1.0.0-v20070510</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.swt.gtk.linux</groupId>
+            <artifactId>x86_64</artifactId>
+            <version>3.3.0-v3346</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.collections</groupId>
+            <artifactId>google-collections</artifactId>
+            <version>1.0</version>
+        </dependency>
+    </dependencies>
 </project>
