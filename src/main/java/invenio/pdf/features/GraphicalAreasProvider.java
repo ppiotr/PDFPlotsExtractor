@@ -11,8 +11,8 @@ import invenio.pdf.core.DisplayedOperation;
 import invenio.pdf.core.IPDFPageFeature;
 import invenio.pdf.core.IPDFPageFeatureProvider;
 import invenio.pdf.core.Operation;
-import invenio.pdf.core.PDFPageManager;
 import invenio.pdf.core.PDFCommonTools;
+import invenio.pdf.core.PDFPageManager;
 import java.awt.Rectangle;
 import java.util.Collection;
 import java.util.HashMap;
@@ -67,7 +67,6 @@ public class GraphicalAreasProvider implements IPDFPageFeatureProvider {
 
             } // else: the operation is either completely incorret( from outside a page) or some horrible error happened
         }
-
 
         // now merging informations from different cluster managers
         HashMap<Rectangle, Pair<List<Operation>, Integer>> results =

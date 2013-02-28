@@ -4,21 +4,14 @@
  */
 package invenio.pdf.features;
 
-import invenio.common.Images;
 import invenio.common.Pair;
 import invenio.pdf.core.ExtractorParameters;
 import invenio.pdf.core.FeatureNotPresentException;
 import invenio.pdf.core.IPDFPageFeature;
 import invenio.pdf.core.IPDFPageFeatureProvider;
 import invenio.pdf.core.PDFPageManager;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Graphics2D;
 import java.awt.Rectangle;
-import java.awt.geom.AffineTransform;
-import java.awt.image.BufferedImage;
 import java.awt.image.Raster;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -26,9 +19,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.TreeMap;
-import org.apache.batik.ext.awt.image.SVGComposite.OutCompositeContext;
 
 /**
  *
@@ -952,6 +943,10 @@ public class PageLayoutProvider implements IPDFPageFeatureProvider {
             if (curWidth < minWidth && curWidth > 0) {
                 minWidth = curWidth;
             }
+        }
+        
+        if (minWidth == Integer.MAX_VALUE){
+            return 0;
         }
         return minWidth;
     }

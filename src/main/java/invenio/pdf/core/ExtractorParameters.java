@@ -150,7 +150,7 @@ public class ExtractorParameters extends Properties {
         this.setProperty("minimal_aspect_ratio","0.001");
         this.setProperty("minimal_graphical_area_fraction", "0.54");
         this.setProperty("minimal_figure_width", "0.15");
-        this.setProperty("minimal_column_width", "0.5");
+        this.setProperty("minimal_column_width", "0.3");
         this.setProperty("minimal_figure_operations_number", "10");
         this.setProperty("minimal_vertical_separator_height", "0.28");
         this.setProperty("minimal_figure_graphical_operations_fraction", "0.28");
