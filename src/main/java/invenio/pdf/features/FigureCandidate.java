@@ -10,6 +10,7 @@ import java.awt.Rectangle;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -24,6 +25,7 @@ import java.util.List;
  * @author piotr
  */
 public class FigureCandidate {
+    private static HashSet<String> usedIdentifiers = new HashSet<String>();
 
     private Rectangle boundary; // The boundary inside the rendered page
     private Rectangle pageBoundary; // The boundary of the rendered page
@@ -35,7 +37,6 @@ public class FigureCandidate {
     private HashMap<String, File> files;
     private PDFPageManager pageManager;
     
-    private static int identifierFactory = 0;
     
     public Boolean isApproved = true;
     public Boolean isToplevelPlot = true;
@@ -155,11 +156,24 @@ public class FigureCandidate {
      * useful in case, we are not able to detect the internal plot identification
      * @return
      */
-    public static String getUniqueIdentifier(){
-        identifierFactory++;
-        return "plot" + identifierFactory;
+    public static String getUniqueIdentifier(String proposedName){
+        
+        if (!FigureCandidate.usedIdentifiers.contains(proposedName)){
+            return proposedName;
+        }
+        int index = 2;
+        
+        String candidate = proposedName + "_" + index;
+        do {
+            candidate = proposedName + "_" + index;
+            index++;
+        } while(FigureCandidate.usedIdentifiers.contains(candidate));
+        FigureCandidate.usedIdentifiers.add(candidate);
+        return candidate;
     }
 
+    
+    
     int getOperationsNumber() {
         return this.operations.size();
     }

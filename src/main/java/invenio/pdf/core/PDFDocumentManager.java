@@ -96,4 +96,5 @@ public class PDFDocumentManager {
     public Set<String> getFeatureNames() {
         return this.documentFeatures.keySet();
     }
+    
 }

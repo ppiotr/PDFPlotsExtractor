@@ -34,8 +34,22 @@ import java.util.regex.Pattern;
 public class FiguresProvider implements IPDFDocumentFeatureProvider {
 
     private static String getPlotIdFromCaption(String caption) {
-        //TODO: implement using regular expressions
-        return FigureCandidate.getUniqueIdentifier();
+        String candidate = "figure";
+        String prepared = caption.toLowerCase().trim().replace(" ", "");
+
+        Pattern p = Pattern.compile("(figure|fig\\.|fig|plot|image|img.|img|table|tab.|tab)([0-9IVX]*)");
+        Matcher m = p.matcher(prepared);
+
+        if (!"".equals(caption)) {
+            System.out.println("ddsds");
+        }
+
+        if (m.lookingAt()) {
+            candidate = m.group(0);
+            candidate = candidate.replace(":", "");
+        }
+        
+        return FigureCandidate.getUniqueIdentifier(candidate);
     }
 
     @Override
@@ -48,9 +62,10 @@ public class FiguresProvider implements IPDFDocumentFeatureProvider {
 
         HashMap<Integer, LinkedList<FigureCaption>> captions = getAllCaptions(docManager);
 
-        /** 
-         *  At this moment we do not support captions appearing on a different page than the figure itself, 
-         *  but such situations happen in rare cases. 
+        /**
+         * At this moment we do not support captions appearing on a different
+         * page than the figure itself, but such situations happen in rare
+         * cases.
          */
         FiguresProvider.matchPlotsWithCaptions(docManager, result, captions);
 
@@ -88,11 +103,10 @@ public class FiguresProvider implements IPDFDocumentFeatureProvider {
         return Figures.featureName;
     }
 
-    /** Class used durign matching captions with figure candidates
-     *  it encapsulates one of 3 tyeops of objects:
-     *        - unassigned textual or graphical cluster
-     *        - figure candidate (rejected or not)
-     *        - caption cluster
+    /**
+     * Class used durign matching captions with figure candidates it
+     * encapsulates one of 3 tyeops of objects: - unassigned textual or
+     * graphical cluster - figure candidate (rejected or not) - caption cluster
      */
     private static class PageRegion {
 
@@ -118,13 +132,13 @@ public class FiguresProvider implements IPDFDocumentFeatureProvider {
                 TreeSet<Integer> yCoordinates, IntervalTree<PageRegion> spatialMgrY) {
             int curY = this.getInitialY(caption);
             int referenceY = curY;
-            
+
             boolean stop = false;
 
             LinkedList<DisplayedOperation> tmpAccumulator = new LinkedList<DisplayedOperation>();
             LinkedList<FigureCandidate> tmpFiguresAccumulator = new LinkedList<FigureCandidate>();
 
-            
+
             while (!stop && !this.stopByAcceptanceMargin(referenceY, curY, toleranceMargin) && !this.stopByLastOperation(yCoordinates, curY)) {
                 //while (!stop && Math.abs(referenceY - curY) < toleranceMargin && yCoordinates.first() != curY) {
 
@@ -231,8 +245,8 @@ public class FiguresProvider implements IPDFDocumentFeatureProvider {
     private static class CaptionMatcherDown extends CaptionMatcherGeneric {
 
         @Override
-        public int getNextNumber(int num, TreeSet<Integer> yCoordinates) {           
-            return yCoordinates.higher(num);        
+        public int getNextNumber(int num, TreeSet<Integer> yCoordinates) {
+            return yCoordinates.higher(num);
         }
 
         @Override
@@ -270,22 +284,27 @@ public class FiguresProvider implements IPDFDocumentFeatureProvider {
         return false;
     }
 
-    /**Matches detected captions with figure candidates, possibly reverting some unused candidates into figures
-     * and including parts of figures which were not considered figures before.
+    /**
+     * Matches detected captions with figure candidates, possibly reverting some
+     * unused candidates into figures and including parts of figures which were
+     * not considered figures before.
+     *
      * @param docManager
      * @param plots
      * @param captions
      * @throws FeatureNotPresentException
-     * @throws Exception 
+     * @throws Exception
      */
     private static void matchPlotsWithCaptions(
             PDFDocumentManager docManager,
             Figures plots,
             HashMap<Integer, LinkedList<FigureCaption>> captions)
             throws FeatureNotPresentException, Exception {
+        
         for (int pageNum = 0; pageNum < docManager.getPagesNumber(); ++pageNum) {
             /**
-             * Preparing field for further processing - building interval trees and so on ...
+             * Preparing field for further processing - building interval trees
+             * and so on ...
              */
             PDFPageManager pageManager = docManager.getPage(pageNum);
 
@@ -301,8 +320,6 @@ public class FiguresProvider implements IPDFDocumentFeatureProvider {
             IntervalTree<PageRegion> spatialMgrY = new IntervalTree<PageRegion>(
                     pageManager.getPageBoundary().y - 2,
                     pageManager.getPageBoundary().y + pageManager.getPageBoundary().height + 2);
-
-
 
 
             TreeSet<Integer> yCoordinates = new TreeSet<Integer>();
@@ -355,12 +372,13 @@ public class FiguresProvider implements IPDFDocumentFeatureProvider {
                 spatialMgrY.addInterval(rec.y, rec.y + rec.height, region);
             }
 
-            /** 
-             * 
-             *  END OF PREPARATION OF DATA STRUCTURES  ----  REAL CODE
-             * 
-             * 
-             * Now considering all the captions from the page in the order of increasing Y 
+            /**
+             *
+             * END OF PREPARATION OF DATA STRUCTURES ---- REAL CODE
+             *
+             *
+             * Now considering all the captions from the page in the order of
+             * increasing Y
              */
             ExtractorParameters parameters = ExtractorParameters.getExtractorParameters();
             double toleranceMargin = parameters.getMaximalInclusionHeight() * pageManager.getPageBoundary().height;
@@ -395,7 +413,7 @@ public class FiguresProvider implements IPDFDocumentFeatureProvider {
                     if (matcher.figuresAccumulator.size() > 1) {
                         // there are many figure candidates - we create super-figure which will contain all the sub-figures and additional operations
                         selectedFigure = new FigureCandidate();
-                        selectedFigure.setId(getPlotIdFromCaption("dupa"));
+                        selectedFigure.setId(getPlotIdFromCaption(caption.text.toLowerCase()));
                         selectedFigure.setPageManager(pageManager);
                         Rectangle boundary = null;
                         for (FigureCandidate figureCandidate : matcher.figuresAccumulator.values()) {
@@ -436,10 +454,12 @@ public class FiguresProvider implements IPDFDocumentFeatureProvider {
         }
     }
 
-    /** Retrieve all captions appearing in the document, aggregated by page number, layout element number and the rectangle 
-     * 
+    /**
+     * Retrieve all captions appearing in the document, aggregated by page
+     * number, layout element number and the rectangle
+     *
      * @param docManager the document manager describing currently processed PDF
-     * @return 
+     * @return
      */
     public static HashMap<Integer, LinkedList<FigureCaption>> getAllCaptions(PDFDocumentManager docManager) throws FeatureNotPresentException, Exception {
         HashMap<Integer, LinkedList<FigureCaption>> captions =
@@ -466,7 +486,6 @@ public class FiguresProvider implements IPDFDocumentFeatureProvider {
             // now we sort caption within every area... by y coordinate
 
             java.util.Collections.sort(captions.get(pageNum), new Comparator<FigureCaption>() {
-
                 @Override
                 public int compare(FigureCaption o1, FigureCaption o2) {
                     return o1.boundary.y - o2.boundary.y;
@@ -480,8 +499,8 @@ public class FiguresProvider implements IPDFDocumentFeatureProvider {
 
     /**
      * Finds all the plots present in the PDF page. Plots are extracted together
-     * with captions but without references because captions appear
-     * on the same page and textual references have to be found globally in the document.
+     * with captions but without references because captions appear on the same
+     * page and textual references have to be found globally in the document.
      *
      * @param manager
      * @return List of plot descriptors
@@ -494,10 +513,11 @@ public class FiguresProvider implements IPDFDocumentFeatureProvider {
         int[] margins = PDFCommonTools.calculateGraphicsMargins(manager);
 
 
-        /*************
-         * Treating graphics operations - clustering them, filtering and 
-         * including appropriate text operations
-         **************/
+        /**
+         * ***********
+         * Treating graphics operations - clustering them, filtering and
+         * including appropriate text operations ************
+         */
         GraphicalAreas graphicalAreas =
                 (GraphicalAreas) manager.getPageFeature(GraphicalAreas.featureName);
 
@@ -539,13 +559,13 @@ public class FiguresProvider implements IPDFDocumentFeatureProvider {
 
 
             /* We do not assign caption at this stage !
-            Pair<String, Rectangle> caption = getPlotCaption(plot, manager);        
-            plot.setCaption(caption.first);
-            plot.setCaptionBoundary(caption.second);
+             Pair<String, Rectangle> caption = getPlotCaption(plot, manager);        
+             plot.setCaption(caption.first);
+             plot.setCaptionBoundary(caption.second);
              */
 
             plot.setPageManager(manager);
-            plot.setId(getPlotIdFromCaption(plot.getCaption().figureIdentifier));
+            plot.setId(getPlotIdFromCaption(plot.getCaption().text));
             plots.add(plot);
         }
 
@@ -556,7 +576,7 @@ public class FiguresProvider implements IPDFDocumentFeatureProvider {
         String prepared = candidate.toLowerCase().trim();
         ExtractorLogger.logMessage(2, "Processing a potential caption : " + candidate);
 
-
+        
         Pattern p = Pattern.compile("(figure|fig\\.|fig|plot|image|img.|img|table|tab.|tab)([^a-z]*([A-Z]|:|-|—|.))");
         Matcher m = p.matcher(prepared);
 
