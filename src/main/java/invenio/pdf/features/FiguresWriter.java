@@ -197,7 +197,7 @@ public class FiguresWriter {
     public static void writePlotsMetadata(Document document, Element containerEl,
             List<FigureCandidate> plots) throws FileNotFoundException, Exception {
 
-        Element plotsCollectionElement = document.createElement("plots");
+        Element plotsCollectionElement = document.createElement("figures");
         containerEl.appendChild(plotsCollectionElement);
 
         for (FigureCandidate plot : plots) {
@@ -222,7 +222,7 @@ public class FiguresWriter {
             throws FileNotFoundException, Exception {
 
         ExtractorParameters parameters = ExtractorParameters.getExtractorParameters();
-        Element rootElement = document.createElement("plot");
+        Element rootElement = document.createElement("figure");
         containerElement.appendChild(rootElement);
 
         // plot identifier

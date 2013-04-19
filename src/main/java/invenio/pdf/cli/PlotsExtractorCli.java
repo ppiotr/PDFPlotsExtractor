@@ -20,7 +20,7 @@ import invenio.pdf.core.TextOperation;
 import invenio.pdf.core.TransformationOperation;
 import invenio.pdf.core.documentProcessing.PDFDocumentTools;
 import invenio.pdf.features.AnnotatedTextWriter;
-import invenio.pdf.features.DocumentWriter;
+import invenio.pdf.features.XMLDocumentWriter;
 import invenio.pdf.features.GraphicalAreasProvider;
 import invenio.pdf.features.PageLayout;
 import invenio.pdf.features.PageLayoutProvider;
@@ -207,7 +207,7 @@ public class PlotsExtractorCli {
             FiguresWriter.writePlotsMetadataToFile(figures.getToplevelPlots(), completemetadataFile);
 
             File extractorOutputFile = new File(outputDirectory.getPath(), "description.xml");
-            DocumentWriter.writeDocumentToFile(document, extractorOutputFile);
+            XMLDocumentWriter.writeDocumentToFile(document, extractorOutputFile);
 
             File extractorJSONOutputFile = new File(outputDirectory.getPath(), "extracted.json");
 

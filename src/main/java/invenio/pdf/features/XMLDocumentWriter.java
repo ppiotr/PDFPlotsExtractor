@@ -22,7 +22,7 @@ import org.w3c.dom.Element;
  *
  * @author piotr
  */
-public class DocumentWriter {
+public class XMLDocumentWriter {
 
     public static void writePage(Document document, Element rootElement,
             PDFPageManager pManager) {

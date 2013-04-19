@@ -23,6 +23,7 @@ import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.CDATASection;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.xml.sax.SAXException;
 
 /**
  *
@@ -65,10 +66,6 @@ public class XmlTools {
     }
 
     public static void saveXmlDocument(Document document, File outputFile) throws TransformerConfigurationException, FileNotFoundException, TransformerException, IOException {
-        // writePlotsMetadata(plots, rootElement, document);
-
-        // saving the output into a file
-
         TransformerFactory transformerFactory =
                 TransformerFactory.newInstance();
         Transformer transformer = transformerFactory.newTransformer();
@@ -83,5 +80,12 @@ public class XmlTools {
         transformer.transform(source, result);
 
         outputStream.close();
+    }
+
+    public static Document readXmlDocument(File inputFile) throws ParserConfigurationException, SAXException, IOException    {
+        DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
+        Document doc = documentBuilder.parse(inputFile);
+        return doc;
     }
 }
