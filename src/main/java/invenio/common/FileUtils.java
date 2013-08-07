@@ -26,7 +26,7 @@ public class FileUtils {
      */
     public static List<String> getRelevantFiles(String inputDirName, String extension) throws Exception {
         File inputDir = new File(inputDirName);
-                
+
         if (!inputDir.exists()) {
             throw new Exception("The input directory does not exist");
         }
@@ -47,5 +47,22 @@ public class FileUtils {
         public boolean accept(File dir, String name) {
             return name.endsWith(this.extension);
         }
+    }
+
+    /**
+     * Returns the name of the file without
+     *
+     * @param fname
+     * @return
+     */
+    public static String stripFileExt(String fname) {
+        int endIndex = fname.length() - 1;
+        while (endIndex >= 0 && fname.charAt(endIndex) != '.') {
+            endIndex--;
+        }
+        if (endIndex <= 0) {
+            return "";
+        }
+        return fname.substring(0, endIndex);
     }
 }
