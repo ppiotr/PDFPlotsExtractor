@@ -21,11 +21,22 @@
                 </configuration>
             </plugin>
         </plugins>
-        
+
     </build>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+    <repositories>
+      <repository>
+        <id>javax.media</id>
+        <url>http://dev.mapfish.org/maven/repository/</url>
+      </repository>
+      <repository>
+        <id>com.sun.media</id>
+        <url>https://repository.jboss.org/nexus/content/repositories/thirdparty-releases/</url>
+      </repository>
+
+    </repositories>
 
     <dependencies>
         <dependency>
