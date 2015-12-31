@@ -13,6 +13,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+//import org.apache.commons.logging.Log;
+//import org.apache.commons.logging.LogFactory;
 
 /**
  *  A class describing single plot appearing inside a document.
@@ -25,6 +27,8 @@ import java.util.List;
  * @author piotr
  */
 public class FigureCandidate {
+    //    private Log log = LogFactory.getLog(FilgureCandidate.class);
+
     private static HashSet<String> usedIdentifiers = new HashSet<String>();
 
     private Rectangle boundary; // The boundary inside the rendered page
@@ -36,8 +40,8 @@ public class FigureCandidate {
     private String id; // Plot identifier iside the document
     private HashMap<String, File> files;
     private PDFPageManager pageManager;
-    
-    
+
+
     public Boolean isApproved = true;
     public Boolean isToplevelPlot = true;
     /**
@@ -51,7 +55,7 @@ public class FigureCandidate {
         this.operations = new LinkedList<Operation>();
         this.files = new HashMap<String, File>();
     }
-    
+
     /**
      * Sets the page on which the plot is located
      * @param num
@@ -150,19 +154,19 @@ public class FigureCandidate {
     public void setPageManager(PDFPageManager mng) {
         this.pageManager = mng;
     }
-    
+
     /**
-     * Returns an unique identifier generated for a plot. This identifier is 
+     * Returns an unique identifier generated for a plot. This identifier is
      * useful in case, we are not able to detect the internal plot identification
      * @return
      */
     public static String getUniqueIdentifier(String proposedName){
-        
+        //        log.info("Retrieving plot identifier");
         if (!FigureCandidate.usedIdentifiers.contains(proposedName)){
             return proposedName;
         }
         int index = 2;
-        
+
         String candidate = proposedName + "_" + index;
         do {
             candidate = proposedName + "_" + index;
@@ -172,8 +176,8 @@ public class FigureCandidate {
         return candidate;
     }
 
-    
-    
+
+
     int getOperationsNumber() {
         return this.operations.size();
     }

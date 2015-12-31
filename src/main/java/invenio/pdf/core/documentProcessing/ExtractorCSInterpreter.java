@@ -6,6 +6,8 @@ import de.intarsys.pdf.content.CSException;
 import de.intarsys.pdf.content.CSOperation;
 import de.intarsys.pdf.platform.cwt.rendering.CSPlatformRenderer;
 
+import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.LogFactory;
 /**
  * An implementation of the jPod CSPlatformRenderer - a class responsible for
  * processing PDF operators.
@@ -30,6 +32,7 @@ import de.intarsys.pdf.platform.cwt.rendering.CSPlatformRenderer;
  * @author piotr
  */
 class ExtractorCSInterpreter extends CSPlatformRenderer {
+    private static Log log = LogFactory.getLog(PDFDocumentTools.class);  
 
     private PDFPageOperationsManager operationsManager;
     private int recursionDepth;
@@ -53,7 +56,7 @@ class ExtractorCSInterpreter extends CSPlatformRenderer {
             // we do this especially in deeper recursion calls to make a top level operation graphical based on presence of a graphical operator !
             this.operationsManager.enforceGraphicalOperation(operation);
         }
-        // The recursion depth allows us to deal with the primary 
+        // The recursion depth allows us to deal with the primary
         // operations (not for example introduced by type3 fonts)
         if (this.recursionDepth == 0) {
             this.operationsManager.setCurrentOperation(operation);
@@ -63,13 +66,18 @@ class ExtractorCSInterpreter extends CSPlatformRenderer {
         if (isOperationNonrecursive) {
             this.recursionDepth++;
         }
+        try {
+            super.process(operation);
+        } catch (Error e) {
+            log.error("Failed to process a PDF operation." + 
+                      operation.getOperator().toString() +
+                      " error message: " + e.getMessage());
 
-        super.process(operation);
-        
+        }
         if (isOperationNonrecursive) {
             this.recursionDepth--;
         }
-        
+
         if (this.recursionDepth == 0) {
             this.operationsManager.unsetCurrentOperation();
         }

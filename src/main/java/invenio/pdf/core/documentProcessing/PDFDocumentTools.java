@@ -28,6 +28,9 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
+import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.LogFactory;
+
 /**
  * The purpose of this class is to provide interface to a lower level PDF
  * library (in this implementation it is jPod, but could be easily replaced by
@@ -45,6 +48,7 @@ import java.io.IOException;
  */
 public class PDFDocumentTools {
 
+    private static Log log = LogFactory.getLog(PDFDocumentTools.class);  
     /**
      * A method reading the PDF file and returning a corresponding
      * PDFDocumentManager
@@ -72,6 +76,7 @@ public class PDFDocumentTools {
     }
 
     private static PDFPageManager<PDPage> getOperationsFromPage(PDPage page) {
+        log.info("Starting retrieving operations from a page");
         Rectangle2D rect = page.getCropBox().toNormalizedRectangle();
         BufferedImage image = null;
         IGraphicsContext graphics = null;
