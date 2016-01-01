@@ -9,7 +9,6 @@ import de.intarsys.pdf.pd.PDPage;
 import invenio.common.Images;
 import invenio.common.Pair;
 import invenio.pdf.core.DisplayedOperation;
-import invenio.pdf.core.ExtractorLogger;
 import invenio.pdf.core.ExtractorParameters;
 import invenio.pdf.core.FeatureNotPresentException;
 import invenio.pdf.core.GraphicalOperation;
@@ -44,14 +43,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.LogFactory;
 
 /**
  *
  * @author piotr
  */
 public class PlotsExtractorCli {
+    private static Log log = LogFactory.getLog(PDFDocumentTools.class);  
 
     /**
      * Processes one PDF document of a given file name
@@ -64,8 +65,7 @@ public class PlotsExtractorCli {
      */
     private static void processDocument(File inputFile, File outputDirectory)
             throws IOException, FeatureNotPresentException, Exception {
-
-        System.out.println("Processing document: " + inputFile.getAbsolutePath());
+        log.info("Processing document: " + inputFile.getAbsolutePath());
         PDFDocumentManager document = PDFDocumentTools.readPDFDocument(inputFile);
         ExtractorParameters parameters = ExtractorParameters.getExtractorParameters();
 
@@ -190,7 +190,7 @@ public class PlotsExtractorCli {
                     if (op instanceof DisplayedOperation) {
                         DisplayedOperation dop = (DisplayedOperation) op;
                         if (layout.getIntersectingAreas(dop.getBoundary()).size() > 1) {
-                            System.out.println("operation that intersects too many layout areas !");
+                            log.debug("operation that intersects too many layout areas !");
                         }
                     }
                 }
@@ -214,7 +214,7 @@ public class PlotsExtractorCli {
             FiguresWriter.writePlotsMetadataToFileJSON(figures.getToplevelPlots(), extractorJSONOutputFile);
         }
         Integer numberOfFigures = figures.getToplevelPlots().size();
-        System.out.println("Number of extracted plots: " + numberOfFigures.toString());
+        log.info("Number of extracted plots: " + numberOfFigures.toString());
         File figuresNumberFile = new File(outputDirectory.getPath(), "numberOfFigures.txt");
         FileOutputStream fos = new FileOutputStream(figuresNumberFile);
         
@@ -230,24 +230,24 @@ public class PlotsExtractorCli {
             "extractor.conf",
             "/etc/extractor.conf",
             PlotsExtractorCli.class.getProtectionDomain().getCodeSource().getLocation().getPath() + "extractor.conf",};
-        System.out.println("Searching for the configuration file:");
+        log.debug("Searching for the configuration file:");
         for (String path : possibleLocations) {
             if (path == null) {
                 continue;
             }
             File f = new File(path);
-            System.out.print("   " + path + "  ...");
+            log.debug("   " + path + "  ...");
 
 
             if (f.exists()) {
                 ExtractorParameters.registerConfigurationFile(path);
-                System.out.println("found");
+                log.debug("found");
                 return;
             }
-            System.out.println("missing");
+            log.debug("missing");
 
         }
-        System.out.println("Missing configuration file");
+        log.warn("Missing configuration file");
     }
 
     public static Pair<String, String> parseSingleArg(String arg) {
@@ -355,10 +355,10 @@ public class PlotsExtractorCli {
                 if (file.getPath().toLowerCase().endsWith(".pdf")) {
                     try {
                         //PlotsExtractorTools.processDocument(file.getPath(), file.getPath() + ".extracted");
-                        ExtractorLogger.logMessage(1, "Processing " + file.getPath());
+                        log.info("Processing " + file.getPath());
                         processDocument(file, getOutputDirectory(outputFolder, file));
                     } catch (Exception ex) {
-                        Logger.getLogger(PlotsExtractorCli.class.getName()).log(Level.SEVERE, null, ex);
+                        log.fatal(ex);
                     }
                 }
             }
@@ -367,7 +367,7 @@ public class PlotsExtractorCli {
                 //PlotsExtractorTools.processDocument(inputFileName, inputFileName + ".extracted");
                 processDocument(input, getOutputDirectory(outputFolder, input));
             } catch (Exception ex) {
-                Logger.getLogger(PlotsExtractorCli.class.getName()).log(Level.SEVERE, null, ex);
+                log.fatal(ex);
             }
         }
     }

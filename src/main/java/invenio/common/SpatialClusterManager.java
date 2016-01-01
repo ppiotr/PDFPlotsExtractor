@@ -3,7 +3,6 @@
  */
 package invenio.common;
 
-import invenio.pdf.core.ExtractorLogger;
 import java.awt.Rectangle;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -11,12 +10,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
+import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.LogFactory;
 /**
  *
  * @author piotr
  */
 public class SpatialClusterManager<StoredObjectType> {
-
+    private static Log log = LogFactory.getLog(SpatialClusterManager.class);  
     IntervalTree<Integer> xIntervalTree;
     IntervalTree<Integer> yIntervalTree;
     private Rectangle boundary;
@@ -68,7 +69,7 @@ public class SpatialClusterManager<StoredObjectType> {
                 int[] dy = intervalsY.get(i);
 
                 if (dx == null || dy == null) {
-                    ExtractorLogger.logMessage(1, "ERROR: Please increase the document scale ! some operations are rendered into no points !");
+                    log.error("Please increase the document scale. some operations are rendered into no points !");
                 } else {
                     partialResults.put(i, new Rectangle(
                             dx[0], dy[0], dx[1] - dx[0], dy[1] - dy[0]));
@@ -110,7 +111,7 @@ public class SpatialClusterManager<StoredObjectType> {
 
             // we have the parent whose boundary is the boundary of the group
             if (partialResults.get(currentNum) == null){
-                ExtractorLogger.logMessage(0, "FATAL: Error when clustering graphical areas ");
+                log.fatal("Error when clustering graphical areas.");
             }
             result.get(partialResults.get(currentNum)).add(
                     this.mappingsToObjects.get(internalIdent));

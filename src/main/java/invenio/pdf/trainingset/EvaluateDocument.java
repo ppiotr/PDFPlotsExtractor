@@ -23,7 +23,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
-import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
@@ -33,11 +32,14 @@ import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.ImageLoader;
 import org.eclipse.swt.widgets.Display;
 
+import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.LogFactory;
 /**
  *
  * @author piotr
  */
 public class EvaluateDocument {
+    private static Log log = LogFactory.getLog(EvaluateDocument.class);  
 
     File inputDirectory;
 
@@ -115,8 +117,8 @@ public class EvaluateDocument {
                 }
                 plotsOnPages.get(pageNum).add(plot);
             } catch (Exception ex) {
-                System.out.println(
-                        "ERROR: unable to read the plot metadata description file "
+                log.error(
+                        "Unable to read the plot metadata description file "
                         + plotFile.getPath() + " because of the following error: "
                         + ex.getMessage());
             }
@@ -130,7 +132,7 @@ public class EvaluateDocument {
         PDFDocumentManager documentManager = new PDFDocumentManager();
         // creating page managers from a directory with sample files
         if (!inputDirectory.isDirectory()) {
-            System.out.println("ERROR: The path specified at the input is not a directory.");
+            log.error("The path specified at the input is not a directory.");
         }
         // Searching the input directory for all the files that could
 
@@ -168,7 +170,7 @@ public class EvaluateDocument {
                 String pageId = m.group(1);
                 pageManager.setPageNumber(Integer.parseInt(pageId));
             } else {
-                System.out.println("ERROR: incorrect raw image file name: " + pageFile.getName());
+               log.error("Incorrect raw image file name: " + pageFile.getName());
             }
 
             // now reading the rendered image for each page
@@ -211,8 +213,8 @@ public class EvaluateDocument {
                 }
                 model.plotsOnPages.get(pageNum).add(plot);
             } catch (Exception ex) {
-                System.out.println(
-                        "ERROR: unable to read the plot metadata description file "
+                log.error(
+                        "Unable to read the plot metadata description file "
                         + plotFile.getPath() + " because of the following error: "
                         + ex.getMessage());
             }
@@ -429,8 +431,8 @@ public class EvaluateDocument {
         loadDetectedDataFromDirectory(new File(args[1]));
         int numDetectedPlots = countPlots(model.plotsOnPages);
 
-        System.out.println("read " + numCorrectPlots + " correct plots");
-        System.out.println("read " + numDetectedPlots + " detected plots");
+        log.debug("read " + numCorrectPlots + " correct plots");
+        log.debug("read " + numDetectedPlots + " detected plots");
 
         int skipped = 0;
         int incorrectly = 0;
@@ -444,7 +446,7 @@ public class EvaluateDocument {
             int nd = (dPlots == null) ? 0 : dPlots.size();
             int nc = (cPlots == null) ? 0 : cPlots.size();
 
-            System.out.println("Evaluation of the page " + pageNum + " detected plots: " + nd + "  number of correct plots: " + nc);
+            log.debug("Evaluation of the page " + pageNum + " detected plots: " + nd + "  number of correct plots: " + nc);
             Pair<Pair<Integer, Integer>, List<Double>> pe = evaluatePage(cPlots, dPlots, pageNum);
             //Pair<Pair<Integer, Integer>, List<Double>> pe = evaluatePage(cPlots, cPlots, pageNum);
             for (double d : pe.second) {
@@ -453,13 +455,13 @@ public class EvaluateDocument {
             }
             skipped += pe.first.first;
             incorrectly += pe.first.second;
-            System.out.println("   skipped:" + pe.first.first + "  incorrectly detected:" + pe.first.second);
+            log.debug("   skipped:" + pe.first.first + "  incorrectly detected:" + pe.first.second);
         }
 
-        System.out.println("Final document statistics: skipped=" + skipped + " incorrectly detected=" + incorrectly + " total sum of distances=" + total + "number of pairs="+totalNum);
-        System.out.println("" + (total/ totalNum));
+        log.info("Final document statistics: skipped=" + skipped + " incorrectly detected=" + incorrectly + " total sum of distances=" + total + "number of pairs="+totalNum);
+        log.info("" + (total/ totalNum));
         double evaluation = 0.3 * ( ((double)skipped) / numCorrectPlots)+ 0.2 * ( ((double) incorrectly )/ numDetectedPlots ) + 0.5 * (total/ totalNum);
-        System.out.println(" total evaluation:" + evaluation);
+        log.info(" total evaluation:" + evaluation);
     }
 
     /**

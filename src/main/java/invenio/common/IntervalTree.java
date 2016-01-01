@@ -4,7 +4,6 @@
  */
 package invenio.common;
 
-import invenio.pdf.core.ExtractorLogger;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
@@ -17,6 +16,9 @@ import java.util.Map;
 import java.util.Stack;
 import java.util.TreeMap;
 
+import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.LogFactory;
+
 /**
  *   An implementation of the balanced BST - interval tree
  *    each interval is represented by a pair of integer numbers
@@ -25,6 +27,7 @@ import java.util.TreeMap;
  * @author piotr
  */
 public class IntervalTree<IntervalObjectType> {
+    private static Log log = LogFactory.getLog(IntervalTree.class);  
 
     public class IntervalTreeNode {
 
@@ -964,7 +967,7 @@ public class IntervalTree<IntervalObjectType> {
                 partialResults.put(obj, false);
             }
             if (this.intervalsStored.get(obj) == null) {
-                ExtractorLogger.logMessage(0, "FATAL: Failed to add an interval to the interval tree");
+                log.fatal("FATAL: Failed to add an interval to the interval tree");
             }
         }
 

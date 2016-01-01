@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Set;
 
 import de.intarsys.pdf.content.CSOperation;
-import invenio.pdf.core.ExtractorLogger;
 import invenio.pdf.core.GraphicalOperation;
 import invenio.pdf.core.PDFPageManager;
 import invenio.pdf.core.TextOperation;
@@ -16,6 +15,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.LogFactory;
 /**
  *
  * Managing operations from the document operations stream (remembering attributes for them).
@@ -27,6 +28,7 @@ import java.util.Map;
  *
  */
 class PDFPageOperationsManager {
+    private static Log log = LogFactory.getLog(PDFPageOperationsManager.class);  
 
     private CSOperation currentOperation; // currently performed operation
     private HashMap<CSOperation, Rectangle> operationBoundaries; // Boundries of areas affected by PS operations
@@ -193,7 +195,7 @@ class PDFPageOperationsManager {
                 if (bd != null) {
                     int[] substrInd = this.getOperationTextIndices(op);
                     if (substrInd == null || this.getPageText() == null) {
-                        ExtractorLogger.logMessage(0, "FATAL: failed to extract the page text");
+                        log.fatal("Failed to extract the page text.");
                     }
                     String operationString = this.getPageText().substring(
                             substrInd[0], substrInd[1]);

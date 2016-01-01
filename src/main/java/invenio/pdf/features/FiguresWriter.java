@@ -6,7 +6,6 @@ package invenio.pdf.features;
 
 import invenio.common.Images;
 import invenio.common.XmlTools;
-import invenio.pdf.core.ExtractorLogger;
 import invenio.pdf.core.ExtractorParameters;
 import invenio.pdf.core.FeatureNotPresentException;
 import invenio.pdf.core.PDFDocumentManager;
@@ -44,12 +43,16 @@ import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.LogFactory;
 /**
  * A class allowing to write plots together with meta-data into files
  *
  * @author piotr
  */
 public class FiguresWriter {
+    private static Log log = LogFactory.getLog(FiguresWriter.class);  
+
 
     public static void writePlots(PDFDocumentManager document, File outputDirectory, boolean saveAttachments)
             throws FeatureNotPresentException, Exception {
@@ -442,7 +445,7 @@ public class FiguresWriter {
      */
     public static void setFileNames(FigureCandidate plot, File outputDirectory) {
         //TODO Create some more realistic file names
-        ExtractorLogger.logMessage(2, "Saving a plot from page "
+        log.info("Saving a plot from page "
                 + plot.getPageManager().getPageNumber()
                 + " number of operations: " + plot.getOperations().size());
 

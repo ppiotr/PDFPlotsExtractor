@@ -12,7 +12,11 @@ import java.awt.Rectangle;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.LogFactory;
+
 public class ContentStreamStateMachine {
+    private static Log log = LogFactory.getLog(ContentStreamStateMachine.class);  
 
     private PDFObject currentObject;
     private LinkedList<PDFObject> storedObjects;
@@ -42,7 +46,7 @@ public class ContentStreamStateMachine {
 
     ///// common infrastructure functions
     private void incorrectOperation() {
-        System.out.println("The PDF operation appeared in a wrong context");
+        log.info("The PDF operation appeared in a wrong context");
         //TODO: possibly throw some exception here, for the moment there is no need
     }
 
@@ -92,7 +96,7 @@ public class ContentStreamStateMachine {
         } else if (checkListOfOperations(operationId, operationsListPathConstruction)){
             this.currentObject.addOperation(operation);
         } else {
-            System.out.println("Incorrect operator in the Path state: " + operationId);
+            log.warn("Incorrect operator in the Path state: " + operationId);
         }
     }
 
@@ -106,7 +110,7 @@ public class ContentStreamStateMachine {
             this.acceptObject();
             this.currentObject = new PDFPageDescriptionObject();
         } else {
-            System.out.println("Incorrect PDF operation in the Path clipping state");
+            log.warn("Incorrect PDF operation in the Path clipping state");
         }
     }
 
@@ -125,16 +129,16 @@ public class ContentStreamStateMachine {
                 || checkListOfOperations(operationId, operationsListMarkedContent)) {
             this.currentObject.addOperation(operation);
         } else {
-            System.out.println("Incorrect PDF operation in the state of text inputing");
+            log.warn("Incorrect PDF operation in the state of text inputing");
         }
     }
 
     private void processShading(CSOperation operation) {
-        System.out.println("Weird... this should not happen ! (calling the ContentStreamStateMachine::processShading()");
+        log.warn("Weird... this should not happen ! (calling the ContentStreamStateMachine::processShading()");
     }
 
     private void processExternal(CSOperation operation) {
-       System.out.println("Weird... this should not happen ! (calling the ContentStreamStateMachine::processExternal()");
+       log.warn("Weird... this should not happen ! (calling the ContentStreamStateMachine::processExternal()");
     }
 
     private void processInline(CSOperation operation) {
@@ -148,7 +152,7 @@ public class ContentStreamStateMachine {
             this.currentObject = new PDFPageDescriptionObject();
 
         } else{
-            System.out.println("incorrect operation");
+            log.error("incorrect operation");
         }
     }
 

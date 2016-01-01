@@ -8,7 +8,6 @@ import invenio.common.ExtractorGeometryTools;
 import invenio.common.IntervalTree;
 import invenio.common.Pair;
 import invenio.pdf.core.DisplayedOperation;
-import invenio.pdf.core.ExtractorLogger;
 import invenio.pdf.core.ExtractorParameters;
 import invenio.pdf.core.FeatureNotPresentException;
 import invenio.pdf.core.IPDFDocumentFeatureProvider;
@@ -27,11 +26,14 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.LogFactory;
 /**
  *
  * @author piotr
  */
 public class FiguresProvider implements IPDFDocumentFeatureProvider {
+    private static Log log = LogFactory.getLog(FiguresProvider.class);  
 
     private static String getPlotIdFromCaption(String caption) {
         String candidate = "figure";
@@ -39,10 +41,6 @@ public class FiguresProvider implements IPDFDocumentFeatureProvider {
 
         Pattern p = Pattern.compile("(figure|fig\\.|fig|plot|image|img.|img|table|tab.|tab)([0-9IVX]*)");
         Matcher m = p.matcher(prepared);
-
-        if (!"".equals(caption)) {
-            System.out.println("ddsds");
-        }
 
         if (m.lookingAt()) {
             candidate = m.group(0);
@@ -69,29 +67,26 @@ public class FiguresProvider implements IPDFDocumentFeatureProvider {
          */
         FiguresProvider.matchPlotsWithCaptions(docManager, result, captions);
 
-
         // Now we are left with some unmatched captions.... we should further investigate this
 
-
-
         /// Debugging code ... we show all captions found inside of the document
-        System.out.println("Matched captions : \n\n");
+        log.debug("Matched captions : \n\n");
         for (int pageNum : captions.keySet()) {
-            System.out.println("Page " + pageNum + "\n");
+            log.debug("Page " + pageNum + "\n");
             for (FigureCaption caption : captions.get(pageNum)) {
                 if (caption.alreadyMatched) {
-                    System.out.println("caption: " + caption.text + "\n");
+                    log.debug("caption: " + caption.text + "\n");
                 }
 
             }
         }
-        System.out.println("\n****************************************************************************\n\nUnmatched captions:\n\n");
+        log.debug("\n****************************************************************************\n\nUnmatched captions:\n\n");
         for (int pageNum : captions.keySet()) {
-            System.out.println("Page " + pageNum + "\n");
+            log.debug("Page " + pageNum + "\n");
 
             for (FigureCaption caption : captions.get(pageNum)) {
                 if (!caption.alreadyMatched) {
-                    System.out.println("Caption " + caption.text + "\n");
+                    log.debug("Caption " + caption.text + "\n");
                 }
             }
         }
@@ -408,7 +403,7 @@ public class FiguresProvider implements IPDFDocumentFeatureProvider {
                     /*We have to assign at least one figure candidate. Otherwise we search in opposite direction*/
                     FigureCandidate selectedFigure = null;
 
-                    System.out.println("Merging resulting figures");
+                    log.debug("Merging resulting figures");
 
                     if (matcher.figuresAccumulator.size() > 1) {
                         // there are many figure candidates - we create super-figure which will contain all the sub-figures and additional operations
@@ -574,7 +569,7 @@ public class FiguresProvider implements IPDFDocumentFeatureProvider {
 
     private static FigureCaption toFigureCaption(String candidate) {
         String prepared = candidate.toLowerCase().trim();
-        ExtractorLogger.logMessage(2, "Processing a potential caption : " + candidate);
+        log.debug("Processing a potential caption : " + candidate);
 
         
         Pattern p = Pattern.compile("(figure|fig\\.|fig|plot|image|img.|img|table|tab.|tab)([^a-z]*([A-Z]|:|-|—|.))");

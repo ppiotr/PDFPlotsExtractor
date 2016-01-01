@@ -159,7 +159,7 @@ public class PDFDocumentTools {
 
         PDPageTree pages = doc.getPageTree();
         PDPage page = pages.getFirstPage();
-        System.out.println("Reading operations from pages");
+        log.debug("Reading operations from pages");
         int pageNum = 0;
         while (page != null) {
             PDFPageManager currentPageManager = getOperationsFromPage(page);
@@ -168,9 +168,9 @@ public class PDFDocumentTools {
             currentPageManager.setDocumentManager(documentManager);
             page = page.getNextPage();
             pageNum++;
-            System.out.println(pageNum);
+            log.debug(pageNum);
         }
-        System.out.println("...finished");
+        log.debug("...finished");
         return documentManager;
     }
 

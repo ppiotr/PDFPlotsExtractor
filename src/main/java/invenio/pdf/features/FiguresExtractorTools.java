@@ -1,7 +1,6 @@
 package invenio.pdf.features;
 
 import invenio.pdf.core.DisplayedOperation;
-import invenio.pdf.core.ExtractorLogger;
 import invenio.pdf.core.Operation;
 import invenio.pdf.core.PDFObjects.PDFClippingPathObject;
 import invenio.pdf.core.PDFObjects.PDFObject;
@@ -24,8 +23,11 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.LogFactory;
 
 public class FiguresExtractorTools {
+    private static Log log = LogFactory.getLog(FiguresExtractorTools.class);  
 
     /** draw a number of rectangles on the canvas*/
     private static Random random = null;
@@ -138,7 +140,7 @@ public class FiguresExtractorTools {
             Color[] columnColors = new Color[]{Color.magenta, Color.pink, Color.red, Color.blue, Color.gray, Color.orange};
             int colorIndex = 0;
             if (layout.areas.isEmpty()) {
-                ExtractorLogger.logMessage(0, "ERROR: no page layout detected");
+                log.fatal("ERROR: no page layout detected");
             }
 
             for (List<Rectangle> area : layout.areas) {

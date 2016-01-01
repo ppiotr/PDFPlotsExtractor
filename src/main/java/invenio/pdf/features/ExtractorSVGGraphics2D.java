@@ -12,11 +12,15 @@ import org.apache.batik.svggen.SVGGeneratorContext;
 import org.apache.batik.svggen.SVGGraphics2D;
 import org.w3c.dom.Document;
 
+import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.LogFactory;
+
 /**
  *
  * @author piotr
  */
 public class ExtractorSVGGraphics2D extends SVGGraphics2D {
+    private static Log log = LogFactory.getLog(ExtractorSVGGraphics2D.class); 
 
     public ExtractorSVGGraphics2D(Document domFactory) {
         super(domFactory);
@@ -36,29 +40,29 @@ public class ExtractorSVGGraphics2D extends SVGGraphics2D {
 
     @Override
     public void drawString(String arg0, int arg1, int arg2) {
-        System.out.println("drawString(String arg0=" + arg0 + ", int arg1=" + arg1 + ", int arg2 = " + arg2 + ")");
+        log.debug("drawString(String arg0=" + arg0 + ", int arg1=" + arg1 + ", int arg2 = " + arg2 + ")");
     }
 
     @Override
     public void drawString(String arg0, float arg1, float arg2) {
-        System.out.println("drawString(String arg0=" + arg0 + ", float arg1=" + arg1 + ", float arg2 = " + arg2 + ")");
+        log.debug("drawString(String arg0=" + arg0 + ", float arg1=" + arg1 + ", float arg2 = " + arg2 + ")");
     }
 
     @Override
     public void drawString(AttributedCharacterIterator arg0, int arg1, int arg2) {
-        System.out.println("drawString(AttributedCharacterIterator arg0=" + arg0 + ", int arg1 = " + arg1 + ", int arg2=" + arg2 + ")");
+        log.debug("drawString(AttributedCharacterIterator arg0=" + arg0 + ", int arg1 = " + arg1 + ", int arg2=" + arg2 + ")");
     }
 
     @Override
     public void drawString(AttributedCharacterIterator arg0, float arg1,
             float arg2) {
-        System.out.println("drawString(AttributedCharacterIterator arg0=" + arg0 + ", float arg1 = " + arg1 + ", float arg2=" + arg2 + ")");
+        log.debug("drawString(AttributedCharacterIterator arg0=" + arg0 + ", float arg1 = " + arg1 + ", float arg2=" + arg2 + ")");
 
     }
 
 
     @Override
     public void drawGlyphVector(GlyphVector arg0, float arg1, float arg2) {
-        System.out.println("drawGlyphVector(GlyphVector arg0=" + arg0 + ", float arg1 = " + arg1 + ", float arg2=" + arg2 + ")");
+        log.debug("drawGlyphVector(GlyphVector arg0=" + arg0 + ", float arg1 = " + arg1 + ", float arg2=" + arg2 + ")");
     }
 }

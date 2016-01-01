@@ -20,19 +20,22 @@ import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.RGB;
 
-
+import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.LogFactory;
 
 /**
  *
  * @author piotr
  */
 public class Images {
+    private static Log log = LogFactory.getLog(Images.class);  
 
     public static BufferedImage readImageFromFile(File inputFile) {
         try {
             return ImageIO.read(inputFile);
         } catch (IOException ex) {
-            System.out.println("Error: Can not read the image file");
+            
+            log.error("Error: Can not read the image file");
             return null;
         }
         

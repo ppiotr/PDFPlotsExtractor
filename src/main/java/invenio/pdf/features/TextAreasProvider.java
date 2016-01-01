@@ -7,7 +7,6 @@ package invenio.pdf.features;
 import invenio.common.ExtractorGeometryTools;
 import invenio.common.Pair;
 import invenio.common.SpatialClusterManager;
-import invenio.pdf.core.ExtractorLogger;
 import invenio.pdf.core.FeatureNotPresentException;
 import invenio.pdf.core.IPDFPageFeature;
 import invenio.pdf.core.IPDFPageFeatureProvider;
@@ -24,11 +23,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.LogFactory;
+
 /**
  *
  * @author piotr
  */
 public class TextAreasProvider implements IPDFPageFeatureProvider {
+    private static Log log = LogFactory.getLog(TextAreasProvider.class);  
 
     /** calculate all the text regions inside the page
      *
@@ -84,7 +87,7 @@ public class TextAreasProvider implements IPDFPageFeatureProvider {
             result.areas.put(ExtractorGeometryTools.shrinkRectangle(bd, margins[0], margins[1]),
                     new Pair<String, List<Operation>>(getTextAreaString(operations), operations));
 
-            ExtractorLogger.logMessage(5, "Text area found: " + getTextAreaString(operations));
+            log.debug("Text area found: " + getTextAreaString(operations));
         }
         return result;
     }

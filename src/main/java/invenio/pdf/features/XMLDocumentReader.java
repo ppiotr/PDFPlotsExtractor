@@ -18,12 +18,15 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.LogFactory;
 /**
  *
  * @author piotr
  */
 public class XMLDocumentReader {
-
+    private static Log log = LogFactory.getLog(XMLDocumentReader.class);  
+    
     public static class ParsingException extends Exception {
 
         public ParsingException(String msg) {
@@ -72,7 +75,7 @@ public class XMLDocumentReader {
                 caption.text = child.getFirstChild().getNodeValue();
             
                 } catch (Exception e){
-                    System.out.println("oops");
+                    log.fatal("oops");
                 }
             }
             if ("coordinates".equals(child.getNodeName())) {
@@ -137,7 +140,7 @@ public class XMLDocumentReader {
         }
 
         if ("plot".equals(node.getNodeName())){
-            System.out.println("WARNING: Old format of XML description is used. (plot tags rather than figure). This might not be supported in the future");
+            log.warn("Old format of XML description is used. (plot tags rather than figure). This might not be supported in the future");
         }
         NodeList children = node.getChildNodes();
         for (int ind = 0; ind < children.getLength(); ++ind) {
@@ -158,13 +161,5 @@ public class XMLDocumentReader {
 
         }
         return result;
-    }
-
-    /**
-     * Only for testing ! ... remove before commiting
-     */
-    public static void main(String[] args) throws ParserConfigurationException, SAXException, IOException, Exception {
-        List<FigureCandidate> readDocument = XMLDocumentReader.readDocument(new File("/home/piotr/sampleArticlesForFigureAnalysis/1302.0015.pdf.extracted/plot20_metadata.xml"));
-        System.out.println("ble");
-    }
+    }   
 }
